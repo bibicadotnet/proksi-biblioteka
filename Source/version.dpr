@@ -12,22 +12,22 @@ uses
 
 VAR
 AppPatch: array [0..MAX_PATH] of Char;
-Proc : array [1..8] of Procedure;  // массив типа Procedure
-FileName  : string;                // Переменная для хранения полного имени файла
+Proc : array [1..8] of Procedure;  // РјР°СЃСЃРёРІ С‚РёРїР° Procedure
+FileName  : string;                // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РїРѕР»РЅРѕРіРѕ РёРјРµРЅРё С„Р°Р№Р»Р°
 APPDIR    : string;
-PARAMS    : string;                // Переменная для хранения параметров
+PARAMS    : string;                // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РїР°СЂР°РјРµС‚СЂРѕРІ
 ExeMain   : procedure;
   
-  OLDCODE : packed record // Структура для формирования функции-моста
-  CALL        : Byte;     // Поле для записи опкода инструкции CALL    | $E8
-  CALLOFFSET  : DWORD;    // Поле для записи аргумента инструкции CALL | DWORD
-  JMP         : Byte;     // Поле для записи опкода инструкции JMP     | $E9
-  JMPOFFSET   : DWORD;    // Поле для записи аргумента инструкции JMP  | DWORD
+  OLDCODE : packed record // РЎС‚СЂСѓРєС‚СѓСЂР° РґР»СЏ С„РѕСЂРјРёСЂРѕРІР°РЅРёСЏ С„СѓРЅРєС†РёРё-РјРѕСЃС‚Р°
+  CALL        : Byte;     // РџРѕР»Рµ РґР»СЏ Р·Р°РїРёСЃРё РѕРїРєРѕРґР° РёРЅСЃС‚СЂСѓРєС†РёРё CALL    | $E8
+  CALLOFFSET  : DWORD;    // РџРѕР»Рµ РґР»СЏ Р·Р°РїРёСЃРё Р°СЂРіСѓРјРµРЅС‚Р° РёРЅСЃС‚СЂСѓРєС†РёРё CALL | DWORD
+  JMP         : Byte;     // РџРѕР»Рµ РґР»СЏ Р·Р°РїРёСЃРё РѕРїРєРѕРґР° РёРЅСЃС‚СЂСѓРєС†РёРё JMP     | $E9
+  JMPOFFSET   : DWORD;    // РџРѕР»Рµ РґР»СЏ Р·Р°РїРёСЃРё Р°СЂРіСѓРјРµРЅС‚Р° РёРЅСЃС‚СЂСѓРєС†РёРё JMP  | DWORD
   end;
 
-// Описание функций для метода dll wraper
-// Функции представляют собой джампы на адреса функций системного файла version.dll.
-// Адреса функций определяются динамически.
+// РћРїРёСЃР°РЅРёРµ С„СѓРЅРєС†РёР№ РґР»СЏ РјРµС‚РѕРґР° dll wraper
+// Р¤СѓРЅРєС†РёРё РїСЂРµРґСЃС‚Р°РІР»СЏСЋС‚ СЃРѕР±РѕР№ РґР¶Р°РјРїС‹ РЅР° Р°РґСЂРµСЃР° С„СѓРЅРєС†РёР№ СЃРёСЃС‚РµРјРЅРѕРіРѕ С„Р°Р№Р»Р° version.dll.
+// РђРґСЂРµСЃР° С„СѓРЅРєС†РёР№ РѕРїСЂРµРґРµР»СЏСЋС‚СЃСЏ РґРёРЅР°РјРёС‡РµСЃРєРё.
 procedure GetFileVersionInfoSizeW; stdcall; begin asm jmp dword ptr [proc + 0 * 4]; end; end;
 procedure GetFileVersionInfoW; stdcall; begin asm jmp dword ptr [proc + 1 * 4]; end; end;
 procedure VerQueryValueW; stdcall; begin asm jmp dword ptr [proc + 2 * 4]; end; end;
@@ -37,7 +37,7 @@ procedure VerQueryValueA; stdcall; begin asm jmp dword ptr [proc + 5 * 4]; end; 
 procedure GetFileVersionInfoExW; stdcall; begin asm jmp dword ptr [proc + 6 * 4]; end; end;
 procedure GetFileVersionInfoSizeExW; stdcall; begin asm jmp dword ptr [proc + 7 * 4]; end; end;
 
-// Объявление списока экспортируемых функций
+// РћР±СЉСЏРІР»РµРЅРёРµ СЃРїРёСЃРѕРєР° СЌРєСЃРїРѕСЂС‚РёСЂСѓРµРјС‹С… С„СѓРЅРєС†РёР№
 exports
 GetFileVersionInfoSizeW name 'GetFileVersionInfoSizeW',
 GetFileVersionInfoW name 'GetFileVersionInfoW',
@@ -48,7 +48,7 @@ VerQueryValueA name 'VerQueryValueA',
 GetFileVersionInfoExW name 'GetFileVersionInfoExW',
 GetFileVersionInfoSizeExW name 'GetFileVersionInfoSizeExW';
 
-// Функция для определения пути к программе
+// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РѕРїСЂРµРґРµР»РµРЅРёСЏ РїСѓС‚Рё Рє РїСЂРѕРіСЂР°РјРјРµ
 function GetAPPDir(APP : string): string;
 var
   Len: LongWord;
@@ -58,14 +58,14 @@ begin
   Result := Copy(APP, 0, Len);
 end;
 
-// Функция для добавления параметров запуска
+// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РґРѕР±Р°РІР»РµРЅРёСЏ РїР°СЂР°РјРµС‚СЂРѕРІ Р·Р°РїСѓСЃРєР°
 function ADDParam(ARGS : string) : string;
 begin
  APPDIR := GetAPPDir(AppPatch);
  ARGS := ARGS + '--portable' + ' ';
  ARGS := ARGS + '--disable-features=RendererCodeIntegrity,FlashDeprecationWarning' + ' ';
  ARGS := ARGS + '--simulate-critical-update' + ' ';
- ARGS := ARGS + '--user-data-dir=' + '"' + APPDIR + 'USER Data' + '"' + ' ';
+ ARGS := ARGS + '--user-data-dir=' + '"' + APPDIR + 'User Data' + '"' + ' ';
  ARGS := ARGS + '--disk-cache-dir=' + '"' + APPDIR + 'Cache' + '"' + ' ';
  ARGS := ARGS + '--disable-logging' + ' ';
  //ARGS := ARGS + '--no-first-run' + ' ';
@@ -79,45 +79,46 @@ procedure PORTABLE(PARAM:string);
 var
   ShellExecuteInfo: TShellExecuteInfo;
 begin
- // Получить полное именя файла с использованием API функции GetModuleFileName
- // Если вместо 0 вписать hInstance, то будет путь к имени DLL файла
+ // РџРѕР»СѓС‡РёС‚СЊ РїРѕР»РЅРѕРµ РёРјРµРЅСЏ С„Р°Р№Р»Р° СЃ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµРј API С„СѓРЅРєС†РёРё GetModuleFileName
+ // Р•СЃР»Рё РІРјРµСЃС‚Рѕ 0 РІРїРёСЃР°С‚СЊ hInstance, С‚Рѕ Р±СѓРґРµС‚ РїСѓС‚СЊ Рє РёРјРµРЅРё DLL С„Р°Р№Р»Р°
  GetModuleFileName(0, AppPatch, SizeOF(AppPatch));
  FileName := AppPatch;
  PARAMS := ADDParam(PARAM);
  APPDIR := GetAPPDir(AppPatch);
- // Заполнение структуры для запуска программы
- FillChar(ShellExecuteInfo, SizeOf(TShellExecuteInfo), 0) ;                // Очистить структуру от случайных данных
- ShellExecuteInfo.cbSize := sizeof(TShellExecuteInfo);                     // Размер структуры в байтах
- ShellExecuteInfo.fMask := SEE_MASK_NOCLOSEPROCESS or SEE_MASK_FLAG_NO_UI; // Комбинация флагов, определяющих используемую часть структуры
- ShellExecuteInfo.lpVerb := 'open';                                        // Строка, определяющее действие с файлом. "open" запускает исполняемый файл.
- ShellExecuteInfo.lpFile := pchar(FileName);                               // Имя файла (полный путь к файлу)
- ShellExecuteInfo.lpDirectory := pchar(APPDIR);                            // Рабочая директория программы
- ShellExecuteInfo.nShow := SW_SHOWNORMAL;                                  // Способ отображения окна
- ShellExecuteInfo.lpParameters := pchar(PARAMS);                           // Параметры.
- if ShellExecuteEx(ADDR(ShellExecuteInfo)) then ExitProcess(0);            // Запустить программу.
+ // MessageBox(0, pchar(PARAMS), 'РџР°СЂР°РјРµС‚СЂС‹ РїРµСЂРµРґ Р·Р°РїСѓСЃРєРѕРј', MB_OK);
+ // Р—Р°РїРѕР»РЅРµРЅРёРµ СЃС‚СЂСѓРєС‚СѓСЂС‹ РґР»СЏ Р·Р°РїСѓСЃРєР° РїСЂРѕРіСЂР°РјРјС‹
+ FillChar(ShellExecuteInfo, SizeOf(TShellExecuteInfo), 0) ;                // РћС‡РёСЃС‚РёС‚СЊ СЃС‚СЂСѓРєС‚СѓСЂСѓ РѕС‚ СЃР»СѓС‡Р°Р№РЅС‹С… РґР°РЅРЅС‹С…
+ ShellExecuteInfo.cbSize := sizeof(TShellExecuteInfo);                     // Р Р°Р·РјРµСЂ СЃС‚СЂСѓРєС‚СѓСЂС‹ РІ Р±Р°Р№С‚Р°С…
+ ShellExecuteInfo.fMask := SEE_MASK_NOCLOSEPROCESS or SEE_MASK_FLAG_NO_UI; // РљРѕРјР±РёРЅР°С†РёСЏ С„Р»Р°РіРѕРІ, РѕРїСЂРµРґРµР»СЏСЋС‰РёС… РёСЃРїРѕР»СЊР·СѓРµРјСѓСЋ С‡Р°СЃС‚СЊ СЃС‚СЂСѓРєС‚СѓСЂС‹
+ ShellExecuteInfo.lpVerb := 'open';                                        // РЎС‚СЂРѕРєР°, РѕРїСЂРµРґРµР»СЏСЋС‰РµРµ РґРµР№СЃС‚РІРёРµ СЃ С„Р°Р№Р»РѕРј. "open" Р·Р°РїСѓСЃРєР°РµС‚ РёСЃРїРѕР»РЅСЏРµРјС‹Р№ С„Р°Р№Р».
+ ShellExecuteInfo.lpFile := pchar(FileName);                               // РРјСЏ С„Р°Р№Р»Р° (РїРѕР»РЅС‹Р№ РїСѓС‚СЊ Рє С„Р°Р№Р»Сѓ)
+ ShellExecuteInfo.lpDirectory := pchar(APPDIR);                            // Р Р°Р±РѕС‡Р°СЏ РґРёСЂРµРєС‚РѕСЂРёСЏ РїСЂРѕРіСЂР°РјРјС‹
+ ShellExecuteInfo.nShow := SW_SHOWNORMAL;                                  // РЎРїРѕСЃРѕР± РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ РѕРєРЅР°
+ ShellExecuteInfo.lpParameters := pchar(PARAMS);                           // РџР°СЂР°РјРµС‚СЂС‹.
+ if ShellExecuteEx(ADDR(ShellExecuteInfo)) then ExitProcess(0);            // Р—Р°РїСѓСЃС‚РёС‚СЊ РїСЂРѕРіСЂР°РјРјСѓ.
 end;
 
-// Определить параметры коммандной строки
+// РћРїСЂРµРґРµР»РёС‚СЊ РїР°СЂР°РјРµС‚СЂС‹ РєРѕРјРјР°РЅРґРЅРѕР№ СЃС‚СЂРѕРєРё
 procedure REDIRECT;
 var
 ARG: String;
 i: integer;
 begin
- // ParamCount - это число параметров. ParamStr(i) - это параметр номер i.
- // Нулевой параметр - это выполняемая программа, следующие это параметры.
+ // ParamCount - СЌС‚Рѕ С‡РёСЃР»Рѕ РїР°СЂР°РјРµС‚СЂРѕРІ. ParamStr(i) - СЌС‚Рѕ РїР°СЂР°РјРµС‚СЂ РЅРѕРјРµСЂ i.
+ // РќСѓР»РµРІРѕР№ РїР°СЂР°РјРµС‚СЂ - СЌС‚Рѕ РІС‹РїРѕР»РЅСЏРµРјР°СЏ РїСЂРѕРіСЂР°РјРјР°, СЃР»РµРґСѓСЋС‰РёРµ СЌС‚Рѕ РїР°СЂР°РјРµС‚СЂС‹.
  ARG := '';
- // Перевести все параметры в одну строку
+ // РџРµСЂРµРІРµСЃС‚Рё РІСЃРµ РїР°СЂР°РјРµС‚СЂС‹ РІ РѕРґРЅСѓ СЃС‚СЂРѕРєСѓ
  for i := 1 to ParamCount do ARG := ARG + ParamStr(i) + ' ';
- // Если в командной строке нет параметра -type= и --portable тогда выполнить PORTABLE
+ // Р•СЃР»Рё РІ РєРѕРјР°РЅРґРЅРѕР№ СЃС‚СЂРѕРєРµ РЅРµС‚ РїР°СЂР°РјРµС‚СЂР° -type= Рё --portable С‚РѕРіРґР° РІС‹РїРѕР»РЅРёС‚СЊ PORTABLE
  if (POS('-type=', ARG) = 0) and (POS('--portable', ARG) = 0) then PORTABLE(ARG);
  HookPreferences;
  ExeMain;
 end;
 
-// Функция установливает перехват
+// Р¤СѓРЅРєС†РёСЏ СѓСЃС‚Р°РЅРѕРІР»РёРІР°РµС‚ РїРµСЂРµС…РІР°С‚
 procedure CodeHook(OldProcAddress, NewProcAddress: pointer);
 var
-  // структура для обычного пехвата через JMP NEAR OFFSET
+  // СЃС‚СЂСѓРєС‚СѓСЂР° РґР»СЏ РѕР±С‹С‡РЅРѕРіРѕ РїРµС…РІР°С‚Р° С‡РµСЂРµР· JMP NEAR OFFSET
   CODE   : packed record
   JMP    : Byte;
   OFFSET : DWORD; end;
@@ -127,16 +128,16 @@ const
 begin
   CODE.JMP := $E9;
   CODE.OFFSET := DWORD (NewProcAddress) - DWORD (OldProcAddress) - 5;
-  // Изменить параметры доступа к области памяти
+  // РР·РјРµРЅРёС‚СЊ РїР°СЂР°РјРµС‚СЂС‹ РґРѕСЃС‚СѓРїР° Рє РѕР±Р»Р°СЃС‚Рё РїР°РјСЏС‚Рё
   if not VirtualProtect(OldProcAddress, 5, PAGE_EXECUTE_READWRITE, Protect) then exit;
-  // HANDLE := GetCurrentProcess; // Определить идентификатор текущего процесса
-  // Вместо HANDLE можно вписать INVALID_HANDLE_VALUE - это идентификатор текущего процесса.
+  // HANDLE := GetCurrentProcess; // РћРїСЂРµРґРµР»РёС‚СЊ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ С‚РµРєСѓС‰РµРіРѕ РїСЂРѕС†РµСЃСЃР°
+  // Р’РјРµСЃС‚Рѕ HANDLE РјРѕР¶РЅРѕ РІРїРёСЃР°С‚СЊ INVALID_HANDLE_VALUE - СЌС‚Рѕ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ С‚РµРєСѓС‰РµРіРѕ РїСЂРѕС†РµСЃСЃР°.
   WriteProcessMemory(HANDLE, OldProcAddress, Addr(CODE), 5, VALUE);
-  // Восстановить прежние параметры доступа к памяти
+  // Р’РѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ РїСЂРµР¶РЅРёРµ РїР°СЂР°РјРµС‚СЂС‹ РґРѕСЃС‚СѓРїР° Рє РїР°РјСЏС‚Рё
   VirtualProtect(OldProcAddress, 5, Protect, Protect);
 end;
 
-// Функция расчета смещения
+// Р¤СѓРЅРєС†РёСЏ СЂР°СЃС‡РµС‚Р° СЃРјРµС‰РµРЅРёСЏ
 function CODEOFFSET(NEWADDR, OLDADDR :DWORD):DWORD;
 begin
  if(OLDADDR < NEWADDR) then
@@ -151,66 +152,67 @@ begin
   end;
 end;
 
-// Определение и подмена адреса точки входа
+// РћРїСЂРµРґРµР»РµРЅРёРµ Рё РїРѕРґРјРµРЅР° Р°РґСЂРµСЃР° С‚РѕС‡РєРё РІС…РѕРґР°
 procedure RedirectEP;
 var
-MI   : MODULEINFO;    // Переменная типа MODULEINFO, MODULEINFO - это структура, которая содержит поле EntryPoint
-EntryADDR : PBYTE;    // Переменная указатель для хранения адреса точки входа
+MI   : MODULEINFO;    // РџРµСЂРµРјРµРЅРЅР°СЏ С‚РёРїР° MODULEINFO, MODULEINFO - СЌС‚Рѕ СЃС‚СЂСѓРєС‚СѓСЂР°, РєРѕС‚РѕСЂР°СЏ СЃРѕРґРµСЂР¶РёС‚ РїРѕР»Рµ EntryPoint
+EntryADDR : PBYTE;    // РџРµСЂРµРјРµРЅРЅР°СЏ СѓРєР°Р·Р°С‚РµР»СЊ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ Р°РґСЂРµСЃР° С‚РѕС‡РєРё РІС…РѕРґР°
 Protect   : DWORD;
 VALUE     : DWORD;
 const
   HANDLE = DWORD(-1);
 begin
- GetModuleInformation(GetCurrentProcess, GetModuleHandle(NIL), Addr(MI), sizeof(MODULEINFO)); // Считать информацию о родительском процессе
- EntryADDR := MI.EntryPoint;             // Считать в переменную адрес точки входа из поля EntryPoint структуры MI
- // Изменить параметры доступа к памяти где расположена структура OLDCODE
+ GetModuleInformation(GetCurrentProcess, GetModuleHandle(NIL), Addr(MI), sizeof(MODULEINFO)); // РЎС‡РёС‚Р°С‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ СЂРѕРґРёС‚РµР»СЊСЃРєРѕРј РїСЂРѕС†РµСЃСЃРµ
+ EntryADDR := MI.EntryPoint;             // РЎС‡РёС‚Р°С‚СЊ РІ РїРµСЂРµРјРµРЅРЅСѓСЋ Р°РґСЂРµСЃ С‚РѕС‡РєРё РІС…РѕРґР° РёР· РїРѕР»СЏ EntryPoint СЃС‚СЂСѓРєС‚СѓСЂС‹ MI
+ // РР·РјРµРЅРёС‚СЊ РїР°СЂР°РјРµС‚СЂС‹ РґРѕСЃС‚СѓРїР° Рє РїР°РјСЏС‚Рё РіРґРµ СЂР°СЃРїРѕР»РѕР¶РµРЅР° СЃС‚СЂСѓРєС‚СѓСЂР° OLDCODE
  if not VirtualProtect(ADDR(OLDCODE), 10, PAGE_EXECUTE_READWRITE, Protect) then exit;
- // Считать пять байт исходной функции в структуру OLDCODE
+ // РЎС‡РёС‚Р°С‚СЊ РїСЏС‚СЊ Р±Р°Р№С‚ РёСЃС…РѕРґРЅРѕР№ С„СѓРЅРєС†РёРё РІ СЃС‚СЂСѓРєС‚СѓСЂСѓ OLDCODE
  ReadProcessMemory(HANDLE, EntryADDR, Addr(OLDCODE), 5, VALUE);
  OLDCODE.CALL := $E8;
  OLDCODE.JMP := $E9;
- // Расчитать смещение и записать его значение в поле структуры
+ // Р Р°СЃС‡РёС‚Р°С‚СЊ СЃРјРµС‰РµРЅРёРµ Рё Р·Р°РїРёСЃР°С‚СЊ РµРіРѕ Р·РЅР°С‡РµРЅРёРµ РІ РїРѕР»Рµ СЃС‚СЂСѓРєС‚СѓСЂС‹
  OLDCODE.CALLOFFSET := OLDCODE.CALLOFFSET + CODEOFFSET(LONGWORD(ADDR(OLDCODE)), LONGWORD(EntryADDR)) + 5;
  OLDCODE.JMPOFFSET := CODEOFFSET(LONGWORD(ADDR(OLDCODE)), LONGWORD(EntryADDR));
- CodeHook(EntryADDR, ADDR(REDIRECT));    // Подмена адреса точки входа в процессе на адрес функции из DLL.
- ADDR(ExeMain) := ADDR(OLDCODE);         // Назначить адрес процедуры ExeMain равным адресу структуры OLDCODE
+ CodeHook(EntryADDR, ADDR(REDIRECT));    // РџРѕРґРјРµРЅР° Р°РґСЂРµСЃР° С‚РѕС‡РєРё РІС…РѕРґР° РІ РїСЂРѕС†РµСЃСЃРµ РЅР° Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё РёР· DLL.
+ ADDR(ExeMain) := ADDR(OLDCODE);         // РќР°Р·РЅР°С‡РёС‚СЊ Р°РґСЂРµСЃ РїСЂРѕС†РµРґСѓСЂС‹ ExeMain СЂР°РІРЅС‹Рј Р°РґСЂРµСЃСѓ СЃС‚СЂСѓРєС‚СѓСЂС‹ OLDCODE
+ //HookPreferences;
 end;
 
-// Обертка для переадресации экспортируемых функций
+// РћР±РµСЂС‚РєР° РґР»СЏ РїРµСЂРµР°РґСЂРµСЃР°С†РёРё СЌРєСЃРїРѕСЂС‚РёСЂСѓРµРјС‹С… С„СѓРЅРєС†РёР№
 procedure RedirectEXAT;
 var
-DLLHandle : THandle;                         // Переменная типа THandle (соответствует LONGWORD)
-SysPatch  : array [0..MAX_PATH] of Char;     // Переменная для хранения пути
+DLLHandle : THandle;                         // РџРµСЂРµРјРµРЅРЅР°СЏ С‚РёРїР° THandle (СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚ LONGWORD)
+SysPatch  : array [0..MAX_PATH] of Char;     // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РїСѓС‚Рё
 begin
- GetSystemDirectory(SysPatch, SizeOf(SysPatch));                          // Определить Путь к системной директории
- FileName :=  SysPatch + '\version.dll';                                  // Получить полное имя файла
- DLLHandle := LoadLibrary(pchar(FileName));                               // Загрузить библиотеку и получить её идентификатор
- Addr(proc[1]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoSizeW');   // Определить адрес функции
- Addr(proc[2]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoW');       // Определить адрес функции
- Addr(proc[3]) := GetProcAddress(DLLHandle, 'VerQueryValueW');            // Определить адрес функции
- Addr(proc[4]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoSizeA');   // Определить адрес функции
- Addr(proc[5]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoA');       // Определить адрес функции
- Addr(proc[6]) := GetProcAddress(DLLHandle, 'VerQueryValueA');            // Определить адрес функции
- Addr(proc[7]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoExW');     // Определить адрес функции
- Addr(proc[8]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoSizeExW'); // Определить адрес функции
+ GetSystemDirectory(SysPatch, SizeOf(SysPatch));                          // РћРїСЂРµРґРµР»РёС‚СЊ РџСѓС‚СЊ Рє СЃРёСЃС‚РµРјРЅРѕР№ РґРёСЂРµРєС‚РѕСЂРёРё
+ FileName :=  SysPatch + '\version.dll';                                  // РџРѕР»СѓС‡РёС‚СЊ РїРѕР»РЅРѕРµ РёРјСЏ С„Р°Р№Р»Р°
+ DLLHandle := LoadLibrary(pchar(FileName));                               // Р—Р°РіСЂСѓР·РёС‚СЊ Р±РёР±Р»РёРѕС‚РµРєСѓ Рё РїРѕР»СѓС‡РёС‚СЊ РµС‘ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ
+ Addr(proc[1]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoSizeW');   // РћРїСЂРµРґРµР»РёС‚СЊ Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё
+ Addr(proc[2]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoW');       // РћРїСЂРµРґРµР»РёС‚СЊ Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё
+ Addr(proc[3]) := GetProcAddress(DLLHandle, 'VerQueryValueW');            // РћРїСЂРµРґРµР»РёС‚СЊ Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё
+ Addr(proc[4]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoSizeA');   // РћРїСЂРµРґРµР»РёС‚СЊ Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё
+ Addr(proc[5]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoA');       // РћРїСЂРµРґРµР»РёС‚СЊ Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё
+ Addr(proc[6]) := GetProcAddress(DLLHandle, 'VerQueryValueA');            // РћРїСЂРµРґРµР»РёС‚СЊ Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё
+ Addr(proc[7]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoExW');     // РћРїСЂРµРґРµР»РёС‚СЊ Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё
+ Addr(proc[8]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoSizeExW'); // РћРїСЂРµРґРµР»РёС‚СЊ Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё
 end;
 
-// Основная стартовая функция
+// РћСЃРЅРѕРІРЅР°СЏ СЃС‚Р°СЂС‚РѕРІР°СЏ С„СѓРЅРєС†РёСЏ
 procedure DllMain(fdwReason: DWORD);
 begin
  if (fdwReason = DLL_PROCESS_ATTACH) then
   begin
-   DisableThreadLibraryCalls(hInstance); // отключить уведомления DLL_THREAD_ATTACH и DLL_THREAD_DETACH
-   RedirectEXAT;                         // Шаг 1. Выполнить переадресацию функций экспорта
-   RedirectEP;                           // Шаг 2. Выполнить переадресацию точки входа
+   DisableThreadLibraryCalls(hInstance); // РѕС‚РєР»СЋС‡РёС‚СЊ СѓРІРµРґРѕРјР»РµРЅРёСЏ DLL_THREAD_ATTACH Рё DLL_THREAD_DETACH
+   RedirectEXAT;                         // РЁР°Рі 1. Р’С‹РїРѕР»РЅРёС‚СЊ РїРµСЂРµР°РґСЂРµСЃР°С†РёСЋ С„СѓРЅРєС†РёР№ СЌРєСЃРїРѕСЂС‚Р°
+   RedirectEP;                           // РЁР°Рі 2. Р’С‹РїРѕР»РЅРёС‚СЊ РїРµСЂРµР°РґСЂРµСЃР°С†РёСЋ С‚РѕС‡РєРё РІС…РѕРґР°
   end;
 end;
 
-// Этот код выполняется каждый раз при при загрузке библиотеки
+// Р­С‚РѕС‚ РєРѕРґ РІС‹РїРѕР»РЅСЏРµС‚СЃСЏ РєР°Р¶РґС‹Р№ СЂР°Р· РїСЂРё РїСЂРё Р·Р°РіСЂСѓР·РєРµ Р±РёР±Р»РёРѕС‚РµРєРё
 begin
- if Addr(DllProc) = nil then    // Исли переменной DllProc не присвоено никакое значение
+ if Addr(DllProc) = nil then    // РСЃР»Рё РїРµСЂРµРјРµРЅРЅРѕР№ DllProc РЅРµ РїСЂРёСЃРІРѕРµРЅРѕ РЅРёРєР°РєРѕРµ Р·РЅР°С‡РµРЅРёРµ
   begin
-   DllProc := Addr(DllMain);    // Присвоить переменной DllProc адрес процедуры DllMain
-   DllMain(DLL_PROCESS_ATTACH); // Выполнить процедуру DllMain с параметром DLL_PROCESS_ATTACH
+   DllProc := Addr(DllMain);    // РџСЂРёСЃРІРѕРёС‚СЊ РїРµСЂРµРјРµРЅРЅРѕР№ DllProc Р°РґСЂРµСЃ РїСЂРѕС†РµРґСѓСЂС‹ DllMain
+   DllMain(DLL_PROCESS_ATTACH); // Р’С‹РїРѕР»РЅРёС‚СЊ РїСЂРѕС†РµРґСѓСЂСѓ DllMain СЃ РїР°СЂР°РјРµС‚СЂРѕРј DLL_PROCESS_ATTACH
  end;
 end.
