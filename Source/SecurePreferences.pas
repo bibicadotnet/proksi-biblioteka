@@ -12,29 +12,29 @@ procedure HookPreferences;
 implementation
 
 type
-// Объявление перечисляемого типа данных с именем COMPUTER_NAME_FORMAT
+// РћР±СЉСЏРІР»РµРЅРёРµ РїРµСЂРµС‡РёСЃР»СЏРµРјРѕРіРѕ С‚РёРїР° РґР°РЅРЅС‹С… СЃ РёРјРµРЅРµРј COMPUTER_NAME_FORMAT
  COMPUTER_NAME_FORMAT = (ComputerNameNetBIOS, ComputerNameDnsHostname, ComputerNameDnsDomain, ComputerNameDnsFullyQualified,
                          ComputerNamePhysicalNetBIOS, ComputerNamePhysicalDnsHostname, ComputerNamePhysicalDnsDomain,
                          ComputerNamePhysicalDnsFullyQualified, ComputerNameMax);
 
- // Структура для описания входных и выходных данных
+ // РЎС‚СЂСѓРєС‚СѓСЂР° РґР»СЏ РѕРїРёСЃР°РЅРёСЏ РІС…РѕРґРЅС‹С… Рё РІС‹С…РѕРґРЅС‹С… РґР°РЅРЅС‹С…
  DATA_BLOB = record
-   cbData: DWORD;         // Размер данных в байтах
-   pbData: pByte; end;    // Указатель на первый байт в блоке данных
+   cbData: DWORD;            // Р Р°Р·РјРµСЂ РґР°РЅРЅС‹С… РІ Р±Р°Р№С‚Р°С…
+   pbData: pByte; end;       // РЈРєР°Р·Р°С‚РµР»СЊ РЅР° РїРµСЂРІС‹Р№ Р±Р°Р№С‚ РІ Р±Р»РѕРєРµ РґР°РЅРЅС‹С…
 
-  // Структура для описания дополнительных данных шифрования
+  // РЎС‚СЂСѓРєС‚СѓСЂР° РґР»СЏ РѕРїРёСЃР°РЅРёСЏ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹С… РґР°РЅРЅС‹С… С€РёС„СЂРѕРІР°РЅРёСЏ
  CRYPTPROTECT_PROMPTSTRUCT = record
-   cbSize: DWORD;          // Размер этой структуры в байтах
-   dwPromptFlags: DWORD;   // флаги, указывающие, когда должны отображаться приглашения в пользовательскую область
-   hwndApp: HWND;          // Дескриптор окна для родительского окна.
-   szPrompt: PWideChar; end; // Строка, содержащая текст приглашения, которое должно быть отображено.
+   cbSize: DWORD;            // Р Р°Р·РјРµСЂ СЌС‚РѕР№ СЃС‚СЂСѓРєС‚СѓСЂС‹ РІ Р±Р°Р№С‚Р°С…
+   dwPromptFlags: DWORD;     // С„Р»Р°РіРё, СѓРєР°Р·С‹РІР°СЋС‰РёРµ, РєРѕРіРґР° РґРѕР»Р¶РЅС‹ РѕС‚РѕР±СЂР°Р¶Р°С‚СЊСЃСЏ РїСЂРёРіР»Р°С€РµРЅРёСЏ РІ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєСѓСЋ РѕР±Р»Р°СЃС‚СЊ
+   hwndApp: HWND;            // Р”РµСЃРєСЂРёРїС‚РѕСЂ РѕРєРЅР° РґР»СЏ СЂРѕРґРёС‚РµР»СЊСЃРєРѕРіРѕ РѕРєРЅР°.
+   szPrompt: PWideChar; end; // РЎС‚СЂРѕРєР°, СЃРѕРґРµСЂР¶Р°С‰Р°СЏ С‚РµРєСЃС‚ РїСЂРёРіР»Р°С€РµРЅРёСЏ, РєРѕС‚РѕСЂРѕРµ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РѕС‚РѕР±СЂР°Р¶РµРЅРѕ.
 
- // Обявление типа фукции с парамеи вызова и возврата соответующии оригинальной функции  UpdateProcThreadAttribute
+ // РћР±СЏРІР»РµРЅРёРµ С‚РёРїР° С„СѓРєС†РёРё СЃ РїР°СЂР°РјРµРё РІС‹Р·РѕРІР° Рё РІРѕР·РІСЂР°С‚Р° СЃРѕРѕС‚РІРµС‚СѓСЋС‰РёРё РѕСЂРёРіРёРЅР°Р»СЊРЅРѕР№ С„СѓРЅРєС†РёРё  UpdateProcThreadAttribute
  UpdProcThrAttr = function (lpAttributeList: Pointer; dwFlags: DWORD; Attribute: DWORD; lpValue: Pointer;
                             cbSize: integer; lpPreviousValue: PPointer; lpReturnSize: PInteger): INTEGER; stdcall;
 
-// Объявить константу с именем PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY
-// с типом данных DWORD и присвоить ей значение в соответствии с WinBase.h
+// РћР±СЉСЏРІРёС‚СЊ РєРѕРЅСЃС‚Р°РЅС‚Сѓ СЃ РёРјРµРЅРµРј PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY
+// СЃ С‚РёРїРѕРј РґР°РЅРЅС‹С… DWORD Рё РїСЂРёСЃРІРѕРёС‚СЊ РµР№ Р·РЅР°С‡РµРЅРёРµ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ WinBase.h
 const PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY = DWORD ($00020007);
 
 var
@@ -42,13 +42,13 @@ var
 Proc : procedure;
 RawUpdateProcThreadAttribute : UpdProcThrAttr;
 
- OLDCODE : packed record              // Структура для формирования функции-моста
- DATA        : array [0..4] of byte;  // Массив для оригинального началом перехватываемой функции
- JMP         : Byte;                  // Поле для записи опкода инструкции JMP     | $E9
- JMPOFFSET   : DWORD;                 // Поле для записи аргумента инструкции JMP  | DWORD
+ OLDCODE : packed record              // РЎС‚СЂСѓРєС‚СѓСЂР° РґР»СЏ С„РѕСЂРјРёСЂРѕРІР°РЅРёСЏ С„СѓРЅРєС†РёРё-РјРѕСЃС‚Р°
+ DATA        : array [0..4] of byte;  // РњР°СЃСЃРёРІ РґР»СЏ РѕСЂРёРіРёРЅР°Р»СЊРЅРѕРіРѕ РЅР°С‡Р°Р»РѕРј РїРµСЂРµС…РІР°С‚С‹РІР°РµРјРѕР№ С„СѓРЅРєС†РёРё
+ JMP         : Byte;                  // РџРѕР»Рµ РґР»СЏ Р·Р°РїРёСЃРё РѕРїРєРѕРґР° РёРЅСЃС‚СЂСѓРєС†РёРё JMP     | $E9
+ JMPOFFSET   : DWORD;                 // РџРѕР»Рµ РґР»СЏ Р·Р°РїРёСЃРё Р°СЂРіСѓРјРµРЅС‚Р° РёРЅСЃС‚СЂСѓРєС†РёРё JMP  | DWORD
  end;
 
-// Описание функций для подмены в системных библиотеках
+// РћРїРёСЃР°РЅРёРµ С„СѓРЅРєС†РёР№ РґР»СЏ РїРѕРґРјРµРЅС‹ РІ СЃРёСЃС‚РµРјРЅС‹С… Р±РёР±Р»РёРѕС‚РµРєР°С…
 // kernel32.dll (GetComputerName, GetVolumeInformation, UpdateProcThreadAttribute)
 // Advapi32.dll (LogonUserA, LogonUserW)
 // Crypt32.dll (CryptProtectData, CryptUnprotectData)
@@ -75,13 +75,13 @@ end;
 
 function GetVolumeInformationA
 (
- lpRootPathName: PChar;                                  // путь к сетевому или локальному тому
- lpVolumeNameBuffer: PChar;                              // буфер в котором будет храниться имя тома
- nVolumeNameSize: DWORD;                                 // размер буфера
- lpVolumeSerialNumber: PDWORD;                           // серийный номер тома
- var lpMaximumComponentLength, lpFileSystemFlags: DWORD; // размер тома и тип файловой системы
- lpFileSystemNameBuffer: PChar;                          // название файловой системы
- nFileSystemNameSize: DWORD                              // размер буфера под название файловой системы
+ lpRootPathName: PChar;                                  // РїСѓС‚СЊ Рє СЃРµС‚РµРІРѕРјСѓ РёР»Рё Р»РѕРєР°Р»СЊРЅРѕРјСѓ С‚РѕРјСѓ
+ lpVolumeNameBuffer: PChar;                              // Р±СѓС„РµСЂ РІ РєРѕС‚РѕСЂРѕРј Р±СѓРґРµС‚ С…СЂР°РЅРёС‚СЊСЃСЏ РёРјСЏ С‚РѕРјР°
+ nVolumeNameSize: DWORD;                                 // СЂР°Р·РјРµСЂ Р±СѓС„РµСЂР°
+ lpVolumeSerialNumber: PDWORD;                           // СЃРµСЂРёР№РЅС‹Р№ РЅРѕРјРµСЂ С‚РѕРјР°
+ var lpMaximumComponentLength, lpFileSystemFlags: DWORD; // СЂР°Р·РјРµСЂ С‚РѕРјР° Рё С‚РёРї С„Р°Р№Р»РѕРІРѕР№ СЃРёСЃС‚РµРјС‹
+ lpFileSystemNameBuffer: PChar;                          // РЅР°Р·РІР°РЅРёРµ С„Р°Р№Р»РѕРІРѕР№ СЃРёСЃС‚РµРјС‹
+ nFileSystemNameSize: DWORD                              // СЂР°Р·РјРµСЂ Р±СѓС„РµСЂР° РїРѕРґ РЅР°Р·РІР°РЅРёРµ С„Р°Р№Р»РѕРІРѕР№ СЃРёСЃС‚РµРјС‹
 ): INTEGER; stdcall;
 begin
   result := 0;
@@ -89,39 +89,39 @@ end;
 
 function GetVolumeInformationW
 (
- lpRootPathName: PWideChar;                               // путь к сетевому или локальному тому
- lpVolumeNameBuffer: PWideChar;                           // буфер в котором будет храниться имя тома
- nVolumeNameSize: DWORD;                                  // размер буфера
- lpVolumeSerialNumber: PDWORD;                            // серийный номер тома
- var lpMaximumComponentLength, lpFileSystemFlags: DWORD;  // размер тома и тип файловой системы
- lpFileSystemNameBuffer: PWideChar;                       // название файловой системы
- nFileSystemNameSize: DWORD                               // размер буфера под название файловой системы
+ lpRootPathName: PWideChar;                               // РїСѓС‚СЊ Рє СЃРµС‚РµРІРѕРјСѓ РёР»Рё Р»РѕРєР°Р»СЊРЅРѕРјСѓ С‚РѕРјСѓ
+ lpVolumeNameBuffer: PWideChar;                           // Р±СѓС„РµСЂ РІ РєРѕС‚РѕСЂРѕРј Р±СѓРґРµС‚ С…СЂР°РЅРёС‚СЊСЃСЏ РёРјСЏ С‚РѕРјР°
+ nVolumeNameSize: DWORD;                                  // СЂР°Р·РјРµСЂ Р±СѓС„РµСЂР°
+ lpVolumeSerialNumber: PDWORD;                            // СЃРµСЂРёР№РЅС‹Р№ РЅРѕРјРµСЂ С‚РѕРјР°
+ var lpMaximumComponentLength, lpFileSystemFlags: DWORD;  // СЂР°Р·РјРµСЂ С‚РѕРјР° Рё С‚РёРї С„Р°Р№Р»РѕРІРѕР№ СЃРёСЃС‚РµРјС‹
+ lpFileSystemNameBuffer: PWideChar;                       // РЅР°Р·РІР°РЅРёРµ С„Р°Р№Р»РѕРІРѕР№ СЃРёСЃС‚РµРјС‹
+ nFileSystemNameSize: DWORD                               // СЂР°Р·РјРµСЂ Р±СѓС„РµСЂР° РїРѕРґ РЅР°Р·РІР°РЅРёРµ С„Р°Р№Р»РѕРІРѕР№ СЃРёСЃС‚РµРјС‹
 ): INTEGER; stdcall;
 begin
   result := 0;
 end;
 
-// Функция UpdateProcThreadAttribute модифирована чтобы сбрасывать бит PROCESS_CREATION_MITIGATION_POLICY_BLOCK_NON_MICROSOFT_BINARIES_ALWAYS_ON
+// Р¤СѓРЅРєС†РёСЏ UpdateProcThreadAttribute РјРѕРґРёС„РёСЂРѕРІР°РЅР° С‡С‚РѕР±С‹ СЃР±СЂР°СЃС‹РІР°С‚СЊ Р±РёС‚ PROCESS_CREATION_MITIGATION_POLICY_BLOCK_NON_MICROSOFT_BINARIES_ALWAYS_ON
 function UpdateProcThreadAttribute
  (
-  lpAttributeList: Pointer;        // Указатель на список атрибутов
-  dwFlags: DWORD;                  // Этот параметр зарезервирован и должен иметь значение 0
-  Attribute: DWORD;                // Ключ атрибута для обновления в списке атрибутов
-  lpValue: Pointer;                // Указатель на значение атрибута
-  cbSize: Integer;                 // Размер значения атрибута, заданного параметром lpValue
-  lpPreviousValue: PPointer;       // Этот параметр зарезервирован и должен иметь значение NULL
-  lpReturnSize: PInteger           // Этот параметр зарезервирован и должен иметь значение NULL
+  lpAttributeList: Pointer;        // РЈРєР°Р·Р°С‚РµР»СЊ РЅР° СЃРїРёСЃРѕРє Р°С‚СЂРёР±СѓС‚РѕРІ
+  dwFlags: DWORD;                  // Р­С‚РѕС‚ РїР°СЂР°РјРµС‚СЂ Р·Р°СЂРµР·РµСЂРІРёСЂРѕРІР°РЅ Рё РґРѕР»Р¶РµРЅ РёРјРµС‚СЊ Р·РЅР°С‡РµРЅРёРµ 0
+  Attribute: DWORD;                // РљР»СЋС‡ Р°С‚СЂРёР±СѓС‚Р° РґР»СЏ РѕР±РЅРѕРІР»РµРЅРёСЏ РІ СЃРїРёСЃРєРµ Р°С‚СЂРёР±СѓС‚РѕРІ
+  lpValue: Pointer;                // РЈРєР°Р·Р°С‚РµР»СЊ РЅР° Р·РЅР°С‡РµРЅРёРµ Р°С‚СЂРёР±СѓС‚Р°
+  cbSize: Integer;                 // Р Р°Р·РјРµСЂ Р·РЅР°С‡РµРЅРёСЏ Р°С‚СЂРёР±СѓС‚Р°, Р·Р°РґР°РЅРЅРѕРіРѕ РїР°СЂР°РјРµС‚СЂРѕРј lpValue
+  lpPreviousValue: PPointer;       // Р­С‚РѕС‚ РїР°СЂР°РјРµС‚СЂ Р·Р°СЂРµР·РµСЂРІРёСЂРѕРІР°РЅ Рё РґРѕР»Р¶РµРЅ РёРјРµС‚СЊ Р·РЅР°С‡РµРЅРёРµ NULL
+  lpReturnSize: PInteger           // Р­С‚РѕС‚ РїР°СЂР°РјРµС‚СЂ Р·Р°СЂРµР·РµСЂРІРёСЂРѕРІР°РЅ Рё РґРѕР»Р¶РµРЅ РёРјРµС‚СЊ Р·РЅР°С‡РµРЅРёРµ NULL
  ): INTEGER; stdcall;
 var
 Buffer : array of byte;
 begin
   if (Attribute = PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY) and (cbSize >= sizeof(UInt64)) then
   begin
-   SetLength(Buffer, cbSize);                     // Задать размер буфера
-   CopyMemory(Addr(Buffer[0]), lpValue, cbSize);  // Скопировать в массив значение атрибута из указателя
-   Buffer[5] := Buffer[5] and (0 shl 4);          // Сбросить бит MICROSOFT_BINARIES_ALWAYS_ON - это пятый бит шестого байта Int64 $100000000000
-   CopyMemory(lpValue, Addr(Buffer[0]), cbSize);  // Скопировать в указатель значения из буфера
-   Buffer := nil;                                 // Освободить память буфера
+   SetLength(Buffer, cbSize);                     // Р—Р°РґР°С‚СЊ СЂР°Р·РјРµСЂ Р±СѓС„РµСЂР°
+   CopyMemory(Addr(Buffer[0]), lpValue, cbSize);  // РЎРєРѕРїРёСЂРѕРІР°С‚СЊ РІ РјР°СЃСЃРёРІ Р·РЅР°С‡РµРЅРёРµ Р°С‚СЂРёР±СѓС‚Р° РёР· СѓРєР°Р·Р°С‚РµР»СЏ
+   Buffer[5] := Buffer[5] and (0 shl 4);          // РЎР±СЂРѕСЃРёС‚СЊ Р±РёС‚ MICROSOFT_BINARIES_ALWAYS_ON - СЌС‚Рѕ РїСЏС‚С‹Р№ Р±РёС‚ С€РµСЃС‚РѕРіРѕ Р±Р°Р№С‚Р° Int64 $100000000000
+   CopyMemory(lpValue, Addr(Buffer[0]), cbSize);  // РЎРєРѕРїРёСЂРѕРІР°С‚СЊ РІ СѓРєР°Р·Р°С‚РµР»СЊ Р·РЅР°С‡РµРЅРёСЏ РёР· Р±СѓС„РµСЂР°
+   Buffer := nil;                                 // РћСЃРІРѕР±РѕРґРёС‚СЊ РїР°РјСЏС‚СЊ Р±СѓС„РµСЂР°
   end;
   result := RawUpdateProcThreadAttribute(lpAttributeList, dwFlags, Attribute, lpValue, cbSize, lpPreviousValue, lpReturnSize);
 end;
@@ -138,50 +138,51 @@ begin
  result := $09051945;
 end;
 
-// Реализация перехвата этих двух функций не выполнена и не требуется
+// РњРѕРґРёС„РёС†РёСЂРѕРІР°РЅРЅР°СЏ С„СѓРЅРєС†РёСЏ CryptProtectData. Р’С…РѕРґРЅС‹Рµ РґР°РЅРЅС‹Рµ РїРµСЂРµРґР°СЋС‚СЃСЏ РІ РІС‹С…РѕРґРЅС‹Рµ Р±РµР· С€РёС„СЂРѕРІР°РЅРёСЏ.
 function CryptProtectData  (
-                            var pDataIn: DATA_BLOB;                       // указатель на структуру pDataIn типа DATA_BLOB с входными данными.
-                            ppszDataDescr: PWideChar;                     // описание данных, этот параметр можно не задавать.
-                            var pOptionalEntropy: DATA_BLOB;              // указатель на структуру pOptionalEntropy типа DATA_BLOB. исподбзуется для задания энтропии.
-                            pvReserved: Pointer;                          // этот параметр зарезервирован и может не задаваться.
-                            var pPromptStruct: CRYPTPROTECT_PROMPTSTRUCT; // указатель на структуру pPromptStruct типа CRYPTPROTECT_PROMPTSTRUCT для ввода доп. пароля для шифрования
-                            dwFlags: DWORD;                               // флаги, управляющие процессом шифрования
-                            var pDataOut: DATA_BLOB                       // указатель на структуру pDataOut типа DATA_BLOB с выходными данными
+                            var pDataIn: DATA_BLOB;                       // СѓРєР°Р·Р°С‚РµР»СЊ РЅР° СЃС‚СЂСѓРєС‚СѓСЂСѓ pDataIn С‚РёРїР° DATA_BLOB СЃ РІС…РѕРґРЅС‹РјРё РґР°РЅРЅС‹РјРё.
+                            ppszDataDescr: PWideChar;                     // РѕРїРёСЃР°РЅРёРµ РґР°РЅРЅС‹С…, СЌС‚РѕС‚ РїР°СЂР°РјРµС‚СЂ РјРѕР¶РЅРѕ РЅРµ Р·Р°РґР°РІР°С‚СЊ.
+                            var pOptionalEntropy: DATA_BLOB;              // СѓРєР°Р·Р°С‚РµР»СЊ РЅР° СЃС‚СЂСѓРєС‚СѓСЂСѓ pOptionalEntropy С‚РёРїР° DATA_BLOB. РёСЃРїРѕРґР±Р·СѓРµС‚СЃСЏ РґР»СЏ Р·Р°РґР°РЅРёСЏ СЌРЅС‚СЂРѕРїРёРё.
+                            pvReserved: Pointer;                          // СЌС‚РѕС‚ РїР°СЂР°РјРµС‚СЂ Р·Р°СЂРµР·РµСЂРІРёСЂРѕРІР°РЅ Рё РјРѕР¶РµС‚ РЅРµ Р·Р°РґР°РІР°С‚СЊСЃСЏ.
+                            var pPromptStruct: CRYPTPROTECT_PROMPTSTRUCT; // СѓРєР°Р·Р°С‚РµР»СЊ РЅР° СЃС‚СЂСѓРєС‚СѓСЂСѓ pPromptStruct С‚РёРїР° CRYPTPROTECT_PROMPTSTRUCT РґР»СЏ РІРІРѕРґР° РґРѕРї. РїР°СЂРѕР»СЏ РґР»СЏ С€РёС„СЂРѕРІР°РЅРёСЏ
+                            dwFlags: DWORD;                               // С„Р»Р°РіРё, СѓРїСЂР°РІР»СЏСЋС‰РёРµ РїСЂРѕС†РµСЃСЃРѕРј С€РёС„СЂРѕРІР°РЅРёСЏ
+                            var pDataOut: DATA_BLOB                       // СѓРєР°Р·Р°С‚РµР»СЊ РЅР° СЃС‚СЂСѓРєС‚СѓСЂСѓ pDataOut С‚РёРїР° DATA_BLOB СЃ РІС‹С…РѕРґРЅС‹РјРё РґР°РЅРЅС‹РјРё
                             ): BOOL; stdcall;
 var
-Buffer : array of byte;
+  Buffer : array of byte;
 begin
-   pDataOut.cbData := pDataIn.cbData;                                    // Размер выходных данных равен размеру входных
-   SetLength(Buffer, pDataIn.cbData);                                    // Задать размер буфера равным размеру входных данных
-   CopyMemory(Addr(Buffer[0]), pDataIn.pbData, pDataIn.cbData);          // Скопировать в массив входные данные
-   pDataOut.pbData := PBYTE(LocalAlloc(LMEM_FIXED, pDataIn.cbData));     // Выделить фиксированную память для блока выходных данных
-   CopyMemory(pDataOut.pbData, Addr(Buffer[0]), pDataIn.cbData);         // Скопировать из массива в блок выходных данных
-   Buffer := nil;                                                        // Освободить память буфера
-   result := TRUE;
+  pDataOut.cbData := pDataIn.cbData;                                      // Р Р°Р·РјРµСЂ РІС‹С…РѕРґРЅС‹С… РґР°РЅРЅС‹С… СЂР°РІРµРЅ СЂР°Р·РјРµСЂСѓ РІС…РѕРґРЅС‹С…
+  SetLength(Buffer, pDataIn.cbData);                                      // Р—Р°РґР°С‚СЊ СЂР°Р·РјРµСЂ Р±СѓС„РµСЂР° СЂР°РІРЅС‹Рј СЂР°Р·РјРµСЂСѓ РІС…РѕРґРЅС‹С… РґР°РЅРЅС‹С…
+  CopyMemory(Addr(Buffer[0]), pDataIn.pbData, pDataIn.cbData);            // РЎРєРѕРїРёСЂРѕРІР°С‚СЊ РІ РјР°СЃСЃРёРІ РІС…РѕРґРЅС‹Рµ РґР°РЅРЅС‹Рµ
+  pDataOut.pbData := PBYTE(LocalAlloc(LMEM_FIXED, pDataIn.cbData));       // Р’С‹РґРµР»РёС‚СЊ С„РёРєСЃРёСЂРѕРІР°РЅРЅСѓСЋ РїР°РјСЏС‚СЊ РґР»СЏ Р±Р»РѕРєР° РІС‹С…РѕРґРЅС‹С… РґР°РЅРЅС‹С…
+  CopyMemory(pDataOut.pbData, Addr(Buffer[0]), pDataIn.cbData);           // РЎРєРѕРїРёСЂРѕРІР°С‚СЊ РёР· РјР°СЃСЃРёРІР° РІ Р±Р»РѕРє РІС‹С…РѕРґРЅС‹С… РґР°РЅРЅС‹С…
+  Buffer := nil;                                                          // РћСЃРІРѕР±РѕРґРёС‚СЊ РїР°РјСЏС‚СЊ Р±СѓС„РµСЂР°
+  result := TRUE;
 end;
 
+// РњРѕРґРёС„РёС†РёСЂРѕРІР°РЅРЅР°СЏ С„СѓРЅРєС†РёСЏ CryptUnprotectData. Р’С…РѕРґРЅС‹Рµ РґР°РЅРЅС‹Рµ РїРµСЂРµРґР°СЋС‚СЃСЏ РІ РІС‹С…РѕРґРЅС‹Рµ Р±РµР· РґРµС€РёС„СЂРѕРІР°РЅРёСЏ.
 function CryptUnprotectData(
-                            var pDataIn: DATA_BLOB;                       // указатель на структуру pDataIn типа DATA_BLOB с входными данными.
-                            ppszDataDescr: PWideChar;                     // описание данных, этот параметр можно не задавать.
-                            var pOptionalEntropy: DATA_BLOB;              // указатель на структуру pOptionalEntropy типа DATA_BLOB. исподбзуется для задания энтропии.
-                            pvReserved: Pointer;                          // этот параметр зарезервирован и может не задаваться.
-                            var pPromptStruct: CRYPTPROTECT_PROMPTSTRUCT; // указатель на структуру pPromptStruct типа CRYPTPROTECT_PROMPTSTRUCT для ввода доп. пароля для шифрования
-                            dwFlags: DWORD;                               // флаги, управляющие процессом шифрования
-                            var pDataOut: DATA_BLOB                       // указатель на структуру pDataOut типа DATA_BLOB с выходными данными
+                            var pDataIn: DATA_BLOB;                       // СѓРєР°Р·Р°С‚РµР»СЊ РЅР° СЃС‚СЂСѓРєС‚СѓСЂСѓ pDataIn С‚РёРїР° DATA_BLOB СЃ РІС…РѕРґРЅС‹РјРё РґР°РЅРЅС‹РјРё.
+                            ppszDataDescr: PWideChar;                     // РѕРїРёСЃР°РЅРёРµ РґР°РЅРЅС‹С…, СЌС‚РѕС‚ РїР°СЂР°РјРµС‚СЂ РјРѕР¶РЅРѕ РЅРµ Р·Р°РґР°РІР°С‚СЊ.
+                            var pOptionalEntropy: DATA_BLOB;              // СѓРєР°Р·Р°С‚РµР»СЊ РЅР° СЃС‚СЂСѓРєС‚СѓСЂСѓ pOptionalEntropy С‚РёРїР° DATA_BLOB. РёСЃРїРѕРґР±Р·СѓРµС‚СЃСЏ РґР»СЏ Р·Р°РґР°РЅРёСЏ СЌРЅС‚СЂРѕРїРёРё.
+                            pvReserved: Pointer;                          // СЌС‚РѕС‚ РїР°СЂР°РјРµС‚СЂ Р·Р°СЂРµР·РµСЂРІРёСЂРѕРІР°РЅ Рё РјРѕР¶РµС‚ РЅРµ Р·Р°РґР°РІР°С‚СЊСЃСЏ.
+                            var pPromptStruct: CRYPTPROTECT_PROMPTSTRUCT; // СѓРєР°Р·Р°С‚РµР»СЊ РЅР° СЃС‚СЂСѓРєС‚СѓСЂСѓ pPromptStruct С‚РёРїР° CRYPTPROTECT_PROMPTSTRUCT РґР»СЏ РІРІРѕРґР° РґРѕРї. РїР°СЂРѕР»СЏ РґР»СЏ С€РёС„СЂРѕРІР°РЅРёСЏ
+                            dwFlags: DWORD;                               // С„Р»Р°РіРё, СѓРїСЂР°РІР»СЏСЋС‰РёРµ РїСЂРѕС†РµСЃСЃРѕРј С€РёС„СЂРѕРІР°РЅРёСЏ
+                            var pDataOut: DATA_BLOB                       // СѓРєР°Р·Р°С‚РµР»СЊ РЅР° СЃС‚СЂСѓРєС‚СѓСЂСѓ pDataOut С‚РёРїР° DATA_BLOB СЃ РІС‹С…РѕРґРЅС‹РјРё РґР°РЅРЅС‹РјРё
                             ): BOOL; stdcall;
 var
-Buffer : array of byte;
+ Buffer : array of byte;
 begin
-   pDataOut.cbData := pDataIn.cbData;                                     // Размер выходных данных равен размеру входных
-   SetLength(Buffer, pDataOut.cbData);                                    // Задать размер буфера равным размеру входных данных
-   CopyMemory(Addr(Buffer[0]), pDataIn.pbData, pDataIn.cbData);           // Скопировать в массив входные данные
-   pDataOut.pbData := PBYTE(LocalAlloc(LMEM_FIXED, pDataIn.cbData));      // Выделить фиксированную память для блока выходных данных
-   CopyMemory(pDataOut.pbData, Addr(Buffer[0]), pDataIn.cbData);          // Скопировать из массива в блок выходных данных
-   Buffer := nil;                                                         // Освободить память буфера
-   result := TRUE;
+  pDataOut.cbData := pDataIn.cbData;                                      // Р Р°Р·РјРµСЂ РІС‹С…РѕРґРЅС‹С… РґР°РЅРЅС‹С… СЂР°РІРµРЅ СЂР°Р·РјРµСЂСѓ РІС…РѕРґРЅС‹С…
+  SetLength(Buffer, pDataOut.cbData);                                     // Р—Р°РґР°С‚СЊ СЂР°Р·РјРµСЂ Р±СѓС„РµСЂР° СЂР°РІРЅС‹Рј СЂР°Р·РјРµСЂСѓ РІС…РѕРґРЅС‹С… РґР°РЅРЅС‹С…
+  CopyMemory(Addr(Buffer[0]), pDataIn.pbData, pDataIn.cbData);            // РЎРєРѕРїРёСЂРѕРІР°С‚СЊ РІ РјР°СЃСЃРёРІ РІС…РѕРґРЅС‹Рµ РґР°РЅРЅС‹Рµ
+  pDataOut.pbData := PBYTE(LocalAlloc(LMEM_FIXED, pDataIn.cbData));       // Р’С‹РґРµР»РёС‚СЊ С„РёРєСЃРёСЂРѕРІР°РЅРЅСѓСЋ РїР°РјСЏС‚СЊ РґР»СЏ Р±Р»РѕРєР° РІС‹С…РѕРґРЅС‹С… РґР°РЅРЅС‹С…
+  CopyMemory(pDataOut.pbData, Addr(Buffer[0]), pDataIn.cbData);           // РЎРєРѕРїРёСЂРѕРІР°С‚СЊ РёР· РјР°СЃСЃРёРІР° РІ Р±Р»РѕРє РІС‹С…РѕРґРЅС‹С… РґР°РЅРЅС‹С…
+  Buffer := nil;                                                          // РћСЃРІРѕР±РѕРґРёС‚СЊ РїР°РјСЏС‚СЊ Р±СѓС„РµСЂР°
+  result := TRUE;
 end;
 
-// Функция расчета смещения
+// Р¤СѓРЅРєС†РёСЏ СЂР°СЃС‡РµС‚Р° СЃРјРµС‰РµРЅРёСЏ
 function CODEOFFSET(NEWADDR, OLDADDR :DWORD):DWORD;
 begin
  if(OLDADDR < NEWADDR) then
@@ -196,79 +197,79 @@ begin
   end;
 end;
 
-// Функция установливает перехват
+// Р¤СѓРЅРєС†РёСЏ СѓСЃС‚Р°РЅРѕРІР»РёРІР°РµС‚ РїРµСЂРµС…РІР°С‚
 procedure CodeHook(OldProcAddress, NewProcAddress: pointer);
 var
-  // структура для обычного перехвата через JMP NEAR OFFSET
+  // СЃС‚СЂСѓРєС‚СѓСЂР° РґР»СЏ РѕР±С‹С‡РЅРѕРіРѕ РїРµСЂРµС…РІР°С‚Р° С‡РµСЂРµР· JMP NEAR OFFSET
   CODE   : packed record
   JMP    : Byte;
   OFFSET : DWORD; end;
   Protect, VALUE : DWORD;
 const
-  HANDLE = DWORD(-1);                                              // Константа идентификатор текущего процесса
+  HANDLE = DWORD(-1);                                                 // РљРѕРЅСЃС‚Р°РЅС‚Р° РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ С‚РµРєСѓС‰РµРіРѕ РїСЂРѕС†РµСЃСЃР°
 begin
   CODE.JMP := $E9;
   CODE.OFFSET := DWORD (NewProcAddress) - DWORD (OldProcAddress) - 5;
-  // Изменить параметры доступа к области памяти
+  // РР·РјРµРЅРёС‚СЊ РїР°СЂР°РјРµС‚СЂС‹ РґРѕСЃС‚СѓРїР° Рє РѕР±Р»Р°СЃС‚Рё РїР°РјСЏС‚Рё
   if not VirtualProtect(OldProcAddress, 5, PAGE_EXECUTE_READWRITE, Protect) then exit;
-  // Записать в память процесса с идентификатором HANDLE в адрес по указателю из OldProcAddress данные из CODE в размере 5 байт
-  // HANDLE := GetCurrentProcess; // Определить идентификатор текущего процесса
+  // Р—Р°РїРёСЃР°С‚СЊ РІ РїР°РјСЏС‚СЊ РїСЂРѕС†РµСЃСЃР° СЃ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРј HANDLE РІ Р°РґСЂРµСЃ РїРѕ СѓРєР°Р·Р°С‚РµР»СЋ РёР· OldProcAddress РґР°РЅРЅС‹Рµ РёР· CODE РІ СЂР°Р·РјРµСЂРµ 5 Р±Р°Р№С‚
+  // HANDLE := GetCurrentProcess; // РћРїСЂРµРґРµР»РёС‚СЊ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ С‚РµРєСѓС‰РµРіРѕ РїСЂРѕС†РµСЃСЃР°
   WriteProcessMemory(HANDLE, OldProcAddress, Addr(CODE), 5, VALUE);
-  // Восстановить прежние параметры доступа к памяти
+  // Р’РѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ РїСЂРµР¶РЅРёРµ РїР°СЂР°РјРµС‚СЂС‹ РґРѕСЃС‚СѓРїР° Рє РїР°РјСЏС‚Рё
   VirtualProtect(OldProcAddress, 5, Protect, Protect);
 end;
 
 procedure HookPreferences;
 var
- DLLHandle : THandle;                                                  // Переменная типа THandle (соответствует LONGWORD)
- SysPatch  : array [0..MAX_PATH] of Char;                              // Переменная для хранения пути
+ DLLHandle : THandle;                                                  // РџРµСЂРµРјРµРЅРЅР°СЏ С‚РёРїР° THandle (СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚ LONGWORD)
+ SysPatch  : array [0..MAX_PATH] of Char;                              // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РїСѓС‚Рё
  FileName  : string;
  Protect   : DWORD;
  VALUE     : DWORD;
 const
   HANDLE = DWORD(-1);
 begin
- GetSystemDirectory(SysPatch, SizeOf(SysPatch));                       // Определить Путь к системной директории
- // Перехват вызова функций из kernel32.dll
- FileName :=  SysPatch + '\kernel32.dll';                              // Получить полное имя файла
- DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
- Addr(Proc) := GetProcAddress(DLLHandle, 'GetComputerNameA');          // Определить адрес функции
- CodeHook(Addr(Proc), ADDR(GetComputerNameA));                         // Подмена адреса точки входа функции в процессе на адрес функции из DLL.
- Addr(Proc) := GetProcAddress(DLLHandle, 'GetComputerNameW');          // Определить адрес функции
- CodeHook(Addr(Proc), ADDR(GetComputerNameW));                         // Подмена адреса точки входа функции в процессе на адрес функции из DLL.
- Addr(Proc) := GetProcAddress(DLLHandle, 'GetComputerNameExA');        // Определить адрес функции
- CodeHook(Addr(Proc), ADDR(GetComputerNameExA));                       // Подмена адреса точки входа функции в процессе на адрес функции из DLL.
- Addr(Proc) := GetProcAddress(DLLHandle, 'GetComputerNameExW');        // Определить адрес функции
- CodeHook(Addr(Proc), ADDR(GetComputerNameExW));                       // Подмена адреса точки входа функции в процессе на адрес функции из DLL.
- Addr(Proc) := GetProcAddress(DLLHandle, 'GetVolumeInformationA');     // Определить адрес функции
- CodeHook(Addr(Proc), ADDR(GetVolumeInformationA));                    // Подмена адреса точки входа функции в процессе на адрес функции из DLL.
- Addr(Proc) := GetProcAddress(DLLHandle, 'GetVolumeInformationW');     // Определить адрес функции
- CodeHook(Addr(Proc), ADDR(GetVolumeInformationW));                    // Подмена адреса точки входа функции в процессе на адрес функции из DLL.
+ GetSystemDirectory(SysPatch, SizeOf(SysPatch));                       // РћРїСЂРµРґРµР»РёС‚СЊ РџСѓС‚СЊ Рє СЃРёСЃС‚РµРјРЅРѕР№ РґРёСЂРµРєС‚РѕСЂРёРё
+ // РџРµСЂРµС…РІР°С‚ РІС‹Р·РѕРІР° С„СѓРЅРєС†РёР№ РёР· kernel32.dll
+ FileName :=  SysPatch + '\kernel32.dll';                              // РџРѕР»СѓС‡РёС‚СЊ РїРѕР»РЅРѕРµ РёРјСЏ С„Р°Р№Р»Р°
+ DLLHandle := LoadLibrary(pchar(FileName));                            // Р—Р°РіСЂСѓР·РёС‚СЊ Р±РёР±Р»РёРѕС‚РµРєСѓ Рё РїРѕР»СѓС‡РёС‚СЊ РµС‘ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ
+ Addr(Proc) := GetProcAddress(DLLHandle, 'GetComputerNameA');          // РћРїСЂРµРґРµР»РёС‚СЊ Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё
+ CodeHook(Addr(Proc), ADDR(GetComputerNameA));                         // РџРѕРґРјРµРЅР° Р°РґСЂРµСЃР° С‚РѕС‡РєРё РІС…РѕРґР° С„СѓРЅРєС†РёРё РІ РїСЂРѕС†РµСЃСЃРµ РЅР° Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё РёР· DLL.
+ Addr(Proc) := GetProcAddress(DLLHandle, 'GetComputerNameW');          // РћРїСЂРµРґРµР»РёС‚СЊ Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё
+ CodeHook(Addr(Proc), ADDR(GetComputerNameW));                         // РџРѕРґРјРµРЅР° Р°РґСЂРµСЃР° С‚РѕС‡РєРё РІС…РѕРґР° С„СѓРЅРєС†РёРё РІ РїСЂРѕС†РµСЃСЃРµ РЅР° Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё РёР· DLL.
+ Addr(Proc) := GetProcAddress(DLLHandle, 'GetComputerNameExA');        // РћРїСЂРµРґРµР»РёС‚СЊ Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё
+ CodeHook(Addr(Proc), ADDR(GetComputerNameExA));                       // РџРѕРґРјРµРЅР° Р°РґСЂРµСЃР° С‚РѕС‡РєРё РІС…РѕРґР° С„СѓРЅРєС†РёРё РІ РїСЂРѕС†РµСЃСЃРµ РЅР° Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё РёР· DLL.
+ Addr(Proc) := GetProcAddress(DLLHandle, 'GetComputerNameExW');        // РћРїСЂРµРґРµР»РёС‚СЊ Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё
+ CodeHook(Addr(Proc), ADDR(GetComputerNameExW));                       // РџРѕРґРјРµРЅР° Р°РґСЂРµСЃР° С‚РѕС‡РєРё РІС…РѕРґР° С„СѓРЅРєС†РёРё РІ РїСЂРѕС†РµСЃСЃРµ РЅР° Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё РёР· DLL.
+ Addr(Proc) := GetProcAddress(DLLHandle, 'GetVolumeInformationA');     // РћРїСЂРµРґРµР»РёС‚СЊ Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё
+ CodeHook(Addr(Proc), ADDR(GetVolumeInformationA));                    // РџРѕРґРјРµРЅР° Р°РґСЂРµСЃР° С‚РѕС‡РєРё РІС…РѕРґР° С„СѓРЅРєС†РёРё РІ РїСЂРѕС†РµСЃСЃРµ РЅР° Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё РёР· DLL.
+ Addr(Proc) := GetProcAddress(DLLHandle, 'GetVolumeInformationW');     // РћРїСЂРµРґРµР»РёС‚СЊ Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё
+ CodeHook(Addr(Proc), ADDR(GetVolumeInformationW));                    // РџРѕРґРјРµРЅР° Р°РґСЂРµСЃР° С‚РѕС‡РєРё РІС…РѕРґР° С„СѓРЅРєС†РёРё РІ РїСЂРѕС†РµСЃСЃРµ РЅР° Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё РёР· DLL.
 
- Addr(Proc) := GetProcAddress(DLLHandle, 'UpdateProcThreadAttribute'); // Определить адрес функции
- // Схранить начало исходной функци в структуру OLDCODE
+ Addr(Proc) := GetProcAddress(DLLHandle, 'UpdateProcThreadAttribute'); // РћРїСЂРµРґРµР»РёС‚СЊ Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё
+ // РЎС…СЂР°РЅРёС‚СЊ РЅР°С‡Р°Р»Рѕ РёСЃС…РѕРґРЅРѕР№ С„СѓРЅРєС†Рё РІ СЃС‚СЂСѓРєС‚СѓСЂСѓ OLDCODE
  if not VirtualProtect(ADDR(OLDCODE), 10, PAGE_EXECUTE_READWRITE, Protect) then exit;
  ReadProcessMemory(HANDLE, Addr(Proc), ADDR(OLDCODE), 5, VALUE);
  OLDCODE.JMP := $E9;
  OLDCODE.JMPOFFSET := CODEOFFSET(LONGWORD(ADDR(OLDCODE)), LONGWORD(ADDR(Proc)));
- ADDR(RawUpdateProcThreadAttribute) := ADDR(OLDCODE);                  // Присвоить адрес функции RawUpdateProcThreadAttribute
- CodeHook(Addr(Proc), ADDR(UpdateProcThreadAttribute));                // Подмена адреса точки входа функции в процессе на адрес функции из DLL.
+ ADDR(RawUpdateProcThreadAttribute) := ADDR(OLDCODE);                  // РџСЂРёСЃРІРѕРёС‚СЊ Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё RawUpdateProcThreadAttribute
+ CodeHook(Addr(Proc), ADDR(UpdateProcThreadAttribute));                // РџРѕРґРјРµРЅР° Р°РґСЂРµСЃР° С‚РѕС‡РєРё РІС…РѕРґР° С„СѓРЅРєС†РёРё РІ РїСЂРѕС†РµСЃСЃРµ РЅР° Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё РёР· DLL.
 
- // Перехват вызова функций из advapi32.dll
- FileName :=  SysPatch + '\advapi32.dll';                              // Получить полное имя файла
- DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
- Addr(Proc) := GetProcAddress(DLLHandle, 'LogonUserA');                // Определить адрес функции
- CodeHook(Addr(Proc), ADDR(LogonUserW));                               // Подмена адреса точки входа функции в процессе на адрес функции из DLL.
- Addr(Proc) := GetProcAddress(DLLHandle, 'LogonUserW');                // Определить адрес функции
- CodeHook(Addr(Proc), ADDR(LogonUserW));                               // Подмена адреса точки входа функции в процессе на адрес функции из DLL.
+ // РџРµСЂРµС…РІР°С‚ РІС‹Р·РѕРІР° С„СѓРЅРєС†РёР№ РёР· advapi32.dll
+ FileName :=  SysPatch + '\advapi32.dll';                              // РџРѕР»СѓС‡РёС‚СЊ РїРѕР»РЅРѕРµ РёРјСЏ С„Р°Р№Р»Р°
+ DLLHandle := LoadLibrary(pchar(FileName));                            // Р—Р°РіСЂСѓР·РёС‚СЊ Р±РёР±Р»РёРѕС‚РµРєСѓ Рё РїРѕР»СѓС‡РёС‚СЊ РµС‘ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ
+ Addr(Proc) := GetProcAddress(DLLHandle, 'LogonUserA');                // РћРїСЂРµРґРµР»РёС‚СЊ Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё
+ CodeHook(Addr(Proc), ADDR(LogonUserW));                               // РџРѕРґРјРµРЅР° Р°РґСЂРµСЃР° С‚РѕС‡РєРё РІС…РѕРґР° С„СѓРЅРєС†РёРё РІ РїСЂРѕС†РµСЃСЃРµ РЅР° Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё РёР· DLL.
+ Addr(Proc) := GetProcAddress(DLLHandle, 'LogonUserW');                // РћРїСЂРµРґРµР»РёС‚СЊ Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё
+ CodeHook(Addr(Proc), ADDR(LogonUserW));                               // РџРѕРґРјРµРЅР° Р°РґСЂРµСЃР° С‚РѕС‡РєРё РІС…РѕРґР° С„СѓРЅРєС†РёРё РІ РїСЂРѕС†РµСЃСЃРµ РЅР° Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё РёР· DLL.
 
- // Перехват вызова функций из Crypt32.dll
- FileName :=  SysPatch + '\Crypt32.dll';                               // Получить полное имя файла
- DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
- Addr(Proc) := GetProcAddress(DLLHandle, 'CryptProtectData');          // Определить адрес функции
- CodeHook(Addr(Proc), ADDR(CryptProtectData));                         // Подмена адреса точки входа функции в процессе на адрес функции из DLL.
- Addr(Proc) := GetProcAddress(DLLHandle, 'CryptUnprotectData');        // Определить адрес функции
- CodeHook(Addr(Proc), ADDR(CryptUnprotectData));                       // Подмена адреса точки входа функции в процессе на адрес функции из DLL.
+ // РџРµСЂРµС…РІР°С‚ РІС‹Р·РѕРІР° С„СѓРЅРєС†РёР№ РёР· Crypt32.dll
+ FileName :=  SysPatch + '\Crypt32.dll';                               // РџРѕР»СѓС‡РёС‚СЊ РїРѕР»РЅРѕРµ РёРјСЏ С„Р°Р№Р»Р°
+ DLLHandle := LoadLibrary(pchar(FileName));                            // Р—Р°РіСЂСѓР·РёС‚СЊ Р±РёР±Р»РёРѕС‚РµРєСѓ Рё РїРѕР»СѓС‡РёС‚СЊ РµС‘ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ
+ Addr(Proc) := GetProcAddress(DLLHandle, 'CryptProtectData');          // РћРїСЂРµРґРµР»РёС‚СЊ Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё
+ CodeHook(Addr(Proc), ADDR(CryptProtectData));                         // РџРѕРґРјРµРЅР° Р°РґСЂРµСЃР° С‚РѕС‡РєРё РІС…РѕРґР° С„СѓРЅРєС†РёРё РІ РїСЂРѕС†РµСЃСЃРµ РЅР° Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё РёР· DLL.
+ Addr(Proc) := GetProcAddress(DLLHandle, 'CryptUnprotectData');        // РћРїСЂРµРґРµР»РёС‚СЊ Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё
+ CodeHook(Addr(Proc), ADDR(CryptUnprotectData));                       // РџРѕРґРјРµРЅР° Р°РґСЂРµСЃР° С‚РѕС‡РєРё РІС…РѕРґР° С„СѓРЅРєС†РёРё РІ РїСЂРѕС†РµСЃСЃРµ РЅР° Р°РґСЂРµСЃ С„СѓРЅРєС†РёРё РёР· DLL.
  end;
 
 end.
