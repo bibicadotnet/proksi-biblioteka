@@ -4,38 +4,42 @@ uses
   Windows,
   PSAPI,
   ShellAPI,
-  SecurePreferences,
-  Hook;
+  Hook in 'Hook.pas',
+  Portable in 'Portable.pas';
 
 {$R version.res}
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
-
 VAR
-  AppPatch: array [0..MAX_PATH] of Char;
-  Proc : array [1..8] of Procedure;  // массив типа Procedure
-  FileName  : string;                // Переменная для хранения полного имени файла
-  APPDIR    : string;                // Переменная для хранения пути к программе
-  PARAMS    : string;                // Переменная для хранения параметров
-  ExeMain   : procedure;
-  
-  OLDCODE : packed record // Структура для формирования функции-моста
-  CALL        : Byte;     // Поле для записи опкода инструкции CALL    | $E8
-  CALLOFFSET  : DWORD;    // Поле для записи аргумента инструкции CALL | DWORD
-  JMP         : Byte;     // Поле для записи опкода инструкции JMP     | $E9
-  JMPOFFSET   : DWORD;    // Поле для записи аргумента инструкции JMP  | DWORD
-  end;
+  AppPatch  : array [0..MAX_PATH] of Char;
+  Proc : array [1..8] of Procedure;        // массив типа Procedure
+  FileName  : string;                      // Переменная для хранения полного имени файла
+  APPDIR    : string;                      // Переменная для хранения пути к программе
+  PARAMS    : string;                      // Переменная для хранения параметров
+  ExeMain   : procedure;                   // Процедурная переменная для стартовой функции
 
 // Описание функций для метода dll wraper
 // Функции представляют собой джампы на адреса функций системного файла version.dll.
 // Адреса функций определяются динамически.
-procedure GetFileVersionInfoSizeW; stdcall; begin asm jmp dword ptr [proc + 0 * 4]; end; end;
-procedure GetFileVersionInfoW; stdcall; begin asm jmp dword ptr [proc + 1 * 4]; end; end;
-procedure VerQueryValueW; stdcall; begin asm jmp dword ptr [proc + 2 * 4]; end; end;
-procedure GetFileVersionInfoSizeA; stdcall; begin asm jmp dword ptr [proc + 3 * 4]; end; end;
-procedure GetFileVersionInfoA; stdcall; begin asm jmp dword ptr [proc + 4 * 4]; end; end;
-procedure VerQueryValueA; stdcall; begin asm jmp dword ptr [proc + 5 * 4]; end; end;
-procedure GetFileVersionInfoExW; stdcall; begin asm jmp dword ptr [proc + 6 * 4]; end; end;
-procedure GetFileVersionInfoSizeExW; stdcall; begin asm jmp dword ptr [proc + 7 * 4]; end; end;
+
+procedure GetFileVersionInfoSizeW; stdcall; asm jmp dword ptr [proc + 0 * 4] end;
+procedure GetFileVersionInfoW; stdcall; asm jmp dword ptr [proc + 1 * 4]; end;
+procedure VerQueryValueW; stdcall; asm jmp dword ptr [proc + 2 * 4]; end;
+procedure GetFileVersionInfoSizeA; stdcall; asm jmp dword ptr [proc + 3 * 4]; end;
+procedure GetFileVersionInfoA; stdcall; asm jmp dword ptr [proc + 4 * 4]; end;
+procedure VerQueryValueA; stdcall; asm jmp dword ptr [proc + 5 * 4]; end;
+procedure GetFileVersionInfoExW; stdcall; asm jmp dword ptr [proc + 6 * 4]; end;
+procedure GetFileVersionInfoSizeExW; stdcall; asm jmp dword ptr [proc + 7 * 4]; end;
+
+{
+function GetFileVersionInfoSizeW(lptstrFilename: LPCWSTR; var lpdwHandle: DWORD):DWORD; stdcall; begin proc[1] end;
+function GetFileVersionInfoW(lptstrFilename: LPCWSTR; dwHandle: DWORD; dwLen: DWORD; lpData: Pointer):BOOL; stdcall; begin proc[2] end;
+function VerQueryValueW(pBlock: Pointer; lpSubBlock: LPWSTR; var lplpBuffer: Pointer;  var puLen: UINT):BOOL; stdcall; begin proc[3] end;
+function GetFileVersionInfoSizeA(lptstrFilename: LPCSTR; var lpdwHandle: DWORD):DWORD; stdcall; begin proc[4] end;
+function GetFileVersionInfoA(lptstrFilename: LPCSTR; dwHandle: DWORD; dwLen: DWORD; lpData: Pointer):BOOL; stdcall; begin proc[5] end;
+function VerQueryValueA(pBlock: Pointer; lpSubBlock: LPSTR; var lplpBuffer: Pointer; var puLen: UINT):BOOL; stdcall; begin proc[6] end;
+procedure GetFileVersionInfoExW; begin proc[7] end;
+procedure GetFileVersionInfoSizeExW; begin proc[8] end;
+}
 
 // Объявление списока экспортируемых функций
 exports
@@ -67,11 +71,12 @@ begin
   ARGS := ARGS + '--simulate-critical-update' + ' ';
   if (POS('--user-data-dir=', ARGS) = 0) then ARGS := ARGS + '--user-data-dir=' + '"' + APPDIR + 'User Data' + '"' + ' ';
   if (POS('--disk-cache-dir=', ARGS) = 0) then ARGS := ARGS + '--disk-cache-dir=' + '"' + APPDIR + 'Cache' + '"' + ' ';
+  //if (POS('--disk-cache-dir=', ARGS) = 0) then ARGS := ARGS + '--disk-cache-dir=' + '"' + 'nul' + '"' + ' ';
+  //if (POS('--disk-cache-size=', ARGS) = 0) then ARGS := ARGS + '--disk-cache-size=' + '"' + '0' + '"' + ' ';
+  //if (POS('--media-cache-size=', ARGS) = 0) then ARGS := ARGS + '--media-cache-size=' + '"' + '0' + '"' + ' ';
   ARGS := ARGS + '--disable-logging' + ' ';
   //ARGS := ARGS + '--no-first-run' + ' ';
   //ARGS := ARGS + '--ppapi-flash-path=' + '"' + APPDIR + 'plugins\pepflashplayer32.dll' + ' ';
-  //ARGS := ARGS + '--test-type' + ' ';
-  //ARGS := ARGS + '--no-sandbox' + ' ';
   RESULT := ARGS;
 end;
 
@@ -120,28 +125,17 @@ procedure RedirectEP;
 var
   MI   : MODULEINFO;    // Переменная типа MODULEINFO, MODULEINFO - это структура, которая содержит поле EntryPoint
   EntryADDR : PBYTE;    // Переменная указатель на адреса точки входа
-  Protect   : DWORD;    // Переменная для хранения параметров доступа к странице памяти
-  VALUE     : DWORD;    // Переменная для функции WriteProcessMemory
-const
-  HANDLE = DWORD(-1);
 begin
-  GetModuleInformation(GetCurrentProcess, GetModuleHandle(NIL), Addr(MI), sizeof(MODULEINFO)); // Считать информацию о родительском процессе
-  EntryADDR := MI.EntryPoint;             // Считать в переменную адрес точки входа из поля EntryPoint структуры MI
-  // Изменить параметры доступа к памяти где расположена структура OLDCODE
-  if not VirtualProtect(ADDR(OLDCODE), 10, PAGE_EXECUTE_READWRITE, Protect) then exit;
-  // Считать пять байт исходной функции в структуру OLDCODE
-  ReadProcessMemory(HANDLE, EntryADDR, Addr(OLDCODE), 5, VALUE);
-  OLDCODE.CALL := $E8;
-  OLDCODE.JMP := $E9;
-  // Расчитать смещение и записать его значение в поле структуры
-  OLDCODE.CALLOFFSET := OLDCODE.CALLOFFSET + CODEOFFSET(DWORD(ADDR(OLDCODE)), DWORD(EntryADDR)) + 5;
-  OLDCODE.JMPOFFSET := CODEOFFSET(DWORD(ADDR(OLDCODE)), DWORD(EntryADDR));
-  CodeHook(EntryADDR, ADDR(REDIRECT));    // Подмена адреса точки входа в процессе на адрес функции из DLL.
-  ADDR(ExeMain) := ADDR(OLDCODE);         // Назначить адрес процедуры ExeMain равным адресу структуры OLDCODE
+  GetModuleInformation(GetCurrentProcess, GetModuleHandle(NIL), Addr(MI), sizeof(MODULEINFO)); // Считать информацию о процессе
+  EntryADDR := MI.EntryPoint;               // Считать в переменную адрес точки входа из поля EntryPoint структуры MI
+  CodeHook(EntryADDR, ADDR(REDIRECT), 1);   // Подмена адреса точки входа в процессе на адрес функции из DLL.
+  ADDR(ExeMain) := ADDR(EPCODE);            // Назначить адрес процедуры ExeMain равным адресу структуры OLDCODE
+  //HookPreferences;
+  //HookLoader;
 end;
 
 // Обертка для переадресации экспортируемых функций
-procedure RedirectEXAT;
+procedure RedirectEXP;
 var
   DLLHandle : THandle;                         // Переменная типа THandle (соответствует DWORD)
   SysPatch  : array [0..MAX_PATH] of Char;     // Переменная для хранения пути
@@ -162,19 +156,31 @@ end;
 // Основная стартовая функция
 procedure DllMain(fdwReason: DWORD);
 begin
- if (fdwReason = DLL_PROCESS_ATTACH) then
+  if (fdwReason = DLL_PROCESS_ATTACH) then
   begin
-   DisableThreadLibraryCalls(hInstance); // Отключить уведомления DLL_THREAD_ATTACH и DLL_THREAD_DETACH
-   RedirectEXAT;                         // Шаг 1. Выполнить переадресацию функций экспорта
-   RedirectEP;                           // Шаг 2. Выполнить переадресацию точки входа
+    DisableThreadLibraryCalls(hInstance);                     // Отключить уведомления DLL_THREAD_ATTACH и DLL_THREAD_DETACH
+    // Макстон Браве Хромиум Цент
+    HMODULE := GetModuleHandle('chrome_elf.dll');             // HMODULE = дескриптор модуля (адрес по которому он загружен)
+    if (HMODULE <> 0) and (BLOK1 = FALSE) then REGBLOCKER(1); // Если модуль загружен выполнить процедуру REGBLOCKER
+    // Вивальди
+    HMODULE := GetModuleHandle('vivaldi_elf.dll');            // HMODULE = дескриптор модуля (адрес по которому он загружен)
+    if (HMODULE <> 0) and (BLOK1 = FALSE) then REGBLOCKER(1); // Если модуль загружен выполнить процедуру REGBLOCKER
+    // Яндекс
+    HMODULE := GetModuleHandle('browser_elf.dll');            // HMODULE = дескриптор модуля (адрес по которому он загружен)
+    if (HMODULE <> 0) and (BLOK1 = FALSE) then REGBLOCKER(1); // Если модуль загружен выполнить процедуру REGBLOCKER
+    // Опера
+    HMODULE := GetModuleHandle('opera_elf.dll');              // HMODULE = дескриптор модуля (адрес по которому он загружен)
+    if (HMODULE <> 0) and (BLOK1 = FALSE) then REGBLOCKER(1); // Если модуль загружен выполнить процедуру REGBLOCKER
+    RedirectEXP;                                              // Шаг 1. Выполнить переадресацию функций экспорта
+    RedirectEP;                                               // Шаг 2. Выполнить переадресацию точки входа
   end;
 end;
 
 // Этот код выполняется каждый раз при при загрузке библиотеки
 begin
- if Addr(DllProc) = nil then             // Исли переменной DllProc не присвоено никакого значения тогда
+  if Addr(DllProc) = nil then                             // Исли переменной DllProc не присвоено никакого значения тогда
   begin
-   DllProc := Addr(DllMain);             // Присвоить переменной DllProc адрес процедуры DllMain
-   DllMain(DLL_PROCESS_ATTACH);          // Выполнить процедуру DllMain с параметром DLL_PROCESS_ATTACH
+    DllProc := Addr(DllMain);                             // Присвоить переменной DllProc адрес процедуры DllMain
+    DllMain(DLL_PROCESS_ATTACH);                          // Выполнить процедуру DllMain с параметром DLL_PROCESS_ATTACH
   end;
 end.
