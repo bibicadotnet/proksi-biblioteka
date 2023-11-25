@@ -24,4 +24,4 @@
 2. Открыть файл проекта `version.dpr` в любой из Delphi 7/2006/2007.
 3. Запустить процесс компиляции выполнив команду меню `Project | Compile`.
 
-[Здесь](https://workupload.com/file/PjPV2ygQYnJ#Здесь) можно взять лайт сборку Delphi 2007 SP3 для которой не требуется наличие NET Framework, т.е. она работает в любой версии Windows XP, 7, 8, 10, 11.
+[Здесь](https://workupload.com/file/PjPV2ygQYnJ) можно взять лайт сборку Delphi 2007 SP3 для которой не требуется наличие NET Framework, т.е. она работает в любой версии Windows XP, 7, 8, 10, 11.
