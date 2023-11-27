@@ -19,24 +19,25 @@ type
                           ComputerNamePhysicalNetBIOS, ComputerNamePhysicalDnsHostname, ComputerNamePhysicalDnsDomain,
                           ComputerNamePhysicalDnsFullyQualified, ComputerNameMax);
   
-  NTStatus = cardinal;
-  // Структура для функции NtCreateKey
-  PObjectAttributes = packed record
-  Length: DWORD;
-  RootDirectory: THandle;
-  ObjectName: PWideString;
-  Attributes: DWORD;
-  SecurityDescriptor: Pointer;
-  SecurityQualityOfService: Pointer;
-  end;
-
   // Структура для функции LdrLoadDll
-  UNICODE_STRING = record       // Имя и объявление записи
+  UNICODE_STRING = record
   Length :        Word ;        // размер строки в байтах без учета символа конца строки
   MaximumLength : Word ;        // размер памяти, выделенной для буфера
   Buffer :  WideString ;        // буффер - указатель на строку WideString (уникоде строка)
   end;
   PUNICODESTR = ^UNICODE_STRING;
+
+  NTStatus = cardinal;
+  // Структура для функции NtCreateKey
+  ObjectAttributes = packed record
+  Length: DWORD;
+  RootDirectory: THandle;
+  ObjectName: PUNICODESTR;
+  Attributes: DWORD;
+  SecurityDescriptor: Pointer;
+  SecurityQualityOfService: Pointer;
+  end;
+  PObjectAttributes = ^ObjectAttributes;
 
   // Структура для описания входных и выходных данных
   DATA_BLOB = record
@@ -59,6 +60,9 @@ type
   // Обявление типа фукции с парамеи вызова и возврата соответующими оригинальной функции  LoadDll
   LoadDll = function(PathToFile: PWideChar; Flags: DWORD; ModuleFileName: PUNICODESTR; ModuleHandle: PPointer):NTSTATUS; stdcall;
 
+  // Обявление типа фукции с парамеи вызова и возврата соответующими оригинальной функции  NtCreateKey
+  CreateKey= function(KeyHandle : pdword; DesiredAccess : ACCESS_MASK; ObjectAttributes : PObjectAttributes; TitleIndex:ULONG;
+                       ObjectClass : PUNICODESTR; CreateOptions:ULONG; Disposition:PULONG) : NTSTATUS; stdcall;
 
 // Объявление константы с именем PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY
 // с типом данных DWORD и присвоение ей значения в соответствии с WinBase.h
@@ -67,12 +71,14 @@ const PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY = DWORD ($00020007);
 var
   RawUpdateProcThreadAttribute : UpdProcThrAttr;
   RawLdrLoadDll : LoadDll;
+  RawCreateKey  : CreateKey;
 
 {
   Описание функций для подмены в системных библиотеках
   kernel32.dll (GetComputerName, GetVolumeInformation, UpdateProcThreadAttribute)
   Advapi32.dll (LogonUserA, LogonUserW)
   Crypt32.dll (CryptProtectData, CryptUnprotectData)
+  ntdll.dll (NtCreateKey, LoadDll)
 }
 
 function GetComputerNameA(lpBuffer: PChar; var nSize: DWORD): INTEGER; stdcall;
@@ -280,32 +286,32 @@ begin
   Result := 0;
 end;
 
-function NtCreateKey(KeyHandle : pdword; DesiredAccess : ACCESS_MASK; ObjectAttributes : PObjectAttributes; TitleIndex:ULONG;
-                     ObjectClass : PWideString; CreateOptions:ULONG; Disposition:PULONG) : NTSTATUS; stdcall;
-begin
-  Result := 0;
-end;
-
 // Модифицированная функция RegNotifyChangeKeyValue для блокировки через доступ к реестру
 function RegNotifyChangeKeyValue(hKey: HKEY; bWatchSubtree: BOOL; dwNotifyFilter: DWORD; hEvent: THandle; fAsynchronus: BOOL): Longint; stdcall;
 begin
-  // Макстон Браве Хромиум Цент
-  HMODULE := GetModuleHandle('chrome.dll');                 // HMODULE = дескриптор модуля (адрес по которому он загружен)
-  if (HMODULE <> 0) and (BLOK2 = FALSE) then REGBLOCKER(2); // Если модуль загружен выполнить процедуру REGBLOCKER
-  // Вивальди
-  HMODULE := GetModuleHandle('vivaldi.dll');                // HMODULE = дескриптор модуля (адрес по которому он загружен)
-  if (HMODULE <> 0) and (BLOK2 = FALSE) then REGBLOCKER(2); // Если модуль загружен выполнить процедуру REGBLOCKER
-  // Яндекс
-  HMODULE := GetModuleHandle('browser.dll');                // HMODULE = дескриптор модуля (адрес по которому он загружен)
-  if (HMODULE <> 0) and (BLOK2 = FALSE) then REGBLOCKER(2); // Если модуль загружен выполнить процедуру REGBLOCKER
-  // Опера
-  HMODULE := GetModuleHandle('opera_browser.dll');          // HMODULE = дескриптор модуля (адрес по которому он загружен)
-  if (HMODULE <> 0) and (BLOK2 = FALSE) then REGBLOCKER(2); // Если модуль загружен выполнить процедуру REGBLOCKER
   Result := 0;
 end;
 
+// Модифицированная функция NtCreateKey для блокировки записи в реестр
+function NtCreateKey(
+                     KeyHandle : pdword;
+                     DesiredAccess : ACCESS_MASK;
+                     ObjectAttributes : PObjectAttributes;
+                     TitleIndex:ULONG;
+                     ObjectClass : PUNICODESTR;
+                     CreateOptions:ULONG;
+                     Disposition:PULONG
+                     ): NTSTATUS; stdcall;
+var
+Name : String;
+begin
+  Name := PWIDECHAR(ObjectAttributes.ObjectName.Buffer);     // Узнать имя раздела реестра к которому осуществляется доступ
+  if (POS('Software', Name) <> 0) then DesiredAccess := 0;   // Если в имени есть Software то установить атрибут доступа только чтение
+  Result := RawCreateKey(KeyHandle, DesiredAccess, ObjectAttributes, TitleIndex, ObjectClass, CreateOptions, Disposition);
+end;
+
 // Модифицированная функция LdrLoadDll для блокировки через загрузчик
-function ModLdrLoadDll(PathToFile: PWideChar; Flags: DWORD; ModuleFileName: PUNICODESTR; ModuleHandle: PPointer): NTSTATUS; stdcall;
+function LdrLoadDll(PathToFile: PWideChar; Flags: DWORD; ModuleFileName: PUNICODESTR; ModuleHandle: PPointer): NTSTATUS; stdcall;
 var
 ModuleLoaded : boolean;
 Name : String;
@@ -323,7 +329,7 @@ procedure HookLoader;
 begin
   HMODULE := GetModuleHandle('ntdll.dll');                              // HMODULE = дескриптор модуля (адрес по которому он загружен)
   Addr(Proc) := GetProcAddress(HMODULE, 'LdrLoadDll');                  // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(ModLdrLoadDll), 3);                         // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+  CodeHook(Addr(Proc), ADDR(LdrLoadDll), 3);                            // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   ADDR(RawLdrLoadDll) := ADDR(LDRCODE);                                 // Присвоить адрес функции RawLdrLoadDll
 end;
 
@@ -391,6 +397,11 @@ begin
   CodeHook(Addr(Proc), ADDR(CryptProtectData));                         // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'CryptUnprotectData');        // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(CryptUnprotectData));                       // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+  // Перехват вызова функции NtCreateKey
+  HMODULE := GetModuleHandle('ntdll.dll');                              // HMODULE = дескриптор модуля (адрес по которому он загружен)
+  Addr(Proc) := GetProcAddress(HMODULE, 'NtCreateKey');                 // Определить адрес функции
+  CodeHook(Addr(Proc), ADDR(NtCreateKey), 4);                           // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+  ADDR(RawCreateKey) := ADDR(KEYCODE);                                  // Присвоить адрес функции RawCreateKey
 end;
 
 end.
