@@ -30,17 +30,6 @@ procedure VerQueryValueA; stdcall; asm jmp dword ptr [proc + 5 * 4]; end;
 procedure GetFileVersionInfoExW; stdcall; asm jmp dword ptr [proc + 6 * 4]; end;
 procedure GetFileVersionInfoSizeExW; stdcall; asm jmp dword ptr [proc + 7 * 4]; end;
 
-{
-function GetFileVersionInfoSizeW(lptstrFilename: LPCWSTR; var lpdwHandle: DWORD):DWORD; stdcall; begin proc[1] end;
-function GetFileVersionInfoW(lptstrFilename: LPCWSTR; dwHandle: DWORD; dwLen: DWORD; lpData: Pointer):BOOL; stdcall; begin proc[2] end;
-function VerQueryValueW(pBlock: Pointer; lpSubBlock: LPWSTR; var lplpBuffer: Pointer;  var puLen: UINT):BOOL; stdcall; begin proc[3] end;
-function GetFileVersionInfoSizeA(lptstrFilename: LPCSTR; var lpdwHandle: DWORD):DWORD; stdcall; begin proc[4] end;
-function GetFileVersionInfoA(lptstrFilename: LPCSTR; dwHandle: DWORD; dwLen: DWORD; lpData: Pointer):BOOL; stdcall; begin proc[5] end;
-function VerQueryValueA(pBlock: Pointer; lpSubBlock: LPSTR; var lplpBuffer: Pointer; var puLen: UINT):BOOL; stdcall; begin proc[6] end;
-procedure GetFileVersionInfoExW; begin proc[7] end;
-procedure GetFileVersionInfoSizeExW; begin proc[8] end;
-}
-
 // Объявление списока экспортируемых функций
 exports
   GetFileVersionInfoSizeW name 'GetFileVersionInfoSizeW',
@@ -68,19 +57,19 @@ begin
   APPDIR := GetAPPDir(AppPatch);
   ARGS := ARGS + '--portable' + ' ';
   ARGS := ARGS + '--disable-features=RendererCodeIntegrity,FlashDeprecationWarning' + ' ';
-  ARGS := ARGS + '--simulate-critical-update' + ' ';
+  //ARGS := ARGS + '--simulate-critical-update' + ' ';
   if (POS('--user-data-dir=', ARGS) = 0) then ARGS := ARGS + '--user-data-dir=' + '"' + APPDIR + 'User Data' + '"' + ' ';
-  if (POS('--disk-cache-dir=', ARGS) = 0) then ARGS := ARGS + '--disk-cache-dir=' + '"' + APPDIR + 'Cache' + '"' + ' ';
-  //if (POS('--disk-cache-dir=', ARGS) = 0) then ARGS := ARGS + '--disk-cache-dir=' + '"' + 'nul' + '"' + ' ';
-  //if (POS('--disk-cache-size=', ARGS) = 0) then ARGS := ARGS + '--disk-cache-size=' + '"' + '0' + '"' + ' ';
-  //if (POS('--media-cache-size=', ARGS) = 0) then ARGS := ARGS + '--media-cache-size=' + '"' + '0' + '"' + ' ';
+  //if (POS('--disk-cache-dir=', ARGS) = 0) then ARGS := ARGS + '--disk-cache-dir=' + '"' + APPDIR + 'Cache' + '"' + ' ';
+  if (POS('--disk-cache-dir=', ARGS) = 0) then ARGS := ARGS + '--disk-cache-dir=' + '"' + 'nul' + '"' + ' ';
+  if (POS('--disk-cache-size=', ARGS) = 0) then ARGS := ARGS + '--disk-cache-size=' + '"' + '0' + '"' + ' ';
+  if (POS('--media-cache-size=', ARGS) = 0) then ARGS := ARGS + '--media-cache-size=' + '"' + '0' + '"' + ' ';
   ARGS := ARGS + '--disable-logging' + ' ';
   //ARGS := ARGS + '--no-first-run' + ' ';
   //ARGS := ARGS + '--ppapi-flash-path=' + '"' + APPDIR + 'plugins\pepflashplayer32.dll' + ' ';
   RESULT := ARGS;
 end;
 
-procedure PORTABLE(PARAM:string);
+procedure STARTPORTABLE(PARAM:string);
 var
   ShellExecuteInfo: TShellExecuteInfo;
 begin
@@ -115,8 +104,7 @@ begin
   // Перевести все параметры в одну строку
   for i := 1 to ParamCount do ARG := ARG + ParamStr(i) + ' ';
   // Если в командной строке нет параметров -type= и --portable тогда выполнить процедуру PORTABLE
-  if (POS('-type=', ARG) = 0) and (POS('--portable', ARG) = 0) then PORTABLE(ARG);
-  HookPreferences;
+  if (POS('-type=', ARG) = 0) and (POS('--portable', ARG) = 0) then STARTPORTABLE(ARG);
   ExeMain;
 end;
 
@@ -130,7 +118,7 @@ begin
   EntryADDR := MI.EntryPoint;               // Считать в переменную адрес точки входа из поля EntryPoint структуры MI
   CodeHook(EntryADDR, ADDR(REDIRECT), 1);   // Подмена адреса точки входа в процессе на адрес функции из DLL.
   ADDR(ExeMain) := ADDR(EPCODE);            // Назначить адрес процедуры ExeMain равным адресу структуры OLDCODE
-  //HookPreferences;
+  HookPreferences;
   //HookLoader;
 end;
 
@@ -159,18 +147,6 @@ begin
   if (fdwReason = DLL_PROCESS_ATTACH) then
   begin
     DisableThreadLibraryCalls(hInstance);                     // Отключить уведомления DLL_THREAD_ATTACH и DLL_THREAD_DETACH
-    // Макстон Браве Хромиум Цент
-    HMODULE := GetModuleHandle('chrome_elf.dll');             // HMODULE = дескриптор модуля (адрес по которому он загружен)
-    if (HMODULE <> 0) and (BLOK1 = FALSE) then REGBLOCKER(1); // Если модуль загружен выполнить процедуру REGBLOCKER
-    // Вивальди
-    HMODULE := GetModuleHandle('vivaldi_elf.dll');            // HMODULE = дескриптор модуля (адрес по которому он загружен)
-    if (HMODULE <> 0) and (BLOK1 = FALSE) then REGBLOCKER(1); // Если модуль загружен выполнить процедуру REGBLOCKER
-    // Яндекс
-    HMODULE := GetModuleHandle('browser_elf.dll');            // HMODULE = дескриптор модуля (адрес по которому он загружен)
-    if (HMODULE <> 0) and (BLOK1 = FALSE) then REGBLOCKER(1); // Если модуль загружен выполнить процедуру REGBLOCKER
-    // Опера
-    HMODULE := GetModuleHandle('opera_elf.dll');              // HMODULE = дескриптор модуля (адрес по которому он загружен)
-    if (HMODULE <> 0) and (BLOK1 = FALSE) then REGBLOCKER(1); // Если модуль загружен выполнить процедуру REGBLOCKER
     RedirectEXP;                                              // Шаг 1. Выполнить переадресацию функций экспорта
     RedirectEP;                                               // Шаг 2. Выполнить переадресацию точки входа
   end;
