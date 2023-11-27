@@ -12,112 +12,112 @@ function  CODEOFFSET(NEWADDR, OLDADDR: DWORD):DWORD;
 procedure REGBLOCKER(MODULNUM : BYTE);
 
 var
-  EPCODE : packed record               // Структура для формирования функции-моста точки входа
-  CALL        : Byte;                  // Поле для записи опкода инструкции CALL    | $E8
-  CALLOFFSET  : DWORD;                 // Поле для записи аргумента инструкции CALL | DWORD
-  JMP         : Byte;                  // Поле для записи опкода инструкции JMP     | $E9
-  JMPOFFSET   : DWORD;                 // Поле для записи аргумента инструкции JMP  | DWORD
+  EPCODE : packed record               // РЎС‚СЂСѓРєС‚СѓСЂР° РґР»СЏ С„РѕСЂРјРёСЂРѕРІР°РЅРёСЏ С„СѓРЅРєС†РёРё-РјРѕСЃС‚Р° С‚РѕС‡РєРё РІС…РѕРґР°
+  CALL        : Byte;                  // РџРѕР»Рµ РґР»СЏ Р·Р°РїРёСЃРё РѕРїРєРѕРґР° РёРЅСЃС‚СЂСѓРєС†РёРё CALL    | $E8
+  CALLOFFSET  : DWORD;                 // РџРѕР»Рµ РґР»СЏ Р·Р°РїРёСЃРё Р°СЂРіСѓРјРµРЅС‚Р° РёРЅСЃС‚СЂСѓРєС†РёРё CALL | DWORD
+  JMP         : Byte;                  // РџРѕР»Рµ РґР»СЏ Р·Р°РїРёСЃРё РѕРїРєРѕРґР° РёРЅСЃС‚СЂСѓРєС†РёРё JMP     | $E9
+  JMPOFFSET   : DWORD;                 // РџРѕР»Рµ РґР»СЏ Р·Р°РїРёСЃРё Р°СЂРіСѓРјРµРЅС‚Р° РёРЅСЃС‚СЂСѓРєС†РёРё JMP  | DWORD
   end;
 
-  OLDCODE : packed record              // Структура для формирования функции-моста
-  DATA        : array [0..4] of byte;  // Массив для храния начального кода перехватываемой функции
-  JMP         : Byte;                  // Поле для записи опкода инструкции JMP     | $E9
-  JMPOFFSET   : DWORD;                 // Поле для записи аргумента инструкции JMP  | DWORD
+  OLDCODE : packed record              // РЎС‚СЂСѓРєС‚СѓСЂР° РґР»СЏ С„РѕСЂРјРёСЂРѕРІР°РЅРёСЏ С„СѓРЅРєС†РёРё-РјРѕСЃС‚Р°
+  DATA        : array [0..4] of byte;  // РњР°СЃСЃРёРІ РґР»СЏ С…СЂР°РЅРёСЏ РЅР°С‡Р°Р»СЊРЅРѕРіРѕ РєРѕРґР° РїРµСЂРµС…РІР°С‚С‹РІР°РµРјРѕР№ С„СѓРЅРєС†РёРё
+  JMP         : Byte;                  // РџРѕР»Рµ РґР»СЏ Р·Р°РїРёСЃРё РѕРїРєРѕРґР° РёРЅСЃС‚СЂСѓРєС†РёРё JMP     | $E9
+  JMPOFFSET   : DWORD;                 // РџРѕР»Рµ РґР»СЏ Р·Р°РїРёСЃРё Р°СЂРіСѓРјРµРЅС‚Р° РёРЅСЃС‚СЂСѓРєС†РёРё JMP  | DWORD
   end;
 
-  LDRCODE : packed record              // Структура для формирования функции-моста LdrLoadDll
-  DATA        : array [0..4] of byte;  // Массив для храния начального кода перехватываемой функции
-  JMP         : Byte;                  // Поле для записи опкода инструкции JMP     | $E9
-  JMPOFFSET   : DWORD;                 // Поле для записи аргумента инструкции JMP  | DWORD
+  LDRCODE : packed record              // РЎС‚СЂСѓРєС‚СѓСЂР° РґР»СЏ С„РѕСЂРјРёСЂРѕРІР°РЅРёСЏ С„СѓРЅРєС†РёРё-РјРѕСЃС‚Р° LdrLoadDll
+  DATA        : array [0..4] of byte;  // РњР°СЃСЃРёРІ РґР»СЏ С…СЂР°РЅРёСЏ РЅР°С‡Р°Р»СЊРЅРѕРіРѕ РєРѕРґР° РїРµСЂРµС…РІР°С‚С‹РІР°РµРјРѕР№ С„СѓРЅРєС†РёРё
+  JMP         : Byte;                  // РџРѕР»Рµ РґР»СЏ Р·Р°РїРёСЃРё РѕРїРєРѕРґР° РёРЅСЃС‚СЂСѓРєС†РёРё JMP     | $E9
+  JMPOFFSET   : DWORD;                 // РџРѕР»Рµ РґР»СЏ Р·Р°РїРёСЃРё Р°СЂРіСѓРјРµРЅС‚Р° РёРЅСЃС‚СЂСѓРєС†РёРё JMP  | DWORD
   end;
 
-  KEYCODE : packed record              // Структура для формирования функции-моста NtCreateKey
-  DATA        : array [0..4] of byte;  // Массив для храния начального кода перехватываемой функции
-  JMP         : Byte;                  // Поле для записи опкода инструкции JMP     | $E9
-  JMPOFFSET   : DWORD;                 // Поле для записи аргумента инструкции JMP  | DWORD
+  KEYCODE : packed record              // РЎС‚СЂСѓРєС‚СѓСЂР° РґР»СЏ С„РѕСЂРјРёСЂРѕРІР°РЅРёСЏ С„СѓРЅРєС†РёРё-РјРѕСЃС‚Р° NtCreateKey
+  DATA        : array [0..4] of byte;  // РњР°СЃСЃРёРІ РґР»СЏ С…СЂР°РЅРёСЏ РЅР°С‡Р°Р»СЊРЅРѕРіРѕ РєРѕРґР° РїРµСЂРµС…РІР°С‚С‹РІР°РµРјРѕР№ С„СѓРЅРєС†РёРё
+  JMP         : Byte;                  // РџРѕР»Рµ РґР»СЏ Р·Р°РїРёСЃРё РѕРїРєРѕРґР° РёРЅСЃС‚СЂСѓРєС†РёРё JMP     | $E9
+  JMPOFFSET   : DWORD;                 // РџРѕР»Рµ РґР»СЏ Р·Р°РїРёСЃРё Р°СЂРіСѓРјРµРЅС‚Р° РёРЅСЃС‚СЂСѓРєС†РёРё JMP  | DWORD
   end;
 
-  Proc : procedure;                    // Процедурная переменная
-  HMODULE  : DWORD;                    // Переменная для хранения дискриптора модуля
+  Proc : procedure;                    // РџСЂРѕС†РµРґСѓСЂРЅР°СЏ РїРµСЂРµРјРµРЅРЅР°СЏ
+  HMODULE  : DWORD;                    // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РґРёСЃРєСЂРёРїС‚РѕСЂР° РјРѕРґСѓР»СЏ
   BLOK1    : BOOLEAN;
   BLOK2    : BOOLEAN;
-  DATAADDR : DWORD;                    // Переменная для хранения адреса модуля
-  DATASIZE : DWORD;                    // Переменная для хранения размера секции модуля
+  DATAADDR : DWORD;                    // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ Р°РґСЂРµСЃР° РјРѕРґСѓР»СЏ
+  DATASIZE : DWORD;                    // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ СЂР°Р·РјРµСЂР° СЃРµРєС†РёРё РјРѕРґСѓР»СЏ
 
 implementation
 
-// Функция установливает перехват
+// Р¤СѓРЅРєС†РёСЏ СѓСЃС‚Р°РЅРѕРІР»РёРІР°РµС‚ РїРµСЂРµС…РІР°С‚
 procedure CodeHook(OldProcAddress, NewProcAddress: pointer; OPT : byte = 0);
 var
-  // структура для обычного пехвата через JMP NEAR OFFSET
+  // СЃС‚СЂСѓРєС‚СѓСЂР° РґР»СЏ РѕР±С‹С‡РЅРѕРіРѕ РїРµС…РІР°С‚Р° С‡РµСЂРµР· JMP NEAR OFFSET
   CODE    : packed record
-  JMP    : BYTE;                       // Поле для записи опкода инструкции JMP     | $E9
-  OFFSET : DWORD;                      // Поле для записи аргумента инструкции JMP  | DWORD
+  JMP    : BYTE;                       // РџРѕР»Рµ РґР»СЏ Р·Р°РїРёСЃРё РѕРїРєРѕРґР° РёРЅСЃС‚СЂСѓРєС†РёРё JMP     | $E9
+  OFFSET : DWORD;                      // РџРѕР»Рµ РґР»СЏ Р·Р°РїРёСЃРё Р°СЂРіСѓРјРµРЅС‚Р° РёРЅСЃС‚СЂСѓРєС†РёРё JMP  | DWORD
   end;
-  Protect : DWORD;                     // Переменная для хранения параметров доступа к странице памяти
-  VALUE   : DWORD;                     // Переменная для функции WriteProcessMemory
+  Protect : DWORD;                     // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РїР°СЂР°РјРµС‚СЂРѕРІ РґРѕСЃС‚СѓРїР° Рє СЃС‚СЂР°РЅРёС†Рµ РїР°РјСЏС‚Рё
+  VALUE   : DWORD;                     // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ С„СѓРЅРєС†РёРё WriteProcessMemory
 const
   HANDLE = DWORD(-1);
 begin
 
   if OPT = 1 then
   begin
-    // Изменить параметры доступа к памяти где расположена структура EPCODE
+    // РР·РјРµРЅРёС‚СЊ РїР°СЂР°РјРµС‚СЂС‹ РґРѕСЃС‚СѓРїР° Рє РїР°РјСЏС‚Рё РіРґРµ СЂР°СЃРїРѕР»РѕР¶РµРЅР° СЃС‚СЂСѓРєС‚СѓСЂР° EPCODE
     if not VirtualProtect(ADDR(EPCODE), 10, PAGE_EXECUTE_READWRITE, Protect) then exit;
-    // Считать пять байт исходной функции в структуру EPCODE
+    // РЎС‡РёС‚Р°С‚СЊ РїСЏС‚СЊ Р±Р°Р№С‚ РёСЃС…РѕРґРЅРѕР№ С„СѓРЅРєС†РёРё РІ СЃС‚СЂСѓРєС‚СѓСЂСѓ EPCODE
     ReadProcessMemory(HANDLE, OldProcAddress, Addr(EPCODE), 5, VALUE);
     EPCODE.CALL := $E8;
     EPCODE.JMP  := $E9;
-    // Расчитать смещение и записать его значение в поле структуры
+    // Р Р°СЃС‡РёС‚Р°С‚СЊ СЃРјРµС‰РµРЅРёРµ Рё Р·Р°РїРёСЃР°С‚СЊ РµРіРѕ Р·РЅР°С‡РµРЅРёРµ РІ РїРѕР»Рµ СЃС‚СЂСѓРєС‚СѓСЂС‹
     EPCODE.CALLOFFSET := EPCODE.CALLOFFSET + CODEOFFSET(DWORD(ADDR(EPCODE)), DWORD(OldProcAddress)) + 5;
     EPCODE.JMPOFFSET := CODEOFFSET(DWORD(ADDR(EPCODE)), DWORD(OldProcAddress));
   end;
 
   if OPT = 2 then
   begin
-    // Изменить параметры доступа к памяти где расположена структура OLDCODE
+    // РР·РјРµРЅРёС‚СЊ РїР°СЂР°РјРµС‚СЂС‹ РґРѕСЃС‚СѓРїР° Рє РїР°РјСЏС‚Рё РіРґРµ СЂР°СЃРїРѕР»РѕР¶РµРЅР° СЃС‚СЂСѓРєС‚СѓСЂР° OLDCODE
     if not VirtualProtect(ADDR(OLDCODE), 10, PAGE_EXECUTE_READWRITE, Protect) then exit;
-    // Схранить начало исходной функци в структуру OLDCODE
+    // РЎС…СЂР°РЅРёС‚СЊ РЅР°С‡Р°Р»Рѕ РёСЃС…РѕРґРЅРѕР№ С„СѓРЅРєС†Рё РІ СЃС‚СЂСѓРєС‚СѓСЂСѓ OLDCODE
     ReadProcessMemory(HANDLE, Addr(Proc), ADDR(OLDCODE), 5, VALUE);
     OLDCODE.JMP := $E9;
-    // Расчитать смещение и записать его значение в поле структуры
+    // Р Р°СЃС‡РёС‚Р°С‚СЊ СЃРјРµС‰РµРЅРёРµ Рё Р·Р°РїРёСЃР°С‚СЊ РµРіРѕ Р·РЅР°С‡РµРЅРёРµ РІ РїРѕР»Рµ СЃС‚СЂСѓРєС‚СѓСЂС‹
     OLDCODE.JMPOFFSET := CODEOFFSET(LONGWORD(ADDR(OLDCODE)), LONGWORD(ADDR(Proc)));
   end;
 
   if OPT = 3 then
   begin
-    // Изменить параметры доступа к памяти где расположена структура LDRCODE
+    // РР·РјРµРЅРёС‚СЊ РїР°СЂР°РјРµС‚СЂС‹ РґРѕСЃС‚СѓРїР° Рє РїР°РјСЏС‚Рё РіРґРµ СЂР°СЃРїРѕР»РѕР¶РµРЅР° СЃС‚СЂСѓРєС‚СѓСЂР° LDRCODE
     if not VirtualProtect(ADDR(LDRCODE), 10, PAGE_EXECUTE_READWRITE, Protect) then exit;
-    // Схранить начало исходной функци в структуру LDRCODE
+    // РЎС…СЂР°РЅРёС‚СЊ РЅР°С‡Р°Р»Рѕ РёСЃС…РѕРґРЅРѕР№ С„СѓРЅРєС†Рё РІ СЃС‚СЂСѓРєС‚СѓСЂСѓ LDRCODE
     ReadProcessMemory(HANDLE, Addr(Proc), ADDR(LDRCODE), 5, VALUE);
     LDRCODE.JMP := $E9;
-    // Расчитать смещение и записать его значение в поле структуры
+    // Р Р°СЃС‡РёС‚Р°С‚СЊ СЃРјРµС‰РµРЅРёРµ Рё Р·Р°РїРёСЃР°С‚СЊ РµРіРѕ Р·РЅР°С‡РµРЅРёРµ РІ РїРѕР»Рµ СЃС‚СЂСѓРєС‚СѓСЂС‹
     LDRCODE.JMPOFFSET := CODEOFFSET(LONGWORD(ADDR(LDRCODE)), LONGWORD(ADDR(Proc)));
   end;
 
   if OPT = 4 then
   begin
-    // Изменить параметры доступа к памяти где расположена структура KEYCODE
+    // РР·РјРµРЅРёС‚СЊ РїР°СЂР°РјРµС‚СЂС‹ РґРѕСЃС‚СѓРїР° Рє РїР°РјСЏС‚Рё РіРґРµ СЂР°СЃРїРѕР»РѕР¶РµРЅР° СЃС‚СЂСѓРєС‚СѓСЂР° KEYCODE
     if not VirtualProtect(ADDR(KEYCODE), 10, PAGE_EXECUTE_READWRITE, Protect) then exit;
-    // Схранить начало исходной функци в структуру LDRCODE
+    // РЎС…СЂР°РЅРёС‚СЊ РЅР°С‡Р°Р»Рѕ РёСЃС…РѕРґРЅРѕР№ С„СѓРЅРєС†Рё РІ СЃС‚СЂСѓРєС‚СѓСЂСѓ LDRCODE
     ReadProcessMemory(HANDLE, Addr(Proc), ADDR(KEYCODE), 5, VALUE);
     KEYCODE.JMP := $E9;
-    // Расчитать смещение и записать его значение в поле структуры
+    // Р Р°СЃС‡РёС‚Р°С‚СЊ СЃРјРµС‰РµРЅРёРµ Рё Р·Р°РїРёСЃР°С‚СЊ РµРіРѕ Р·РЅР°С‡РµРЅРёРµ РІ РїРѕР»Рµ СЃС‚СЂСѓРєС‚СѓСЂС‹
     KEYCODE.JMPOFFSET := CODEOFFSET(LONGWORD(ADDR(KEYCODE)), LONGWORD(ADDR(Proc)));
   end;
 
   CODE.JMP := $E9;
   CODE.OFFSET := DWORD (NewProcAddress) - DWORD (OldProcAddress) - 5;
-  // Изменить параметры доступа к области памяти
+  // РР·РјРµРЅРёС‚СЊ РїР°СЂР°РјРµС‚СЂС‹ РґРѕСЃС‚СѓРїР° Рє РѕР±Р»Р°СЃС‚Рё РїР°РјСЏС‚Рё
   if not VirtualProtect(OldProcAddress, 5, PAGE_EXECUTE_READWRITE, Protect) then exit;
-  // HANDLE := GetCurrentProcess; // Определить идентификатор текущего процесса
-  // Вместо HANDLE можно вписать INVALID_HANDLE_VALUE - это идентификатор текущего процесса.
+  // HANDLE := GetCurrentProcess; // РћРїСЂРµРґРµР»РёС‚СЊ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ С‚РµРєСѓС‰РµРіРѕ РїСЂРѕС†РµСЃСЃР°
+  // Р’РјРµСЃС‚Рѕ HANDLE РјРѕР¶РЅРѕ РІРїРёСЃР°С‚СЊ INVALID_HANDLE_VALUE - СЌС‚Рѕ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ С‚РµРєСѓС‰РµРіРѕ РїСЂРѕС†РµСЃСЃР°.
   WriteProcessMemory(HANDLE, OldProcAddress, Addr(CODE), 5, VALUE);
-  // Восстановить прежние параметры доступа к памяти
+  // Р’РѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ РїСЂРµР¶РЅРёРµ РїР°СЂР°РјРµС‚СЂС‹ РґРѕСЃС‚СѓРїР° Рє РїР°РјСЏС‚Рё
   VirtualProtect(OldProcAddress, 5, Protect, Protect);
 end;
 
-// Функция расчета смещения
+// Р¤СѓРЅРєС†РёСЏ СЂР°СЃС‡РµС‚Р° СЃРјРµС‰РµРЅРёСЏ
 function CODEOFFSET(NEWADDR, OLDADDR: DWORD):DWORD;
 begin
   if(OLDADDR < NEWADDR) then
@@ -140,52 +140,52 @@ const
   REPLACE  : array [0..38] of Byte = ($83,$3D,$FF,$FF,$FF,$FF,$00,$0F,$81,$FF,$FF,$00,$00,$83,$3D,$FF,$FF,$FF,$FF,$00,$0F,$81,$FF,$FF,$00,$00,$83,$3D,$FF,$FF,$FF,$FF,$00,$0F,$81,$FF,$FF,$00,$00);
   REPLACEM : array [0..38] of Byte = ($00,$00,$00,$00,$00,$00,$00,$00,$01,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$01,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$01,$00,$00,$00,$00);
 var
-  DOSHeader     : PImageDosHeader;                                    // Переменная для хранения Dos-заголовока
-  NTHeader      : PImageNtHeaders;                                    // Переменная для хранения PE-заголовка
-  SectionHeader : PImageSectionHeader;                                // Переменная дя хранения заголовка секции
-  ASTR : String;                                                      // Переменная для хранения имени секции
-  i    : LONGWORD;                                                    // Преременная для цикла поиска в пределах памяти процесса
-  j    : BYTE;                                                        // Переменная для цикла поиска в пределах размера сигнатуры
+  DOSHeader     : PImageDosHeader;                                    // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ Dos-Р·Р°РіРѕР»РѕРІРѕРєР°
+  NTHeader      : PImageNtHeaders;                                    // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ PE-Р·Р°РіРѕР»РѕРІРєР°
+  SectionHeader : PImageSectionHeader;                                // РџРµСЂРµРјРµРЅРЅР°СЏ РґСЏ С…СЂР°РЅРµРЅРёСЏ Р·Р°РіРѕР»РѕРІРєР° СЃРµРєС†РёРё
+  ASTR : String;                                                      // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РёРјРµРЅРё СЃРµРєС†РёРё
+  i    : LONGWORD;                                                    // РџСЂРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ С†РёРєР»Р° РїРѕРёСЃРєР° РІ РїСЂРµРґРµР»Р°С… РїР°РјСЏС‚Рё РїСЂРѕС†РµСЃСЃР°
+  j    : BYTE;                                                        // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ С†РёРєР»Р° РїРѕРёСЃРєР° РІ РїСЂРµРґРµР»Р°С… СЂР°Р·РјРµСЂР° СЃРёРіРЅР°С‚СѓСЂС‹
   Protect : DWORD;
   BUFFER : array [0..38] of BYTE;
   RESULT : BOOLEAN;
 begin
-  if MODULNUM = 1 then BLOK1 := TRUE;                                 // Блокировка первого модуля выполнена
-  if MODULNUM = 2 then BLOK2 := TRUE;                                 // Блокировка второго модуля выполнена
-  // 1. Получить адрес и размер секции
-  DOSHeader := POINTER(HMODULE);                                      // Прочитать DOS заголовок модуля
-  NTHeader  := POINTER(DWORD(DOSHeader) + DWORD(DOSHeader._lfanew));  // Прочитать NT заголовок модуля
-  SectionHeader := POINTER(DWORD(NTHeader) + NTheader.FileHeader.SizeOfOptionalHeader + SizeOF(NTheader.FileHeader) +  SizeOF(NTheader.Signature)); // Прочитать заголовок первой секции
-  // 2. Преобразовать имя секции в строку
+  if MODULNUM = 1 then BLOK1 := TRUE;                                 // Р‘Р»РѕРєРёСЂРѕРІРєР° РїРµСЂРІРѕРіРѕ РјРѕРґСѓР»СЏ РІС‹РїРѕР»РЅРµРЅР°
+  if MODULNUM = 2 then BLOK2 := TRUE;                                 // Р‘Р»РѕРєРёСЂРѕРІРєР° РІС‚РѕСЂРѕРіРѕ РјРѕРґСѓР»СЏ РІС‹РїРѕР»РЅРµРЅР°
+  // 1. РџРѕР»СѓС‡РёС‚СЊ Р°РґСЂРµСЃ Рё СЂР°Р·РјРµСЂ СЃРµРєС†РёРё
+  DOSHeader := POINTER(HMODULE);                                      // РџСЂРѕС‡РёС‚Р°С‚СЊ DOS Р·Р°РіРѕР»РѕРІРѕРє РјРѕРґСѓР»СЏ
+  NTHeader  := POINTER(DWORD(DOSHeader) + DWORD(DOSHeader._lfanew));  // РџСЂРѕС‡РёС‚Р°С‚СЊ NT Р·Р°РіРѕР»РѕРІРѕРє РјРѕРґСѓР»СЏ
+  SectionHeader := POINTER(DWORD(NTHeader) + NTheader.FileHeader.SizeOfOptionalHeader + SizeOF(NTheader.FileHeader) +  SizeOF(NTheader.Signature)); // РџСЂРѕС‡РёС‚Р°С‚СЊ Р·Р°РіРѕР»РѕРІРѕРє РїРµСЂРІРѕР№ СЃРµРєС†РёРё
+  // 2. РџСЂРµРѕР±СЂР°Р·РѕРІР°С‚СЊ РёРјСЏ СЃРµРєС†РёРё РІ СЃС‚СЂРѕРєСѓ
   for i := 0 to 7 do
   begin
     Astr := Astr + chr(SectionHeader.Name[i]);
   end;
-  // 3. Получит адрес и размер секции с именем '.text' и выполнить поиск и замену
+  // 3. РџРѕР»СѓС‡РёС‚ Р°РґСЂРµСЃ Рё СЂР°Р·РјРµСЂ СЃРµРєС†РёРё СЃ РёРјРµРЅРµРј '.text' Рё РІС‹РїРѕР»РЅРёС‚СЊ РїРѕРёСЃРє Рё Р·Р°РјРµРЅСѓ
   if Pchar(Astr) = '.text' then
   begin
-    DATAADDR := SectionHeader.VirtualAddress + HMODULE;               // Адрес начала данных секции
-    DATASIZE := SectionHeader.SizeOfRawData;                          // Размер данных секции
-    for i := 0 to DATASIZE - 39 do                                    // Цикл поиска последовательности в сеции
+    DATAADDR := SectionHeader.VirtualAddress + HMODULE;               // РђРґСЂРµСЃ РЅР°С‡Р°Р»Р° РґР°РЅРЅС‹С… СЃРµРєС†РёРё
+    DATASIZE := SectionHeader.SizeOfRawData;                          // Р Р°Р·РјРµСЂ РґР°РЅРЅС‹С… СЃРµРєС†РёРё
+    for i := 0 to DATASIZE - 39 do                                    // Р¦РёРєР» РїРѕРёСЃРєР° РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚Рё РІ СЃРµС†РёРё
     begin
-      CopyMemory(ADDR(BUFFER), POINTER(DATAADDR), 39);                // Скопировать в буфер из памяти секции 39 байт
-      RESULT := TRUE;                                                 // Начальное значение результата совпадения
-      for j := 0 to 38 do                                             // Цикл проверки совпадения сигнатуры
+      CopyMemory(ADDR(BUFFER), POINTER(DATAADDR), 39);                // РЎРєРѕРїРёСЂРѕРІР°С‚СЊ РІ Р±СѓС„РµСЂ РёР· РїР°РјСЏС‚Рё СЃРµРєС†РёРё 39 Р±Р°Р№С‚
+      RESULT := TRUE;                                                 // РќР°С‡Р°Р»СЊРЅРѕРµ Р·РЅР°С‡РµРЅРёРµ СЂРµР·СѓР»СЊС‚Р°С‚Р° СЃРѕРІРїР°РґРµРЅРёСЏ
+      for j := 0 to 38 do                                             // Р¦РёРєР» РїСЂРѕРІРµСЂРєРё СЃРѕРІРїР°РґРµРЅРёСЏ СЃРёРіРЅР°С‚СѓСЂС‹
       begin
-        RESULT := RESULT and (BUFFER[j] = SEARSH[j]);                 // Установить при совпадении или снять при отличии
-        if SEARCHM[j] = $01 then RESULT := True;                      // Установить по маске поиска
-        if RESULT = False then break;                                 // Если нет совпадений то прервать цикл
+        RESULT := RESULT and (BUFFER[j] = SEARSH[j]);                 // РЈСЃС‚Р°РЅРѕРІРёС‚СЊ РїСЂРё СЃРѕРІРїР°РґРµРЅРёРё РёР»Рё СЃРЅСЏС‚СЊ РїСЂРё РѕС‚Р»РёС‡РёРё
+        if SEARCHM[j] = $01 then RESULT := True;                      // РЈСЃС‚Р°РЅРѕРІРёС‚СЊ РїРѕ РјР°СЃРєРµ РїРѕРёСЃРєР°
+        if RESULT = False then break;                                 // Р•СЃР»Рё РЅРµС‚ СЃРѕРІРїР°РґРµРЅРёР№ С‚Рѕ РїСЂРµСЂРІР°С‚СЊ С†РёРєР»
       end;
-      if RESULT = True then                                           // Если совпадение найдено тогда выполнить замену
+      if RESULT = True then                                           // Р•СЃР»Рё СЃРѕРІРїР°РґРµРЅРёРµ РЅР°Р№РґРµРЅРѕ С‚РѕРіРґР° РІС‹РїРѕР»РЅРёС‚СЊ Р·Р°РјРµРЅСѓ
       begin
-        // MessageBox(0, pchar(Astr), 'Найдено совпадение', MB_OK);
+        // MessageBox(0, pchar(Astr), 'РќР°Р№РґРµРЅРѕ СЃРѕРІРїР°РґРµРЅРёРµ', MB_OK);
         for j := 0 to 38 do if REPLACEM[j] = $01 then BUFFER[j] := REPLACE[j];
         if not VirtualProtect(POINTER(DATAADDR), 39, PAGE_EXECUTE_READWRITE, Protect) then exit;
         CopyMemory(POINTER(DATAADDR), ADDR(BUFFER), 39);
         VirtualProtect(POINTER(DATAADDR), 39, Protect, Protect);
         break;
       end;
-      inc(DATAADDR);                                                  // Увеличить значение адреса данных
+      inc(DATAADDR);                                                  // РЈРІРµР»РёС‡РёС‚СЊ Р·РЅР°С‡РµРЅРёРµ Р°РґСЂРµСЃР° РґР°РЅРЅС‹С…
     end;
   end;
 end;
