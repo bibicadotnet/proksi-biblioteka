@@ -16,11 +16,11 @@ VAR
   APPDIR    : string;                      // Переменная для хранения пути к программе
   PARAMS    : string;                      // Переменная для хранения параметров
   ExeMain   : procedure;                   // Процедурная переменная для стартовой функции
+  IniFile: TextFile;
 
 // Описание функций для метода dll wraper
 // Функции представляют собой джампы на адреса функций системного файла version.dll.
 // Адреса функций определяются динамически.
-
 procedure GetFileVersionInfoSizeW; stdcall; asm jmp dword ptr [proc + 0 * 4] end;
 procedure GetFileVersionInfoW; stdcall; asm jmp dword ptr [proc + 1 * 4]; end;
 procedure VerQueryValueW; stdcall; asm jmp dword ptr [proc + 2 * 4]; end;
@@ -51,20 +51,58 @@ begin
   Result := Copy(APP, 0, Len);
 end;
 
+// Функция для излечения значения параметра из строки
+function GetParam(Param : string): string;
+var
+  Len    : DWORD;
+  SETPOS : DWORD;
+begin
+  Len := Length(Param);
+  SETPOS := POS('=', Param) + 1;
+  Result := Copy(Param, SETPOS, Len - SETPOS + 1);
+end;
+
 // Функция для добавления параметров запуска
 function ADDParam(ARGS : string) : string;
+var
+  IniLine : String;
+  IniParam : String;
+  APP : String;
 begin
   APPDIR := GetAPPDir(AppPatch);
+  APP := APPDIR;
+
+  AssignFile(IniFile, 'Version.ini');      // Связать переменную IniFile с файлом Version.ini
+  {$I-}                                    // Выключить контроль ошибок ввода-вывода
+  Reset(IniFile);                          // Открыть файл для чтения
+  {$I+}                                    // Включить контроль ошибок ввода-вывода
+  if IOResult = 0 then begin               // Если ошибок нет (файл отрыт) выполнить построчное чтение файла
+  while (not EOF(IniFile)) do begin        // Пока не достигнут конец файла
+    Readln(IniFile, IniLine);              // Прочитат строку в переменную IniLine
+    if POS(';', IniLine) = 0 then          // Если строка не комментарий
+      begin
+      IniParam := GetParam(IniLine);       // Извлечь из строки значение параметра
+      if POS('APPDIR', IniLine) <> 0 then if IniParam = '1' then APP := APPDIR else if IniParam = '0' then APP := '';
+      if POS('DATADIR', IniLine) <> 0 then if IniParam <> '' then ARGS := ARGS + '--user-data-dir=' + '"' + APP + IniParam + '"' + ' ';
+      if POS('CACHEDIR', IniLine) <> 0 then if IniParam <> '' then ARGS := ARGS + '--disk-cache-dir=' + '"' + APP + IniParam + '"' + ' ';
+      if POS('RUNPARAM', IniLine) <> 0 then ARGS := ARGS + IniParam + ' ';
+      end;
+    end;
+    CloseFile(IniFile);
+  end;
+  
   ARGS := ARGS + '--portable' + ' ';
   ARGS := ARGS + '--disable-features=RendererCodeIntegrity,FlashDeprecationWarning' + ' ';
-  //ARGS := ARGS + '--simulate-critical-update' + ' ';
   if (POS('--user-data-dir=', ARGS) = 0) then ARGS := ARGS + '--user-data-dir=' + '"' + APPDIR + 'User Data' + '"' + ' ';
-  //if (POS('--disk-cache-dir=', ARGS) = 0) then ARGS := ARGS + '--disk-cache-dir=' + '"' + APPDIR + 'Cache' + '"' + ' ';
-  if (POS('--disk-cache-dir=', ARGS) = 0) then ARGS := ARGS + '--disk-cache-dir=' + '"' + 'nul' + '"' + ' ';
-  if (POS('--disk-cache-size=', ARGS) = 0) then ARGS := ARGS + '--disk-cache-size=' + '"' + '0' + '"' + ' ';
-  if (POS('--media-cache-size=', ARGS) = 0) then ARGS := ARGS + '--media-cache-size=' + '"' + '0' + '"' + ' ';
-  ARGS := ARGS + '--disable-logging' + ' ';
+  if (POS('--disk-cache-dir=', ARGS) = 0) then ARGS := ARGS + '--disk-cache-dir=' + '"' + APPDIR + 'Cache' + '"' + ' ';
+  //if (POS('--disk-cache-dir=', ARGS) = 0) then ARGS := ARGS + '--disk-cache-dir=' + '"' + 'nul' + '"' + ' ';
+  //if (POS('--disk-cache-size=', ARGS) = 0) then ARGS := ARGS + '--disk-cache-size=' + '"' + '0' + '"' + ' ';
+  //if (POS('--media-cache-size=', ARGS) = 0) then ARGS := ARGS + '--media-cache-size=' + '"' + '0' + '"' + ' ';
+  //ARGS := ARGS + '--simulate-critical-update' + ' ';
+  //ARGS := ARGS + '--disable-logging' + ' ';
   //ARGS := ARGS + '--no-first-run' + ' ';
+  //ARGS := ARGS + '--no-sandbox' + ' ';
+  //ARGS := ARGS + '--test-type' + ' ';
   //ARGS := ARGS + '--ppapi-flash-path=' + '"' + APPDIR + 'plugins\pepflashplayer32.dll' + ' ';
   RESULT := ARGS;
 end;
@@ -103,7 +141,7 @@ begin
   ARG := '';
   // Перевести все параметры в одну строку
   for i := 1 to ParamCount do ARG := ARG + ParamStr(i) + ' ';
-  // Если в командной строке нет параметров -type= и --portable тогда выполнить процедуру PORTABLE
+  // Если в командной строке нет параметров -type= и --portable тогда выполнить процедуру STARTPORTABLE
   if (POS('-type=', ARG) = 0) and (POS('--portable', ARG) = 0) then STARTPORTABLE(ARG);
   ExeMain;
 end;
