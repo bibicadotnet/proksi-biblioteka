@@ -18,16 +18,17 @@ type
   COMPUTER_NAME_FORMAT = (ComputerNameNetBIOS, ComputerNameDnsHostname, ComputerNameDnsDomain, ComputerNameDnsFullyQualified,
                           ComputerNamePhysicalNetBIOS, ComputerNamePhysicalDnsHostname, ComputerNamePhysicalDnsDomain,
                           ComputerNamePhysicalDnsFullyQualified, ComputerNameMax);
-  
-  // Структура для функции LdrLoadDll
-  UNICODE_STRING = record
-  Length :        Word ;        // размер строки в байтах без учета символа конца строки
-  MaximumLength : Word ;        // размер памяти, выделенной для буфера
-  Buffer :  WideString ;        // буффер - указатель на строку WideString (уникоде строка)
-  end;
-  PUNICODESTR = ^UNICODE_STRING;
 
   NTStatus = cardinal;
+
+  // Структура для функции LdrLoadDll и NtCreateKey
+  UNICODE_STRING = record
+  Length :        Word ;           // размер строки в байтах без учета символа конца строки
+  MaximumLength : Word ;           // размер памяти, выделенной для буфера
+  Buffer :  WideString ;           // буффер - указатель на строку WideString (уникоде строка)
+  end;
+  PUNICODESTR = ^UNICODE_STRING;   // указатель на структуру
+
   // Структура для функции NtCreateKey
   ObjectAttributes = packed record
   Length: DWORD;
@@ -62,7 +63,7 @@ type
 
   // Обявление типа фукции с парамеи вызова и возврата соответующими оригинальной функции  NtCreateKey
   CreateKey= function(KeyHandle : pdword; DesiredAccess : ACCESS_MASK; ObjectAttributes : PObjectAttributes; TitleIndex:ULONG;
-                       ObjectClass : PUNICODESTR; CreateOptions:ULONG; Disposition:PULONG) : NTSTATUS; stdcall;
+                      ObjectClass : PUNICODESTR; CreateOptions:ULONG; Disposition:PULONG) : NTSTATUS; stdcall;
 
 // Объявление константы с именем PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY
 // с типом данных DWORD и присвоение ей значения в соответствии с WinBase.h
@@ -286,7 +287,6 @@ begin
   Result := 0;
 end;
 
-// Модифицированная функция RegNotifyChangeKeyValue для блокировки через доступ к реестру
 function RegNotifyChangeKeyValue(hKey: HKEY; bWatchSubtree: BOOL; dwNotifyFilter: DWORD; hEvent: THandle; fAsynchronus: BOOL): Longint; stdcall;
 begin
   Result := 0;

@@ -60,7 +60,7 @@ const
   HANDLE = DWORD(-1);
 begin
 
-  if OPT = 1 then
+  if OPT = 1 then                      // Это для перехвата точки входа
   begin
     // Изменить параметры доступа к памяти где расположена структура EPCODE
     if not VirtualProtect(ADDR(EPCODE), 10, PAGE_EXECUTE_READWRITE, Protect) then exit;
@@ -73,7 +73,7 @@ begin
     EPCODE.JMPOFFSET := CODEOFFSET(DWORD(ADDR(EPCODE)), DWORD(OldProcAddress));
   end;
 
-  if OPT = 2 then
+  if OPT = 2 then                      // Это для перехвата UpdateProcThreadAttribute
   begin
     // Изменить параметры доступа к памяти где расположена структура OLDCODE
     if not VirtualProtect(ADDR(OLDCODE), 10, PAGE_EXECUTE_READWRITE, Protect) then exit;
@@ -84,7 +84,7 @@ begin
     OLDCODE.JMPOFFSET := CODEOFFSET(LONGWORD(ADDR(OLDCODE)), LONGWORD(ADDR(Proc)));
   end;
 
-  if OPT = 3 then
+  if OPT = 3 then                      // Это для перехвата LdrLoadDll
   begin
     // Изменить параметры доступа к памяти где расположена структура LDRCODE
     if not VirtualProtect(ADDR(LDRCODE), 10, PAGE_EXECUTE_READWRITE, Protect) then exit;
@@ -95,7 +95,7 @@ begin
     LDRCODE.JMPOFFSET := CODEOFFSET(LONGWORD(ADDR(LDRCODE)), LONGWORD(ADDR(Proc)));
   end;
 
-  if OPT = 4 then
+  if OPT = 4 then                       // Это для перехвата NtCreateKey
   begin
     // Изменить параметры доступа к памяти где расположена структура KEYCODE
     if not VirtualProtect(ADDR(KEYCODE), 10, PAGE_EXECUTE_READWRITE, Protect) then exit;
@@ -105,7 +105,6 @@ begin
     // Расчитать смещение и записать его значение в поле структуры
     KEYCODE.JMPOFFSET := CODEOFFSET(LONGWORD(ADDR(KEYCODE)), LONGWORD(ADDR(Proc)));
   end;
-
   CODE.JMP := $E9;
   CODE.OFFSET := DWORD (NewProcAddress) - DWORD (OldProcAddress) - 5;
   // Изменить параметры доступа к области памяти
@@ -133,6 +132,7 @@ begin
     end;
 end;
 
+// Поиск и замена последовательности в памяти
 procedure REGBLOCKER(MODULNUM : BYTE);
 const
   SEARSH   : array [0..38] of Byte = ($83,$3D,$FF,$FF,$FF,$FF,$00,$0F,$84,$FF,$FF,$00,$00,$83,$3D,$FF,$FF,$FF,$FF,$00,$0F,$84,$FF,$FF,$00,$00,$83,$3D,$FF,$FF,$FF,$FF,$00,$0F,$84,$FF,$FF,$00,$00);
