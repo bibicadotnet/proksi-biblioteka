@@ -32,6 +32,7 @@ procedure VerQueryValueA; stdcall; asm jmp dword ptr [proc + 5 * 4]; end;
 procedure GetFileVersionInfoExW; stdcall; asm jmp dword ptr [proc + 6 * 4]; end;
 procedure GetFileVersionInfoSizeExW; stdcall; asm jmp dword ptr [proc + 7 * 4]; end;
 
+
 // Объявление списока экспортируемых функций
 exports
   GetFileVersionInfoSizeW name 'GetFileVersionInfoSizeW',
@@ -64,6 +65,31 @@ begin
   Result := Copy(Param, SETPOS, Len - SETPOS + 1);
 end;
 
+// Функция для чтения параметра REGOFF из ini файла
+function ReadREGOFF : Boolean;
+var
+  IniLine : String;
+  IniParam : String;
+begin
+  RESULT := True;                               // Значение параметра по умолчанию
+  // Чтение параметров из ини файла
+  AssignFile(IniFile, APPDIR + 'Version.ini');  // Связать переменную IniFile с файлом Version.ini
+  {$I-}                                         // Выключить контроль ошибок ввода-вывода
+  Reset(IniFile);                               // Открыть файл для чтения
+  {$I+}                                         // Включить контроль ошибок ввода-вывода
+  if IOResult = 0 then begin                    // Если ошибок нет (файл отрыт) выполнить построчное чтение файла
+  while (not EOF(IniFile)) do begin             // Пока не достигнут конец файла
+    Readln(IniFile, IniLine);                   // Прочитат строку в переменную IniLine
+    if POS(';', IniLine) = 0 then               // Если строка не комментарий
+      begin
+      IniParam := GetParam(IniLine);            // Извлечь из строки значение параметра
+      if POS('REGOFF', IniLine) <> 0 then if IniParam = '1' then RESULT := True else if IniParam = '0' then RESULT := False;
+      end;
+    end;
+    CloseFile(IniFile);
+  end;
+end;
+
 // Функция для добавления параметров запуска
 function ADDParam(ARGS : string) : string;
 var
@@ -73,17 +99,17 @@ var
 begin
   APPDIR := GetAPPDir(AppPatch);
   APP := APPDIR;
-  // Чтение параметров из ини файла 
-  AssignFile(IniFile, 'Version.ini');      // Связать переменную IniFile с файлом Version.ini
-  {$I-}                                    // Выключить контроль ошибок ввода-вывода
-  Reset(IniFile);                          // Открыть файл для чтения
-  {$I+}                                    // Включить контроль ошибок ввода-вывода
-  if IOResult = 0 then begin               // Если ошибок нет (файл отрыт) выполнить построчное чтение файла
-  while (not EOF(IniFile)) do begin        // Пока не достигнут конец файла
-    Readln(IniFile, IniLine);              // Прочитат строку в переменную IniLine
-    if POS(';', IniLine) = 0 then          // Если строка не комментарий
+  // Чтение параметров из ини файла
+  AssignFile(IniFile, APPDIR + 'Version.ini');  // Связать переменную IniFile с файлом Version.ini
+  {$I-}                                         // Выключить контроль ошибок ввода-вывода
+  Reset(IniFile);                               // Открыть файл для чтения
+  {$I+}                                         // Включить контроль ошибок ввода-вывода
+  if IOResult = 0 then begin                    // Если ошибок нет (файл отрыт) выполнить построчное чтение файла
+  while (not EOF(IniFile)) do begin             // Пока не достигнут конец файла
+    Readln(IniFile, IniLine);                   // Прочитат строку в переменную IniLine
+    if POS(';', IniLine) = 0 then               // Если строка не комментарий
       begin
-      IniParam := GetParam(IniLine);       // Извлечь из строки значение параметра
+      IniParam := GetParam(IniLine);            // Извлечь из строки значение параметра
       if POS('REGOFF', IniLine) <> 0 then if IniParam = '1' then REGOFF := True else if IniParam = '0' then REGOFF := False;
       if POS('APPDIR', IniLine) <> 0 then if IniParam = '1' then APP := APPDIR else if IniParam = '0' then APP := '';
       if POS('DATADIR', IniLine) <> 0 then if IniParam <> '' then ARGS := ARGS + '--user-data-dir=' + '"' + APP + IniParam + '"' + ' ';
@@ -179,6 +205,7 @@ begin
   if (fdwReason = DLL_PROCESS_ATTACH) then
   begin
     DisableThreadLibraryCalls(hInstance);                     // Отключить уведомления DLL_THREAD_ATTACH и DLL_THREAD_DETACH
+    REGOFF := ReadREGOFF;                                     // Установить значение REGOFF функцией ReadREGOFF
     RedirectEXP;                                              // Шаг 1. Выполнить переадресацию функций экспорта
     RedirectEP;                                               // Шаг 2. Выполнить переадресацию точки входа
   end;

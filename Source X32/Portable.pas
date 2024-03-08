@@ -10,7 +10,7 @@ Hook;
 
 procedure HookPreferences;
 procedure HookLoader;
-var REGOFF    : boolean = True;          // Переменная для отключения записи в реестр
+var REGOFF : boolean;          // Переменная для отключения записи в реестр
 
 implementation
 
@@ -368,8 +368,8 @@ begin
   CodeHook(Addr(Proc), ADDR(LogonUserW));                               // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'LogonUserW');                // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(LogonUserW));                               // Подмена адреса точки входа функции в процессе на адрес функции из DLL
-  // Перехват вызова функций записи в реестр 
-  if REGOFF = TRUE then begin
+  // Перехват вызова функций записи в реестр
+  if REGOFF = True then begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'RegCreateKeyA');             // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(RegCreateKeyA));                            // Подмена адреса точки входа функции в процессе на адрес функции из DL
   Addr(Proc) := GetProcAddress(DLLHandle, 'RegCreateKeyW');             // Определить адрес функции
