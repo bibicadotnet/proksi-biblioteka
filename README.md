@@ -20,7 +20,7 @@
 
 ### Инструкция по использованию
 
-1. Переименовать `version x32.dll` или `version x64.dll` в version.dll.
+1. Переименовать `version x32.dll` или `version x64.dll` в `version.dll`.
 2. Положить файл `version.dll` радом с исполняемым файлом браузера (brave.exe / chrome.exe / opera.exe / vivaldi.exe / yandex.exe и т.п.).
 3. При необходимости положить файл конфигурации `version.ini` рядом с `version.dll`.
 4. Запустить браузер, настроить, добавить расширения.
