@@ -9,7 +9,7 @@ Hook;
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
 
 procedure HookPreferences;
-var REGOFF    : boolean = True;          // Переменная для отключения записи в реестр
+var REGOFF : boolean;          // Переменная для отключения записи в реестр
 
 implementation
 
@@ -55,8 +55,8 @@ type
   end;
 
   // Обявление типа фукции с парамеи вызова и возврата соответующими оригинальной функции  UpdateProcThreadAttribute
-  UpdProcThrAttr = function (lpAttributeList: Pointer; dwFlags: DWORD; Attribute: DWORD; lpValue: Pointer;
-                             cbSize: integer; lpPreviousValue: PPointer; lpReturnSize: PInteger): INTEGER; stdcall;
+  UpdProcThrAttr = function (lpAttributeList: Pointer; dwFlags: DWORD; Attribute: DWORD_PTR; lpValue: Pointer;
+                             cbSize: SIZE_T; lpPreviousValue: PPointer; lpReturnSize: PSIZE_T): INTEGER; stdcall;
 
   // Обявление типа фукции с парамеи вызова и возврата соответующими оригинальной функции  LoadDll
   LoadDll = function(PathToFile: PWideChar; Flags: DWORD; ModuleFileName: PUNICODESTR; ModuleHandle: PPointer):NTSTATUS; stdcall;
@@ -71,7 +71,6 @@ const PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY = DWORD ($00020007);
 
 var
   RawUpdateProcThreadAttribute : UpdProcThrAttr;
-  RawLdrLoadDll : LoadDll;
   RawCreateKey  : CreateKey;
 
 {
@@ -135,11 +134,11 @@ function UpdateProcThreadAttribute
   (
    lpAttributeList: Pointer;        // Указатель на список атрибутов
    dwFlags: DWORD;                  // Этот параметр зарезервирован и должен иметь значение 0
-   Attribute: DWORD;                // Ключ атрибута для обновления в списке атрибутов
+   Attribute: DWORD_PTR;            // Ключ атрибута для обновления в списке атрибутов
    lpValue: Pointer;                // Указатель на значение атрибута
-   cbSize: Integer;                 // Размер значения атрибута, заданного параметром lpValue
+   cbSize: SIZE_T;                  // Размер значения атрибута, заданного параметром lpValue
    lpPreviousValue: PPointer;       // Этот параметр зарезервирован и должен иметь значение NULL
-   lpReturnSize: PInteger           // Этот параметр зарезервирован и должен иметь значение NULL
+   lpReturnSize: PSIZE_T            // Этот параметр зарезервирован и должен иметь значение NULL
   ): INTEGER; stdcall;
 var
   Buffer : array of byte;
@@ -316,8 +315,6 @@ var
   DLLHandle : THandle;                                                  // Переменная типа THandle (соответствует LONGWORD)
   SysPatch  : array [0..MAX_PATH] of Char;                              // Переменная для хранения пути
   FileName  : string;                                                   // Переменная для хранения полного имени файла
-const
-  HANDLE = DWORD(-1);
 begin
   GetSystemDirectory(SysPatch, SizeOf(SysPatch));                       // Определить Путь к системной директории
   // Перехват вызова функций из kernel32.dll
@@ -377,12 +374,15 @@ begin
   CodeHook(Addr(Proc), ADDR(CryptProtectData));                         // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'CryptUnprotectData');        // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(CryptUnprotectData));                       // Подмена адреса точки входа функции в процессе на адрес функции из DLL
-  // Перехват вызова функции NtCreateKey
+  // Перехват вызова функции NtCreateKey.
+  // Отключена из-за несоответствия размера инструкций.
   {
+  if REGOFF = TRUE then begin
   HMODULE := GetModuleHandle('ntdll.dll');                              // HMODULE = дескриптор модуля (адрес по которому он загружен)
   Addr(Proc) := GetProcAddress(HMODULE, 'NtCreateKey');                 // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(NtCreateKey), 3);                           // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   ADDR(RawCreateKey) := ADDR(KEYCODE);                                  // Присвоить адрес функции RawCreateKey
+  end;
   }
   end;
 

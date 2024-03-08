@@ -22,7 +22,7 @@ var
   end;
 
   OLDCODE : packed record               // Структура для формирования функции-моста
-  DATA        : array [0..15] of byte;  // Массив для храния начального кода перехватываемой функции 16 байт
+  DATA        : array [0..20] of byte;  // Массив для храния начального кода перехватываемой функции 21 байт
   JMPOP       : array [0..2] of Word;   // Опкод инструкции  Jmp qword ptr              | FF 25 00 00 00 00
   JMPARG      : POINTER;                // Поле для записи аргумента инструкции Jmp     | QWORD $11 22 33 44 55 66 77 88
   end;
@@ -76,7 +76,7 @@ begin
     // Заполнить структуру EPCODE. Расчитать смещение и записать его значение в поле структуры
     EPCODE.SUB := OEP.SUB;
     EPCODE.MOVRRAXOP := $B848;
-    EPCODE.MOVRRAXARG := (UInt64(OldProcAddress) + OEP.CALLOFFSET + 9);
+    EPCODE.MOVRRAXARG := (UInt64(OldProcAddress) + UInt64(OEP.CALLOFFSET) + 9);
     EPCODE.CALLRAXOP := $D0FF;
     EPCODE.ADD := OEP.ADD;
     // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
@@ -89,14 +89,14 @@ begin
   if OPT = 2 then  // Это для создание моста при перехвате UpdateProcThreadAttribute
   begin
     // Изменить параметры доступа к памяти где расположена структура OLDCODE
-    if not VirtualProtect(ADDR(OLDCODE), 30, PAGE_EXECUTE_READWRITE, Protect) then exit;
-    // Схранить начало исходной функци в структуру OLDCODE. Целое число инструкций занимает 16 байт.
-    ReadProcessMemory(HANDLE, ADDR(Proc), ADDR(OLDCODE), 16, VALUE);
+    if not VirtualProtect(ADDR(OLDCODE), 35, PAGE_EXECUTE_READWRITE, Protect) then exit;
+    // Схранить начало исходной функци в структуру OLDCODE. Целое число инструкций занимает 15 байт.
+    ReadProcessMemory(HANDLE, ADDR(Proc), ADDR(OLDCODE), 21, VALUE);
     // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
     OLDCODE.JMPOP[0] := $25FF;
     OLDCODE.JMPOP[1] := $0000;
     OLDCODE.JMPOP[2] := $0000;
-    OLDCODE.JMPARG := Pointer(UInt64(OldProcAddress) + 16);
+    OLDCODE.JMPARG := Pointer(UInt64(OldProcAddress) + 21);
   end;
 
   if OPT = 3 then  // Это для создание моста при перехвате NtCreateKey
@@ -106,17 +106,16 @@ begin
     // Схранить начало исходной функци в структуру KEYCODE
     ReadProcessMemory(HANDLE, ADDR(Proc), ADDR(KEYCODE), 11, VALUE);
     // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
-    //KEYCODE.JMPOP[0] := $25FF;
-    //KEYCODE.JMPOP[1] := $0000;
-    //KEYCODE.JMPOP[2] := $0000;
-    //KEYCODE.JMPARG := Pointer(UInt64(OldProcAddress) + 11);
+    KEYCODE.JMPOP[0] := $25FF;
+    KEYCODE.JMPOP[1] := $0000;
+    KEYCODE.JMPOP[2] := $0000;
+    KEYCODE.JMPARG := Pointer(UInt64(OldProcAddress) + 11);
   end;
 
-  // Формирование прыжка в прокси функцию в теле исходной функции
+  // Формирование прыжка в прокси функцию в теле исходной функции методом mov rax,addr jmp rax (12 байт)
   RAXJUMP.MOVRRAXOP := $B848;
   RAXJUMP.MOVRRAXARG := NewProcAddress;
   RAXJUMP.JMPRAXOP := $E0FF;
-
   // Изменить параметры доступа к области памяти
   if not VirtualProtect(OldProcAddress, 12, PAGE_EXECUTE_READWRITE, Protect) then exit;
   // Записать в память процесса прыжок на прокси функцию

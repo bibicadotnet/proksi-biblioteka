@@ -63,6 +63,31 @@ begin
   Result := Copy(Param, SETPOS, Len - SETPOS + 1);
 end;
 
+// Функция для чтения параметра REGOFF из ini файла
+function ReadREGOFF : Boolean;
+var
+  IniLine : String;
+  IniParam : String;
+begin
+  RESULT := True;                               // Значение параметра по умолчанию
+  // Чтение параметров из ини файла
+  AssignFile(IniFile, APPDIR + 'Version.ini');  // Связать переменную IniFile с файлом Version.ini
+  {$I-}                                         // Выключить контроль ошибок ввода-вывода
+  Reset(IniFile);                               // Открыть файл для чтения
+  {$I+}                                         // Включить контроль ошибок ввода-вывода
+  if IOResult = 0 then begin                    // Если ошибок нет (файл отрыт) выполнить построчное чтение файла
+  while (not EOF(IniFile)) do begin             // Пока не достигнут конец файла
+    Readln(IniFile, IniLine);                   // Прочитат строку в переменную IniLine
+    if POS(';', IniLine) = 0 then               // Если строка не комментарий
+      begin
+      IniParam := GetParam(IniLine);            // Извлечь из строки значение параметра
+      if POS('REGOFF', IniLine) <> 0 then if IniParam = '1' then RESULT := True else if IniParam = '0' then RESULT := False;
+      end;
+    end;
+    CloseFile(IniFile);
+  end;
+end;
+
 // Функция для добавления параметров запуска
 function ADDParam(ARGS : string) : string;
 var
@@ -73,14 +98,14 @@ begin
   APPDIR := GetAPPDir(AppPatch);
   APP := APPDIR;
   // Чтение параметров из ини файла 
-  AssignFile(IniFile, 'Version.ini');      // Связать переменную IniFile с файлом Version.ini
-  {$I-}                                    // Выключить контроль ошибок ввода-вывода
-  Reset(IniFile);                          // Открыть файл для чтения
-  {$I+}                                    // Включить контроль ошибок ввода-вывода
-  if IOResult = 0 then begin               // Если ошибок нет (файл отрыт) выполнить построчное чтение файла
-  while (not EOF(IniFile)) do begin        // Пока не достигнут конец файла
-    Readln(IniFile, IniLine);              // Прочитат строку в переменную IniLine
-    if POS(';', IniLine) = 0 then          // Если строка не комментарий
+  AssignFile(IniFile, APPDIR + 'Version.ini');  // Связать переменную IniFile с файлом Version.ini
+  {$I-}                                         // Выключить контроль ошибок ввода-вывода
+  Reset(IniFile);                               // Открыть файл для чтения
+  {$I+}                                         // Включить контроль ошибок ввода-вывода
+  if IOResult = 0 then begin                    // Если ошибок нет (файл отрыт) выполнить построчное чтение файла
+  while (not EOF(IniFile)) do begin             // Пока не достигнут конец файла
+    Readln(IniFile, IniLine);                   // Прочитат строку в переменную IniLine
+    if POS(';', IniLine) = 0 then               // Если строка не комментарий
       begin
       IniParam := GetParam(IniLine);       // Извлечь из строки значение параметра
       if POS('REGOFF', IniLine) <> 0 then if IniParam = '1' then REGOFF := True else if IniParam = '0' then REGOFF := False;
@@ -111,8 +136,8 @@ begin
   PARAMS := ADDParam(PARAM);
   APPDIR := GetAPPDir(AppPatch);
   // Заполнение структуры для запуска программы
-  FillChar(ShellExecuteInfo, SizeOf(TShellExecuteInfo), 0) ;                // Очистить структуру от случайных данных
-  ShellExecuteInfo.cbSize := sizeof(TShellExecuteInfo);                     // Размер структуры в байтах
+  FillChar(ShellExecuteInfo, SizeOf(TShellExecuteInfo), 0) ;                 // Очистить структуру от случайных данных
+  ShellExecuteInfo.cbSize := sizeof(TShellExecuteInfo);                      // Размер структуры в байтах
   ShellExecuteInfo.fMask := SEE_MASK_NOCLOSEPROCESS or SEE_MASK_FLAG_NO_UI; // Комбинация флагов, определяющих используемую часть структуры
   ShellExecuteInfo.lpVerb := 'open';                                        // Строка, определяющее действие с файлом. 'open' запускает исполняемый файл
   ShellExecuteInfo.lpFile := pchar(FileName);                               // Имя файла (полный путь к файлу)
@@ -177,6 +202,7 @@ begin
   if (fdwReason = DLL_PROCESS_ATTACH) then
   begin
     DisableThreadLibraryCalls(hInstance);                     // Отключить уведомления DLL_THREAD_ATTACH и DLL_THREAD_DETACH
+    REGOFF := ReadREGOFF;                                     // Установить значение REGOFF функцией ReadREGOFF
     RedirectEXP;                                              // Шаг 1. Выполнить переадресацию функций экспорта
     RedirectEP;                                               // Шаг 2. Выполнить переадресацию точки входа
   end;
