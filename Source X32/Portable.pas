@@ -306,8 +306,9 @@ function NtCreateKey(
 var
 Name : String;
 begin
-  Name := PWIDECHAR(ObjectAttributes.ObjectName.Buffer);     // Узнать имя раздела реестра к которому осуществляется доступ
-  if (POS('Software', Name) <> 0) then DesiredAccess := 0;   // Если в имени есть Software то установить атрибут доступа только чтение
+  //Name := PWIDECHAR(ObjectAttributes.ObjectName.Buffer);     // Узнать имя раздела реестра к которому осуществляется доступ
+  //if (POS('Software', Name) <> 0) then DesiredAccess := 0;   // Если в имени есть Software то установить атрибут доступа только чтение
+  if DesiredAccess = 3 then DesiredAccess := 0;
   Result := RawCreateKey(KeyHandle, DesiredAccess, ObjectAttributes, TitleIndex, ObjectClass, CreateOptions, Disposition);
 end;
 
