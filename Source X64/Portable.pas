@@ -19,13 +19,13 @@ type
                           ComputerNamePhysicalNetBIOS, ComputerNamePhysicalDnsHostname, ComputerNamePhysicalDnsDomain,
                           ComputerNamePhysicalDnsFullyQualified, ComputerNameMax);
 
-  NTStatus = cardinal;
+  NTStatus = UINT32;
 
   // Структура для функции LdrLoadDll и NtCreateKey
   UNICODE_STRING = record
-  Length :        Word ;           // размер строки в байтах без учета символа конца строки
-  MaximumLength : Word ;           // размер памяти, выделенной для буфера
-  Buffer :   PWIDECHAR ;           // буффер - указатель на строку WideString (уникоде строка)
+  Length :        USHORT ;         // размер строки в байтах без учета символа конца строки
+  MaximumLength : USHORT ;         // размер памяти, выделенной для буфера
+  Buffer :   PWIDESTRING ;         // буффер - указатель на строку WideString (уникоде строка)
   end;
   PUNICODESTR = ^UNICODE_STRING;   // указатель на структуру
 
@@ -301,13 +301,10 @@ function NtCreateKey(
                      CreateOptions:ULONG;
                      Disposition:PULONG
                      ): NTSTATUS; stdcall;
-var
-Name : String;
+
 begin
-  Name := WIDECHAR(ObjectAttributes.ObjectName.Buffer);      // Узнать имя раздела реестра к которому осуществляется доступ
-  if (POS('Software', Name) <> 0) then DesiredAccess := 0;   // Если в имени есть Software то установить атрибут доступа только чтение
+  if DesiredAccess = 3 then DesiredAccess := 0;
   Result := RawCreateKey(KeyHandle, DesiredAccess, ObjectAttributes, TitleIndex, ObjectClass, CreateOptions, Disposition);
-  Result := 0;
 end;
 
 procedure HookPreferences;
@@ -375,15 +372,12 @@ begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'CryptUnprotectData');        // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(CryptUnprotectData));                       // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   // Перехват вызова функции NtCreateKey.
-  // Отключена из-за несоответствия размера инструкций.
-  {
   if REGOFF = TRUE then begin
   HMODULE := GetModuleHandle('ntdll.dll');                              // HMODULE = дескриптор модуля (адрес по которому он загружен)
   Addr(Proc) := GetProcAddress(HMODULE, 'NtCreateKey');                 // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(NtCreateKey), 3);                           // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   ADDR(RawCreateKey) := ADDR(KEYCODE);                                  // Присвоить адрес функции RawCreateKey
   end;
-  }
   end;
 
 end.
