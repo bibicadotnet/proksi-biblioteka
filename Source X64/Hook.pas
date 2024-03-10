@@ -28,8 +28,8 @@ var
   end;
 
   KEYCODE : packed record              // Структура для формирования функции-моста NtCreateKey
-  JMPOP       : array [0..2] of Word;  // Опкод инструкции  Jmp qword ptr              | FF 25 00 00 00 00
-  JMPARG      : POINTER;               // Поле для записи аргумента инструкции Jmp     | QWORD $11 22 33 44 55 66 77 88
+  DATA        : array [0..10] of byte; // Массив для храния начального кода перехватываемой функции 11 байт
+
   end;
 
   Proc : procedure;                    // Процедурная переменная
@@ -106,10 +106,10 @@ begin
     // Схранить начало исходной функци в структуру KEYCODE
     ReadProcessMemory(HANDLE, ADDR(Proc), ADDR(KEYCODE), 11, VALUE);
     // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
-    KEYCODE.JMPOP[0] := $25FF;
-    KEYCODE.JMPOP[1] := $0000;
-    KEYCODE.JMPOP[2] := $0000;
-    KEYCODE.JMPARG := Pointer(UInt64(OldProcAddress) + 11);
+    // KEYCODE.JMPOP[0] := $25FF;
+    // KEYCODE.JMPOP[1] := $0000;
+    // KEYCODE.JMPOP[2] := $0000;
+    // KEYCODE.JMPARG := Pointer(UInt64(OldProcAddress) + 11);
   end;
 
   // Формирование прыжка в прокси функцию в теле исходной функции методом mov rax,addr jmp rax (12 байт)
