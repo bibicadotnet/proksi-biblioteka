@@ -21,19 +21,18 @@ var
   JMPARG      : POINTER;               // Поле для записи аргумента инструкции Jmp     | QWORD $11 22 33 44 55 66 77 88
   end;
 
-  OLDCODE : packed record               // Структура для формирования функции-моста
-  DATA        : array [0..20] of byte;  // Массив для храния начального кода перехватываемой функции 21 байт
-  JMPOP       : array [0..2] of Word;   // Опкод инструкции  Jmp qword ptr              | FF 25 00 00 00 00
-  JMPARG      : POINTER;                // Поле для записи аргумента инструкции Jmp     | QWORD $11 22 33 44 55 66 77 88
+  OLDCODE : packed record              // Структура для формирования функции-моста
+  DATA        : array [0..20] of byte; // Массив для храния начального кода перехватываемой функции 21 байт
+  JMPOP       : array [0..2] of Word;  // Опкод инструкции  Jmp qword ptr              | FF 25 00 00 00 00
+  JMPARG      : POINTER;               // Поле для записи аргумента инструкции Jmp     | QWORD $11 22 33 44 55 66 77 88
   end;
 
   KEYCODE : packed record              // Структура для формирования функции-моста NtCreateKey
-  DATA        : array [0..10] of byte; // Массив для храния начального кода перехватываемой функции 11 байт
+  DATA        : array [0..23] of byte; // Массив для храния начального кода перехватываемой функции 11 байт
 
   end;
 
   Proc : procedure;                    // Процедурная переменная
-  HMODULE  : DWORD;                    // Переменная для хранения дискриптора модуля
 
   implementation
 
@@ -102,14 +101,9 @@ begin
   if OPT = 3 then  // Это для создание моста при перехвате NtCreateKey
   begin
     // Изменить параметры доступа к памяти где расположена структура KEYCODE
-    if not VirtualProtect(ADDR(KEYCODE), 11, PAGE_EXECUTE_READWRITE, Protect) then exit;
-    // Схранить начало исходной функци в структуру KEYCODE
-    ReadProcessMemory(HANDLE, ADDR(Proc), ADDR(KEYCODE), 11, VALUE);
-    // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
-    // KEYCODE.JMPOP[0] := $25FF;
-    // KEYCODE.JMPOP[1] := $0000;
-    // KEYCODE.JMPOP[2] := $0000;
-    // KEYCODE.JMPARG := Pointer(UInt64(OldProcAddress) + 11);
+    if not VirtualProtect(ADDR(KEYCODE), 24, PAGE_EXECUTE_READWRITE, Protect) then exit;
+    // Схранить исходную функци в структуру KEYCODE
+    ReadProcessMemory(HANDLE, ADDR(Proc), ADDR(KEYCODE), 24, VALUE);
   end;
 
   // Формирование прыжка в прокси функцию в теле исходной функции методом mov rax,addr jmp rax (12 байт)
