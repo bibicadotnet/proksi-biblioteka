@@ -303,7 +303,7 @@ function NtCreateKey(
                      ): NTSTATUS; stdcall;
 
 begin
-  if DesiredAccess = 3 then DesiredAccess := 0;
+  if DesiredAccess = 1 then DesiredAccess := 0;
   if DesiredAccess = 3 then DesiredAccess := 0;
   if DesiredAccess = 514 then DesiredAccess := 0;
   Result := RawCreateKey(KeyHandle, DesiredAccess, ObjectAttributes, TitleIndex, ObjectClass, CreateOptions, Disposition);
@@ -311,7 +311,7 @@ end;
 
 procedure HookPreferences;
 var
-  DLLHandle : THandle;                                                  // Переменная типа THandle (соответствует LONGWORD)
+  DLLHandle : THandle;                                                  // Переменная типа THandle
   SysPatch  : array [0..MAX_PATH] of Char;                              // Переменная для хранения пути
   FileName  : string;                                                   // Переменная для хранения полного имени файла
 begin
@@ -375,11 +375,10 @@ begin
   CodeHook(Addr(Proc), ADDR(CryptUnprotectData));                       // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   // Перехват вызова функции NtCreateKey.
   if REGOFF = TRUE then begin
-  HMODULE := GetModuleHandle('ntdll.dll');                              // HMODULE = дескриптор модуля (адрес по которому он загружен)
-  Addr(Proc) := GetProcAddress(HMODULE, 'NtCreateKey');                 // Определить адрес функции
+  DLLHandle := GetModuleHandle('ntdll.dll');                            // DLLHandle = дескриптор модуля (адрес по которому он загружен)
+  Addr(Proc) := GetProcAddress(DLLHandle, 'NtCreateKey');               // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(NtCreateKey), 3);                           // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   ADDR(RawCreateKey) := ADDR(KEYCODE);                                  // Присвоить адрес функции RawCreateKey
   end;
   end;
-
 end.
