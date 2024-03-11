@@ -304,6 +304,8 @@ function NtCreateKey(
 
 begin
   if DesiredAccess = 3 then DesiredAccess := 0;
+  if DesiredAccess = 3 then DesiredAccess := 0;
+  if DesiredAccess = 514 then DesiredAccess := 0;
   Result := RawCreateKey(KeyHandle, DesiredAccess, ObjectAttributes, TitleIndex, ObjectClass, CreateOptions, Disposition);
 end;
 
