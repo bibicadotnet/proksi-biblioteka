@@ -18,6 +18,9 @@ VAR
   PARAMS    : string;                      // Переменная для хранения параметров
   ExeMain   : procedure;                   // Процедурная переменная для стартовой функции
   IniFile   : TextFile;                    // Переменная типа TextFile для файла настроек
+
+  OSINFO: TOSVersionInfo;
+
 // Описание функций для метода dll wraper
 // Функции представляют собой джампы на адреса функций системного файла version.dll.
 // Адреса функций определяются динамически.
@@ -173,6 +176,17 @@ begin
   EntryADDR := MI.EntryPoint;               // Считать в переменную адрес точки входа из поля EntryPoint структуры MI
   CodeHook(EntryADDR, ADDR(REDIRECT), 1);   // Подмена адреса точки входа в процессе на адрес функции из DLL.
   ADDR(ExeMain) := ADDR(EPCODE);            // Назначить адрес процедуры ExeMain равным адресу структуры EPCODE
+
+  OSINFO.dwOSVersionInfoSize := SizeOf(OSINFO);
+  if GetVersionEx(OSINFO) then
+  begin
+  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 1) then OS := 1;
+  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 2) then OS := 1;
+  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 3) then OS := 1;
+  if (OSINFO.dwMajorVersion = 10) and (OSINFO.dwMinorVersion = 0) and (OSINFO.dwBuildNumber < 20000) then OS := 1;
+  if (OSINFO.dwMajorVersion = 10) and (OSINFO.dwMinorVersion = 0) and (OSINFO.dwBuildNumber > 20000) then OS := 2;
+  end;
+
   HookPreferences;
   //HookLoader;
 end;

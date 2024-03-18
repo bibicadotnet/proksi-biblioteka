@@ -210,30 +210,27 @@ begin
   result := TRUE;
 end;
 
-function RegCreateKeyA(hKey: HKEY; lpSubKey: PAnsiChar; var phkResult: HKEY): Longint; stdcall;
+function RegCreateKeyA(hKey: HKEY; lpSubKey: PAnsiChar; phkResult: PHKEY): Longint; stdcall;
 begin
-  phkResult := 0;
   Result := 0;
 end;
 
-function RegCreateKeyW(hKey: HKEY; lpSubKey: PWideChar; var phkResult: HKEY): Longint; stdcall;
+function RegCreateKeyW(hKey: HKEY; lpSubKey: PWideChar; phkResult: PHKEY): Longint; stdcall;
 begin
-  phkResult := 0;
   Result := 0;
 end;
 
 function RegCreateKeyExA(hKey: HKEY; lpSubKey: PAnsiChar; Reserved: DWORD; lpClass: PAnsiChar; dwOptions: DWORD; samDesired: REGSAM;
-                         lpSecurityAttributes: PSecurityAttributes; var phkResult: HKEY; lpdwDisposition: PDWORD): Longint; stdcall;
+                         lpSecurityAttributes: PSecurityAttributes; phkResult: PHKEY; lpdwDisposition: PDWORD): Longint; stdcall;
 begin
-  phkResult := 0;
   lpdwDisposition := nil;
   Result := 0;
 end;
 
 function RegCreateKeyExW(hKey: HKEY; lpSubKey: PWideChar; Reserved: DWORD; lpClass: PWideChar; dwOptions: DWORD; samDesired: REGSAM;
-                         lpSecurityAttributes: PSecurityAttributes; var phkResult: HKEY; lpdwDisposition: PDWORD): Longint; stdcall;
+                         lpSecurityAttributes: PSecurityAttributes; phkResult: PHKEY; lpdwDisposition: PDWORD): Longint; stdcall;
 begin
-  phkResult := 0;
+  phkResult := nil;
   lpdwDisposition := nil;
   Result := 0;
 end;
@@ -301,7 +298,6 @@ function NtCreateKey(
                      CreateOptions:ULONG;
                      Disposition:PULONG
                      ): NTSTATUS; stdcall;
-
 begin
   if DesiredAccess = 1 then DesiredAccess := 0;
   if DesiredAccess = 3 then DesiredAccess := 0;
@@ -333,7 +329,8 @@ begin
   CodeHook(Addr(Proc), ADDR(GetVolumeInformationW));                    // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'UpdateProcThreadAttribute'); // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(UpdateProcThreadAttribute), 2);             // Подмена адреса точки входа функции в процессе на адрес функции из DLL
-  ADDR(RawUpdateProcThreadAttribute) := ADDR(OLDCODE);                  // Присвоить адрес функции RawUpdateProcThreadAttribute
+  if OS = 1 then ADDR(RawUpdateProcThreadAttribute) := ADDR(OLDCODE710);// Присвоить адрес функции RawUpdateProcThreadAttribute
+  if OS = 2 then ADDR(RawUpdateProcThreadAttribute) := ADDR(OLDCODE11); // Присвоить адрес функции RawUpdateProcThreadAttribute
   // Перехват вызова функций из advapi32.dll
   FileName :=  SysPatch + '\advapi32.dll';                              // Получить полное имя файла
   DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
