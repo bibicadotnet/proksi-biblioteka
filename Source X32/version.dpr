@@ -96,9 +96,20 @@ var
   IniLine : String;
   IniParam : String;
   APP : String;
+  ARGSSTART : STRING;
 begin
   APPDIR := GetAPPDir(AppPatch);
   APP := APPDIR;
+  ARGSSTART := '';
+  // Проверка наличия параметра '--single-argument'
+  if POS('--single-argument', ARGS) <> 0 then
+  begin
+    ARGSSTART := ARGS;
+    ARGS := '';
+  end;
+  ARGS := ARGS + '--portable' + ' ';
+  ARGS := ARGS + '--disable-features=RendererCodeIntegrity,FlashDeprecationWarning' + ' ';
+
   // Чтение параметров из ини файла
   AssignFile(IniFile, APPDIR + 'Version.ini');  // Связать переменную IniFile с файлом Version.ini
   {$I-}                                         // Выключить контроль ошибок ввода-вывода
@@ -120,11 +131,9 @@ begin
     CloseFile(IniFile);
   end;
   
-  ARGS := ARGS + '--portable' + ' ';
-  ARGS := ARGS + '--disable-features=RendererCodeIntegrity,FlashDeprecationWarning' + ' ';
   if (POS('--user-data-dir=', ARGS) = 0) then ARGS := ARGS + '--user-data-dir=' + '"' + APPDIR + 'User Data' + '"' + ' ';
   if (POS('--disk-cache-dir=', ARGS) = 0) then ARGS := ARGS + '--disk-cache-dir=' + '"' + APPDIR + 'Cache' + '"' + ' ';
-  RESULT := ARGS;
+  RESULT := ARGS + ARGSSTART;
 end;
 
 procedure STARTPORTABLE(PARAM:string);

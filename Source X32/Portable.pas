@@ -26,7 +26,7 @@ type
   UNICODE_STRING = record
   Length :        Word ;           // размер строки в байтах без учета символа конца строки
   MaximumLength : Word ;           // размер памяти, выделенной для буфера
-  Buffer :  WideString ;           // буффер - указатель на строку WideString (уникоде строка)
+  Buffer :  PWideString;           // буффер - указатель на строку WideString (уникоде строка)
   end;
   PUNICODESTR = ^UNICODE_STRING;   // указатель на структуру
 
@@ -212,20 +212,20 @@ begin
   result := TRUE;
 end;
 
-function RegCreateKeyA(hKey: HKEY; lpSubKey: PAnsiChar; var phkResult: HKEY): Longint; stdcall;
+function RegCreateKeyA(hKey: HKEY; lpSubKey: PAnsiChar; phkResult: PHKEY): Longint; stdcall;
 begin
   phkResult := 0;
   Result := 0;
 end;
 
-function RegCreateKeyW(hKey: HKEY; lpSubKey: PWideChar; var phkResult: HKEY): Longint; stdcall;
+function RegCreateKeyW(hKey: HKEY; lpSubKey: PWideChar; phkResult: PHKEY): Longint; stdcall;
 begin
   phkResult := 0;
   Result := 0;
 end;
 
 function RegCreateKeyExA(hKey: HKEY; lpSubKey: PAnsiChar; Reserved: DWORD; lpClass: PAnsiChar; dwOptions: DWORD; samDesired: REGSAM;
-                         lpSecurityAttributes: PSecurityAttributes; var phkResult: HKEY; lpdwDisposition: PDWORD): Longint; stdcall;
+                         lpSecurityAttributes: PSecurityAttributes; phkResult: PHKEY; lpdwDisposition: PDWORD): Longint; stdcall;
 begin
   phkResult := 0;
   lpdwDisposition := nil;
@@ -233,7 +233,7 @@ begin
 end;
 
 function RegCreateKeyExW(hKey: HKEY; lpSubKey: PWideChar; Reserved: DWORD; lpClass: PWideChar; dwOptions: DWORD; samDesired: REGSAM;
-                         lpSecurityAttributes: PSecurityAttributes; var phkResult: HKEY; lpdwDisposition: PDWORD): Longint; stdcall;
+                         lpSecurityAttributes: PSecurityAttributes; phkResult: PHKEY; lpdwDisposition: PDWORD): Longint; stdcall;
 begin
   phkResult := 0;
   lpdwDisposition := nil;
@@ -303,14 +303,16 @@ function NtCreateKey(
                      CreateOptions:ULONG;
                      Disposition:PULONG
                      ): NTSTATUS; stdcall;
-var
-Name : String;
+//var
+//Name : String;
 begin
-  Name := PWIDECHAR(ObjectAttributes.ObjectName.Buffer);     // Узнать имя раздела реестра к которому осуществляется доступ
-  if (POS('Software', Name) <> 0) then DesiredAccess := 0;   // Если в имени есть Software то установить атрибут доступа только чтение
+  //Name := PWIDECHAR(ObjectAttributes.ObjectName.Buffer);     // Узнать имя раздела реестра к которому осуществляется доступ
+  //if (POS('Software', Name) <> 0) then DesiredAccess := 0;   // Если в имени есть Software то установить атрибут доступа только чтение
+  if DesiredAccess = 1 then DesiredAccess := 0;
+  if DesiredAccess = 3 then DesiredAccess := 0;
+  if DesiredAccess = 514 then DesiredAccess := 0;
   Result := RawCreateKey(KeyHandle, DesiredAccess, ObjectAttributes, TitleIndex, ObjectClass, CreateOptions, Disposition);
 end;
-
 // Модифицированная функция LdrLoadDll для блокировки через загрузчик
 function LdrLoadDll(PathToFile: PWideChar; Flags: DWORD; ModuleFileName: PUNICODESTR; ModuleHandle: PPointer): NTSTATUS; stdcall;
 var

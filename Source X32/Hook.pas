@@ -38,7 +38,7 @@ var
   end;
 
   Proc : procedure;                    // Процедурная переменная
-  HMODULE  : DWORD;                    // Переменная для хранения дискриптора модуля
+  HMODULE  : THANDLE;                    // Переменная для хранения дискриптора модуля
   BLOK1    : BOOLEAN;
   BLOK2    : BOOLEAN;
   DATAADDR : DWORD;                    // Переменная для хранения адреса модуля
