@@ -37,6 +37,7 @@ var
   JMPOFFSET   : DWORD;                 // Поле для записи аргумента инструкции JMP  | DWORD
   end;
 
+  OS   : Byte;
   Proc : procedure;                    // Процедурная переменная
   HMODULE  : THANDLE;                    // Переменная для хранения дискриптора модуля
   BLOK1    : BOOLEAN;

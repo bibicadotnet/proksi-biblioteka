@@ -12,13 +12,14 @@ uses
 
 VAR
   AppPatch  : array [0..MAX_PATH] of Char;
-  Proc : array [1..8] of Procedure;        // массив типа Procedure
+  Proc : array [1..6] of Procedure;        // массив типа Procedure
   FileName  : string;                      // Переменная для хранения полного имени файла
   APPDIR    : string;                      // Переменная для хранения пути к программе
   PARAMS    : string;                      // Переменная для хранения параметров
   ExeMain   : procedure;                   // Процедурная переменная для стартовой функции
   IniFile   : TextFile;                    // Переменная типа TextFile для файла настроек
 
+  OSINFO: TOSVersionInfo;
 // Описание функций для метода dll wraper
 // Функции представляют собой джампы на адреса функций системного файла version.dll.
 // Адреса функций определяются динамически.
@@ -29,8 +30,6 @@ procedure VerQueryValueW; stdcall; asm jmp dword ptr [proc + 2 * 4]; end;
 procedure GetFileVersionInfoSizeA; stdcall; asm jmp dword ptr [proc + 3 * 4]; end;
 procedure GetFileVersionInfoA; stdcall; asm jmp dword ptr [proc + 4 * 4]; end;
 procedure VerQueryValueA; stdcall; asm jmp dword ptr [proc + 5 * 4]; end;
-procedure GetFileVersionInfoExW; stdcall; asm jmp dword ptr [proc + 6 * 4]; end;
-procedure GetFileVersionInfoSizeExW; stdcall; asm jmp dword ptr [proc + 7 * 4]; end;
 
 
 // Объявление списока экспортируемых функций
@@ -40,9 +39,7 @@ exports
   VerQueryValueW name 'VerQueryValueW',
   GetFileVersionInfoSizeA name 'GetFileVersionInfoSizeA',
   GetFileVersionInfoA name 'GetFileVersionInfoA',
-  VerQueryValueA name 'VerQueryValueA',
-  GetFileVersionInfoExW name 'GetFileVersionInfoExW',
-  GetFileVersionInfoSizeExW name 'GetFileVersionInfoSizeExW';
+  VerQueryValueA name 'VerQueryValueA';
 
 // Функция для определения пути к программе
 function GetAPPDir(APP : string): string;
@@ -65,13 +62,14 @@ begin
   Result := Copy(Param, SETPOS, Len - SETPOS + 1);
 end;
 
-// Функция для чтения параметра REGOFF из ini файла
-function ReadREGOFF : Boolean;
+// Функция для чтения параметра из ini файла
+procedure READPARAM;
 var
   IniLine : String;
   IniParam : String;
 begin
-  RESULT := True;                               // Значение параметра по умолчанию
+  REGOFF := True;                               // Значение параметра по умолчанию
+  AIDOFF := True;                               // Значение параметра по умолчанию
   // Чтение параметров из ини файла
   AssignFile(IniFile, APPDIR + 'Version.ini');  // Связать переменную IniFile с файлом Version.ini
   {$I-}                                         // Выключить контроль ошибок ввода-вывода
@@ -83,7 +81,8 @@ begin
     if POS(';', IniLine) = 0 then               // Если строка не комментарий
       begin
       IniParam := GetParam(IniLine);            // Извлечь из строки значение параметра
-      if POS('REGOFF', IniLine) <> 0 then if IniParam = '1' then RESULT := True else if IniParam = '0' then RESULT := False;
+      if POS('REGOFF', IniLine) <> 0 then if IniParam = '1' then REGOFF := True else if IniParam = '0' then REGOFF := False;
+      if POS('AIDOFF', IniLine) <> 0 then if IniParam = '1' then AIDOFF := True else if IniParam = '0' then AIDOFF := False;
       end;
     end;
     CloseFile(IniFile);
@@ -121,7 +120,6 @@ begin
     if POS(';', IniLine) = 0 then               // Если строка не комментарий
       begin
       IniParam := GetParam(IniLine);            // Извлечь из строки значение параметра
-      if POS('REGOFF', IniLine) <> 0 then if IniParam = '1' then REGOFF := True else if IniParam = '0' then REGOFF := False;
       if POS('APPDIR', IniLine) <> 0 then if IniParam = '1' then APP := APPDIR else if IniParam = '0' then APP := '';
       if POS('DATADIR', IniLine) <> 0 then if IniParam <> '' then ARGS := ARGS + '--user-data-dir=' + '"' + APP + IniParam + '"' + ' ';
       if POS('CACHEDIR', IniLine) <> 0 then if IniParam <> '' then ARGS := ARGS + '--disk-cache-dir=' + '"' + APP + IniParam + '"' + ' ';
@@ -185,6 +183,18 @@ begin
   EntryADDR := MI.EntryPoint;               // Считать в переменную адрес точки входа из поля EntryPoint структуры MI
   CodeHook(EntryADDR, ADDR(REDIRECT), 1);   // Подмена адреса точки входа в процессе на адрес функции из DLL.
   ADDR(ExeMain) := ADDR(EPCODE);            // Назначить адрес процедуры ExeMain равным адресу структуры EPCODE
+  // Определить версию ОС
+  OSINFO.dwOSVersionInfoSize := SizeOf(OSINFO);
+  if GetVersionEx(OSINFO) then
+  begin
+  if (OSINFO.dwMajorVersion = 5) and (OSINFO.dwMinorVersion = 1) then OS := 1;                                      // Windows XP 32
+  if (OSINFO.dwMajorVersion = 5) and (OSINFO.dwMinorVersion = 2) then OS := 1;                                      // Windows XP 64
+  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 1) then OS := 2;                                      // Windows 7
+  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 2) then OS := 2;                                      // Windows 8
+  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 3) then OS := 2;                                      // Windows 8.1
+  if (OSINFO.dwMajorVersion = 10) and (OSINFO.dwMinorVersion = 0) and (OSINFO.dwBuildNumber < 20000) then OS := 2;  // Windows 10
+  if (OSINFO.dwMajorVersion = 10) and (OSINFO.dwMinorVersion = 0) and (OSINFO.dwBuildNumber > 20000) then OS := 3;  // Windows 11
+  end;
   HookPreferences;
   //HookLoader;                             // Перехват функции LdrLoadDll. Использовать для поиска и замены сигнатуры в памяти процесса.
 end;
@@ -204,8 +214,6 @@ begin
   Addr(proc[4]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoSizeA');   // Определить адрес функции
   Addr(proc[5]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoA');       // Определить адрес функции
   Addr(proc[6]) := GetProcAddress(DLLHandle, 'VerQueryValueA');            // Определить адрес функции
-  Addr(proc[7]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoExW');     // Определить адрес функции
-  Addr(proc[8]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoSizeExW'); // Определить адрес функции
 end;
 
 // Основная стартовая функция
@@ -214,7 +222,7 @@ begin
   if (fdwReason = DLL_PROCESS_ATTACH) then
   begin
     DisableThreadLibraryCalls(hInstance);                     // Отключить уведомления DLL_THREAD_ATTACH и DLL_THREAD_DETACH
-    REGOFF := ReadREGOFF;                                     // Установить значение REGOFF функцией ReadREGOFF
+    READPARAM;                                                // Прочитать параметры REGOFF и AIDOFF
     RedirectEXP;                                              // Шаг 1. Выполнить переадресацию функций экспорта
     RedirectEP;                                               // Шаг 2. Выполнить переадресацию точки входа
   end;

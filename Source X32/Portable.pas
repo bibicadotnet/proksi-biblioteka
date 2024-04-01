@@ -10,7 +10,9 @@ Hook;
 
 procedure HookPreferences;
 procedure HookLoader;
-var REGOFF : boolean;          // Переменная для отключения записи в реестр
+var
+REGOFF : boolean;          // Переменная для отключения записи в реестр
+AIDOFF : boolean;          // Переменная для отключения идентификации приложения
 
 implementation
 
@@ -26,7 +28,7 @@ type
   UNICODE_STRING = record
   Length :        Word ;           // размер строки в байтах без учета символа конца строки
   MaximumLength : Word ;           // размер памяти, выделенной для буфера
-  Buffer :  PWideString;           // буффер - указатель на строку WideString (уникоде строка)
+  Buffer :    PWideChar;           // буффер - указатель на строку WideString (уникоде строка)
   end;
   PUNICODESTR = ^UNICODE_STRING;   // указатель на структуру
 
@@ -40,6 +42,13 @@ type
   SecurityQualityOfService: Pointer;
   end;
   PObjectAttributes = ^ObjectAttributes;
+
+  // Структура для функции PSStringFromPropertyKey
+  PROPERTYKEY = packed record
+  fmtid: TGUID ;
+  pid: DWORD ;
+  end;
+  REFPROPERTYKEY = ^PROPERTYKEY; // указатель на структуру
 
   // Структура для описания входных и выходных данных
   DATA_BLOB = record
@@ -81,7 +90,14 @@ var
   Advapi32.dll (LogonUserA, LogonUserW)
   Crypt32.dll (CryptProtectData, CryptUnprotectData)
   ntdll.dll (NtCreateKey, LoadDll)
+  Propsys.dll (PSStringFromPropertyKey)
 }
+
+// Это модифицированная функция для блокировки System.AppUserModel.ID
+function PSStringFromPropertyKey(pkey: REFPROPERTYKEY; psz: PWideChar; cch: INTEGER): HRESULT ; stdcall;
+begin
+  result := 0;
+end;
 
 function GetComputerNameA(lpBuffer: PChar; var nSize: DWORD): INTEGER; stdcall;
 begin
@@ -295,24 +311,26 @@ end;
 
 // Модифицированная функция NtCreateKey для блокировки записи в реестр
 function NtCreateKey(
-                     KeyHandle : PHANDLE;
-                     DesiredAccess : ACCESS_MASK;
-                     ObjectAttributes : PObjectAttributes;
-                     TitleIndex:ULONG;
-                     ObjectClass : PUNICODESTR;
-                     CreateOptions:ULONG;
-                     Disposition:PULONG
+                     KeyHandle : PHANDLE;                    // Указатель на переменную-дескриптор, которая получает дескриптор ключа.
+                     DesiredAccess : ACCESS_MASK;            // Указывает значение ACCESS_MASK, которое определяет запрашиваемый доступ к объекту.
+                     ObjectAttributes : PObjectAttributes;   // Указатель на структуру OBJECT_ATTRIBUTES, которая определяет имя объекта и другие атрибуты.
+                     TitleIndex:ULONG;                       // Драйверы устройств и промежуточных устройств устанавливают этот параметр равным нулю.
+                     ObjectClass : PUNICODESTR;              // Указатель на строку в Юникоде, содержащую класс объекта ключа.
+                     CreateOptions:ULONG;                    // Определяет параметры, применяемые при создании или открытии ключа.
+                     Disposition:PULONG                      // указатель на переменную, которая получает значение, указывающее, был ли создан новый ключ или открыт существующий.
                      ): NTSTATUS; stdcall;
-//var
-//Name : String;
+var
+Name : String;
 begin
   //Name := PWIDECHAR(ObjectAttributes.ObjectName.Buffer);     // Узнать имя раздела реестра к которому осуществляется доступ
   //if (POS('Software', Name) <> 0) then DesiredAccess := 0;   // Если в имени есть Software то установить атрибут доступа только чтение
+  //
   if DesiredAccess = 1 then DesiredAccess := 0;
   if DesiredAccess = 3 then DesiredAccess := 0;
   if DesiredAccess = 514 then DesiredAccess := 0;
   Result := RawCreateKey(KeyHandle, DesiredAccess, ObjectAttributes, TitleIndex, ObjectClass, CreateOptions, Disposition);
 end;
+
 // Модифицированная функция LdrLoadDll для блокировки через загрузчик
 function LdrLoadDll(PathToFile: PWideChar; Flags: DWORD; ModuleFileName: PUNICODESTR; ModuleHandle: PPointer): NTSTATUS; stdcall;
 var
@@ -360,9 +378,11 @@ begin
   CodeHook(Addr(Proc), ADDR(GetVolumeInformationA));                    // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetVolumeInformationW');     // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(GetVolumeInformationW));                    // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+  if OS > 1 then begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'UpdateProcThreadAttribute'); // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(UpdateProcThreadAttribute), 2);             // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   ADDR(RawUpdateProcThreadAttribute) := ADDR(OLDCODE);                  // Присвоить адрес функции RawUpdateProcThreadAttribute
+  end;
   // Перехват вызова функций из advapi32.dll
   FileName :=  SysPatch + '\advapi32.dll';                              // Получить полное имя файла
   DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
@@ -373,27 +393,29 @@ begin
   // Перехват вызова функций записи в реестр
   if REGOFF = True then begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'RegCreateKeyA');             // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(RegCreateKeyA));                            // Подмена адреса точки входа функции в процессе на адрес функции из DL
+  CodeHook(Addr(Proc), ADDR(RegCreateKeyA));                            // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'RegCreateKeyW');             // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(RegCreateKeyW));                            // Подмена адреса точки входа функции в процессе на адрес функции из DL
+  CodeHook(Addr(Proc), ADDR(RegCreateKeyW));                            // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'RegCreateKeyExA');           // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(RegCreateKeyExA));                          // Подмена адреса точки входа функции в процессе на адрес функции из DL
+  CodeHook(Addr(Proc), ADDR(RegCreateKeyExA));                          // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'RegCreateKeyExW');           // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(RegCreateKeyExW));                          // Подмена адреса точки входа функции в процессе на адрес функции из DL
-  Addr(Proc) := GetProcAddress(DLLHandle, 'RegCreateKeyTransactedA');   // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(RegCreateKeyTransactedA));                  // Подмена адреса точки входа функции в процессе на адрес функции из DL
-  Addr(Proc) := GetProcAddress(DLLHandle, 'RegCreateKeyTransactedW');   // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(RegCreateKeyTransactedW));                  // Подмена адреса точки входа функции в процессе на адрес функции из DL
+  CodeHook(Addr(Proc), ADDR(RegCreateKeyExW));                          // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'RegSetValueA');              // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(RegSetValueA));                             // Подмена адреса точки входа функции в процессе на адрес функции из DL
+  CodeHook(Addr(Proc), ADDR(RegSetValueA));                             // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'RegSetValueW');              // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(RegSetValueW));                             // Подмена адреса точки входа функции в процессе на адрес функции из DL
+  CodeHook(Addr(Proc), ADDR(RegSetValueW));                             // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'RegSetValueExA');            // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(RegSetValueExA));                           // Подмена адреса точки входа функции в процессе на адрес функции из DL
+  CodeHook(Addr(Proc), ADDR(RegSetValueExA));                           // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'RegSetValueExW');            // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(RegSetValueExW));                           // Подмена адреса точки входа функции в процессе на адрес функции из DL
+  CodeHook(Addr(Proc), ADDR(RegSetValueExW));                           // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+  Addr(Proc) := GetProcAddress(DLLHandle, 'RegCreateKeyTransactedA');   // Определить адрес функции
+  CodeHook(Addr(Proc), ADDR(RegCreateKeyTransactedA));                  // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+  if OS > 1 then begin
+  Addr(Proc) := GetProcAddress(DLLHandle, 'RegCreateKeyTransactedW');   // Определить адрес функции
+  CodeHook(Addr(Proc), ADDR(RegCreateKeyTransactedW));                  // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+  end;
   Addr(Proc) := GetProcAddress(DLLHandle, 'RegNotifyChangeKeyValue');   // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(RegNotifyChangeKeyValue));                  // Подмена адреса точки входа функции в процессе на адрес функции из DL
+  CodeHook(Addr(Proc), ADDR(RegNotifyChangeKeyValue));                  // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
   // Перехват вызова функций из Crypt32.dll
   FileName :=  SysPatch + '\Crypt32.dll';                               // Получить полное имя файла
@@ -408,6 +430,12 @@ begin
   Addr(Proc) := GetProcAddress(HMODULE, 'NtCreateKey');                 // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(NtCreateKey), 4);                           // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   ADDR(RawCreateKey) := ADDR(KEYCODE);                                  // Присвоить адрес функции RawCreateKey
+  end;
+  if AIDOFF = TRUE then begin
+  FileName :=  SysPatch + '\Propsys.dll';   ;                           // Получить полное имя файла
+  DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
+  Addr(Proc) := GetProcAddress(DLLHandle, 'PSStringFromPropertyKey');   // Определить адрес функции
+  CodeHook(Addr(Proc), ADDR(PSStringFromPropertyKey));                  // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
   end;
 end.
