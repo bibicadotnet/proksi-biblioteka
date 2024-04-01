@@ -21,13 +21,13 @@ var
   JMPARG      : POINTER;               // Поле для записи аргумента инструкции Jmp     | QWORD $11 22 33 44 55 66 77 88
   end;
 
-  OLDCODE710 : packed record            // Структура для формирования функции-моста
+  OLDCODE710 : packed record            // Структура для формирования функции-моста UpdateProcThreadAttribute
   DATA        : array [0..20] of byte;  // Массив для храния начального кода перехватываемой функции 21 байт
   JMPOP       : array [0..2] of Word;   // Опкод инструкции  Jmp qword ptr              | FF 25 00 00 00 00
   JMPARG      : POINTER;                // Поле для записи аргумента инструкции Jmp     | QWORD $11 22 33 44 55 66 77 88
   end;
 
-  OLDCODE11 : packed record             // Структура для формирования функции-моста
+  OLDCODE11 : packed record             // Структура для формирования функции-моста UpdateProcThreadAttribute
   DATA        : array [0..19] of byte;  // Массив для храния начального кода перехватываемой функции 20 байт
   JMPOP       : array [0..2] of Word;   // Опкод инструкции  Jmp qword ptr              | FF 25 00 00 00 00
   JMPARG      : POINTER;                // Поле для записи аргумента инструкции Jmp     | QWORD $11 22 33 44 55 66 77 88
@@ -85,7 +85,7 @@ begin
     EPCODE.JMPARG := Pointer(UInt64(OldProcAddress) + 13);
   end;
 
-  if (OPT = 2) and (OS = 1) then  // Это для создание моста при перехвате UpdateProcThreadAttribute
+  if (OPT = 2) and (OS = 2) then  // Это для создание моста при перехвате UpdateProcThreadAttribute
   begin
     // Изменить параметры доступа к памяти где расположена структура OLDCODE
     if not VirtualProtect(ADDR(OLDCODE710), 35, PAGE_EXECUTE_READWRITE, Protect) then exit;
@@ -98,7 +98,7 @@ begin
     OLDCODE710.JMPARG := Pointer(UInt64(OldProcAddress) + 21);
   end;
 
-  if (OPT = 2) and (OS = 2) then  // Это для создание моста при перехвате UpdateProcThreadAttribute
+  if (OPT = 2) and (OS = 3) then  // Это для создание моста при перехвате UpdateProcThreadAttribute
   begin
     // Изменить параметры доступа к памяти где расположена структура OLDCODE
     if not VirtualProtect(ADDR(OLDCODE11), 34, PAGE_EXECUTE_READWRITE, Protect) then exit;
