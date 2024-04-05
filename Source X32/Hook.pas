@@ -5,7 +5,7 @@ interface
 uses
   Windows;
 
-  {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
+{$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
 
 procedure CodeHook(OldProcAddress, NewProcAddress: pointer; OPT : byte = 0);
 function  CODEOFFSET(NEWADDR, OLDADDR: DWORD):DWORD;
@@ -39,7 +39,7 @@ var
 
   OS   : Byte;
   Proc : procedure;                    // Процедурная переменная
-  HMODULE  : THANDLE;                    // Переменная для хранения дискриптора модуля
+  HMODULE  : THANDLE;                  // Переменная для хранения дискриптора модуля
   BLOK1    : BOOLEAN;
   BLOK2    : BOOLEAN;
   DATAADDR : DWORD;                    // Переменная для хранения адреса модуля
@@ -107,7 +107,7 @@ begin
     KEYCODE.JMP := $E9;
     KEYCODE.JMPOFFSET := CODEOFFSET(LONGWORD(ADDR(KEYCODE)), LONGWORD(ADDR(Proc)));
   end;
-  
+
   // Формирование прыжка в прокси функцию в теле исходной функции
   CODE.JMP := $E9;
   CODE.OFFSET := DWORD (NewProcAddress) - DWORD (OldProcAddress) - 5;

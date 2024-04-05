@@ -6,20 +6,22 @@ uses
   ShellAPI,
   Hook in 'Hook.pas',
   Portable in 'Portable.pas';
+  
 
 {$R version.res}
+
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
 
 VAR
   AppPatch  : array [0..MAX_PATH] of Char;
-  Proc : array [1..6] of Procedure;        // массив типа Procedure
+  Proc      : array [1..8] of Procedure;   // массив типа Procedure
   FileName  : string;                      // Переменная для хранения полного имени файла
   APPDIR    : string;                      // Переменная для хранения пути к программе
   PARAMS    : string;                      // Переменная для хранения параметров
   ExeMain   : procedure;                   // Процедурная переменная для стартовой функции
   IniFile   : TextFile;                    // Переменная типа TextFile для файла настроек
+  OSINFO    : TOSVersionInfo;
 
-  OSINFO: TOSVersionInfo;
 // Описание функций для метода dll wraper
 // Функции представляют собой джампы на адреса функций системного файла version.dll.
 // Адреса функций определяются динамически.
@@ -30,7 +32,8 @@ procedure VerQueryValueW; stdcall; asm jmp dword ptr [proc + 2 * 4]; end;
 procedure GetFileVersionInfoSizeA; stdcall; asm jmp dword ptr [proc + 3 * 4]; end;
 procedure GetFileVersionInfoA; stdcall; asm jmp dword ptr [proc + 4 * 4]; end;
 procedure VerQueryValueA; stdcall; asm jmp dword ptr [proc + 5 * 4]; end;
-
+procedure GetFileVersionInfoExW; stdcall; asm jmp dword ptr [proc + 6 * 4]; end;
+procedure GetFileVersionInfoSizeExW; stdcall; asm jmp dword ptr [proc + 7 * 4]; end;
 
 // Объявление списока экспортируемых функций
 exports
@@ -39,7 +42,9 @@ exports
   VerQueryValueW name 'VerQueryValueW',
   GetFileVersionInfoSizeA name 'GetFileVersionInfoSizeA',
   GetFileVersionInfoA name 'GetFileVersionInfoA',
-  VerQueryValueA name 'VerQueryValueA';
+  VerQueryValueA name 'VerQueryValueA',
+  GetFileVersionInfoExW name 'GetFileVersionInfoExW',
+  GetFileVersionInfoSizeExW name 'GetFileVersionInfoSizeExW';
 
 // Функция для определения пути к программе
 function GetAPPDir(APP : string): string;
@@ -60,6 +65,20 @@ begin
   Len := Length(Param);
   SETPOS := POS('=', Param) + 1;
   Result := Copy(Param, SETPOS, Len - SETPOS + 1);
+end;
+
+procedure OSVER;
+begin
+  // Определить версию ОС
+  OSINFO.dwOSVersionInfoSize := SizeOf(OSINFO);
+  if GetVersionEx(OSINFO) then
+  if (OSINFO.dwMajorVersion = 5) and (OSINFO.dwMinorVersion = 1) then OS := 1;                                      // Windows XP 32
+  if (OSINFO.dwMajorVersion = 5) and (OSINFO.dwMinorVersion = 2) then OS := 1;                                      // Windows XP 64
+  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 1) then OS := 2;                                      // Windows 7
+  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 2) then OS := 2;                                      // Windows 8
+  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 3) then OS := 2;                                      // Windows 8.1
+  if (OSINFO.dwMajorVersion = 10) and (OSINFO.dwMinorVersion = 0) and (OSINFO.dwBuildNumber < 22600) then OS := 2;  // Windows 10, первая версия Windows 11
+  if (OSINFO.dwMajorVersion = 10) and (OSINFO.dwMinorVersion = 0) and (OSINFO.dwBuildNumber > 22600) then OS := 3;  // Windows 11
 end;
 
 // Функция для чтения параметра из ini файла
@@ -128,7 +147,7 @@ begin
     end;
     CloseFile(IniFile);
   end;
-  
+
   if (POS('--user-data-dir=', ARGS) = 0) then ARGS := ARGS + '--user-data-dir=' + '"' + APPDIR + 'User Data' + '"' + ' ';
   if (POS('--disk-cache-dir=', ARGS) = 0) then ARGS := ARGS + '--disk-cache-dir=' + '"' + APPDIR + 'Cache' + '"' + ' ';
   RESULT := ARGS + ARGSSTART;
@@ -183,18 +202,6 @@ begin
   EntryADDR := MI.EntryPoint;               // Считать в переменную адрес точки входа из поля EntryPoint структуры MI
   CodeHook(EntryADDR, ADDR(REDIRECT), 1);   // Подмена адреса точки входа в процессе на адрес функции из DLL.
   ADDR(ExeMain) := ADDR(EPCODE);            // Назначить адрес процедуры ExeMain равным адресу структуры EPCODE
-  // Определить версию ОС
-  OSINFO.dwOSVersionInfoSize := SizeOf(OSINFO);
-  if GetVersionEx(OSINFO) then
-  begin
-  if (OSINFO.dwMajorVersion = 5) and (OSINFO.dwMinorVersion = 1) then OS := 1;                                      // Windows XP 32
-  if (OSINFO.dwMajorVersion = 5) and (OSINFO.dwMinorVersion = 2) then OS := 1;                                      // Windows XP 64
-  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 1) then OS := 2;                                      // Windows 7
-  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 2) then OS := 2;                                      // Windows 8
-  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 3) then OS := 2;                                      // Windows 8.1
-  if (OSINFO.dwMajorVersion = 10) and (OSINFO.dwMinorVersion = 0) and (OSINFO.dwBuildNumber < 20000) then OS := 2;  // Windows 10
-  if (OSINFO.dwMajorVersion = 10) and (OSINFO.dwMinorVersion = 0) and (OSINFO.dwBuildNumber > 20000) then OS := 3;  // Windows 11
-  end;
   HookPreferences;
   //HookLoader;                             // Перехват функции LdrLoadDll. Использовать для поиска и замены сигнатуры в памяти процесса.
 end;
@@ -214,7 +221,11 @@ begin
   Addr(proc[4]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoSizeA');   // Определить адрес функции
   Addr(proc[5]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoA');       // Определить адрес функции
   Addr(proc[6]) := GetProcAddress(DLLHandle, 'VerQueryValueA');            // Определить адрес функции
-end;
+  if OS > 1 then begin
+  Addr(proc[7]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoExW');     // Определить адрес функции
+  Addr(proc[8]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoSizeExW'); // Определить адрес функции
+  end;
+ end;
 
 // Основная стартовая функция
 procedure DllMain(fdwReason: DWORD);
@@ -223,6 +234,7 @@ begin
   begin
     DisableThreadLibraryCalls(hInstance);                     // Отключить уведомления DLL_THREAD_ATTACH и DLL_THREAD_DETACH
     READPARAM;                                                // Прочитать параметры REGOFF и AIDOFF
+    OSVER;                                                    // Определить версию ОС
     RedirectEXP;                                              // Шаг 1. Выполнить переадресацию функций экспорта
     RedirectEP;                                               // Шаг 2. Выполнить переадресацию точки входа
   end;

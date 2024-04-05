@@ -17,10 +17,6 @@ AIDOFF : boolean;          // Переменная для отключения �
 implementation
 
 type
-  // Объявление перечисляемого типа данных с именем COMPUTER_NAME_FORMAT
-  COMPUTER_NAME_FORMAT = (ComputerNameNetBIOS, ComputerNameDnsHostname, ComputerNameDnsDomain, ComputerNameDnsFullyQualified,
-                          ComputerNamePhysicalNetBIOS, ComputerNamePhysicalDnsHostname, ComputerNamePhysicalDnsDomain,
-                          ComputerNamePhysicalDnsFullyQualified, ComputerNameMax);
 
   NTStatus = cardinal;
 
@@ -105,16 +101,6 @@ begin
 end;
 
 function GetComputerNameW(lpBuffer: PWideChar; var nSize: DWORD): INTEGER; stdcall;
-begin
-  result := 0;
-end;
-
-function GetComputerNameExA(NameType: COMPUTER_NAME_FORMAT; lpBuffer: PChar; var nSize: DWORD): INTEGER; stdcall;
-begin
-  result := 0;
-end;
-
-function GetComputerNameExW(NameType: COMPUTER_NAME_FORMAT; lpBuffer: PChar; var nSize: DWORD): INTEGER; stdcall;
 begin
   result := 0;
 end;
@@ -359,8 +345,6 @@ var
   DLLHandle : THandle;                                                  // Переменная типа THandle (соответствует LONGWORD)
   SysPatch  : array [0..MAX_PATH] of Char;                              // Переменная для хранения пути
   FileName  : string;                                                   // Переменная для хранения полного имени файла
-const
-  HANDLE = DWORD(-1);
 begin
   GetSystemDirectory(SysPatch, SizeOf(SysPatch));                       // Определить Путь к системной директории
   // Перехват вызова функций из kernel32.dll
@@ -370,10 +354,6 @@ begin
   CodeHook(Addr(Proc), ADDR(GetComputerNameA));                         // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetComputerNameW');          // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(GetComputerNameW));                         // Подмена адреса точки входа функции в процессе на адрес функции из DLL
-  Addr(Proc) := GetProcAddress(DLLHandle, 'GetComputerNameExA');        // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(GetComputerNameExA));                       // Подмена адреса точки входа функции в процессе на адрес функции из DLL
-  Addr(Proc) := GetProcAddress(DLLHandle, 'GetComputerNameExW');        // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(GetComputerNameExW));                       // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetVolumeInformationA');     // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(GetVolumeInformationA));                    // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetVolumeInformationW');     // Определить адрес функции
@@ -391,7 +371,7 @@ begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'LogonUserW');                // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(LogonUserW));                               // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   // Перехват вызова функций записи в реестр
-  if REGOFF = True then begin
+  if REGOFF = TRUE then begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'RegCreateKeyA');             // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(RegCreateKeyA));                            // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'RegCreateKeyW');             // Определить адрес функции
@@ -426,8 +406,8 @@ begin
   CodeHook(Addr(Proc), ADDR(CryptUnprotectData));                       // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   // Перехват вызова функции NtCreateKey
   if REGOFF = TRUE then begin
-  HMODULE := GetModuleHandle('ntdll.dll');                              // HMODULE = дескриптор модуля (адрес по которому он загружен)
-  Addr(Proc) := GetProcAddress(HMODULE, 'NtCreateKey');                 // Определить адрес функции
+  DLLHandle := GetModuleHandle('ntdll.dll');                            // DLLHandle = дескриптор модуля (адрес по которому он загружен)
+  Addr(Proc) := GetProcAddress(DLLHandle, 'NtCreateKey');               // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(NtCreateKey), 4);                           // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   ADDR(RawCreateKey) := ADDR(KEYCODE);                                  // Присвоить адрес функции RawCreateKey
   end;
