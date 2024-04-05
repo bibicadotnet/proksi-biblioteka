@@ -34,7 +34,7 @@ var
   end;
 
   KEYCODE   : packed record             // Структура для формирования функции-моста NtCreateKey
-  DATA      : array [0..23] of byte;    // Массив для храния начального кода перехватываемой функции 11 байт 7 или 24 байта 10
+  DATA      : array [0..23] of byte;    // Массив для храния начального кода перехватываемой функции 11 байт XP и 7 или 24 байта 10 и 11
   end;
 
   OS   : Byte;
@@ -85,7 +85,7 @@ begin
     EPCODE.JMPARG := Pointer(UInt64(OldProcAddress) + 13);
   end;
 
-  if (OPT = 2) and (OS = 2) then  // Это для создание моста при перехвате UpdateProcThreadAttribute
+  if (OPT = 2) and (OS = 2) then  // Это для создание моста при перехвате UpdateProcThreadAttribute WIN7-10
   begin
     // Изменить параметры доступа к памяти где расположена структура OLDCODE
     if not VirtualProtect(ADDR(OLDCODE710), 35, PAGE_EXECUTE_READWRITE, Protect) then exit;
@@ -98,7 +98,7 @@ begin
     OLDCODE710.JMPARG := Pointer(UInt64(OldProcAddress) + 21);
   end;
 
-  if (OPT = 2) and (OS = 3) then  // Это для создание моста при перехвате UpdateProcThreadAttribute
+  if (OPT = 2) and (OS = 3) then  // Это для создание моста при перехвате UpdateProcThreadAttribute  WIN11
   begin
     // Изменить параметры доступа к памяти где расположена структура OLDCODE
     if not VirtualProtect(ADDR(OLDCODE11), 34, PAGE_EXECUTE_READWRITE, Protect) then exit;

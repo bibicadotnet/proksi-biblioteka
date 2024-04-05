@@ -12,14 +12,13 @@ uses
 
 VAR
   AppPatch  : array [0..MAX_PATH] of Char;
-  Proc : array [1..6] of Procedure;        // массив типа Procedure
+  Proc : array [1..8] of Procedure;        // массив типа Procedure
   FileName  : string;                      // Переменная для хранения полного имени файла
   APPDIR    : string;                      // Переменная для хранения пути к программе
   PARAMS    : string;                      // Переменная для хранения параметров
   ExeMain   : procedure;                   // Процедурная переменная для стартовой функции
   IniFile   : TextFile;                    // Переменная типа TextFile для файла настроек
-
-  OSINFO: TOSVersionInfo;
+  OSINFO    : TOSVersionInfo;
 
 // Описание функций для метода dll wraper
 // Функции представляют собой джампы на адреса функций системного файла version.dll.
@@ -31,6 +30,9 @@ procedure VerQueryValueW; stdcall; asm jmp QWORD ptr [proc + 2 * 8]; end;
 procedure GetFileVersionInfoSizeA; stdcall; asm jmp QWORD ptr [proc + 3 * 8]; end;
 procedure GetFileVersionInfoA; stdcall; asm jmp QWORD ptr [proc + 4 * 8]; end;
 procedure VerQueryValueA; stdcall; asm jmp QWORD ptr [proc + 5 * 8]; end;
+procedure GetFileVersionInfoExW; stdcall; asm jmp QWORD ptr [proc + 6 * 4]; end;
+procedure GetFileVersionInfoSizeExW; stdcall; asm jmp QWORD ptr [proc + 7 * 4]; end;
+
 
 // Объявление списока экспортируемых функций
 exports
@@ -39,7 +41,9 @@ exports
   VerQueryValueW name 'VerQueryValueW',
   GetFileVersionInfoSizeA name 'GetFileVersionInfoSizeA',
   GetFileVersionInfoA name 'GetFileVersionInfoA',
-  VerQueryValueA name 'VerQueryValueA';
+  VerQueryValueA name 'VerQueryValueA',
+  GetFileVersionInfoExW name 'GetFileVersionInfoExW',
+  GetFileVersionInfoSizeExW name 'GetFileVersionInfoSizeExW';
 
 // Функция для определения пути к программе
 function GetAPPDir(APP : string): string;
@@ -60,6 +64,20 @@ begin
   Len := Length(Param);
   SETPOS := POS('=', Param) + 1;
   Result := Copy(Param, SETPOS, Len - SETPOS + 1);
+end;
+
+procedure OSVER;
+begin
+  // Определить версию ОС
+  OSINFO.dwOSVersionInfoSize := SizeOf(OSINFO);
+  if GetVersionEx(OSINFO) then
+  if (OSINFO.dwMajorVersion = 5) and (OSINFO.dwMinorVersion = 1) then OS := 1;                                      // Windows XP 32
+  if (OSINFO.dwMajorVersion = 5) and (OSINFO.dwMinorVersion = 2) then OS := 1;                                      // Windows XP 64
+  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 1) then OS := 2;                                      // Windows 7
+  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 2) then OS := 2;                                      // Windows 8
+  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 3) then OS := 2;                                      // Windows 8.1
+  if (OSINFO.dwMajorVersion = 10) and (OSINFO.dwMinorVersion = 0) and (OSINFO.dwBuildNumber < 22600) then OS := 2;  // Windows 10, первая версия Windows 11
+  if (OSINFO.dwMajorVersion = 10) and (OSINFO.dwMinorVersion = 0) and (OSINFO.dwBuildNumber > 22600) then OS := 3;  // Windows 11
 end;
 
 // Функция для чтения параметра из ini файла
@@ -109,7 +127,7 @@ begin
   ARGS := ARGS + '--portable' + ' ';
   ARGS := ARGS + '--disable-features=RendererCodeIntegrity,FlashDeprecationWarning' + ' ';
 
-  // Чтение параметров из ини файла 
+  // Чтение параметров из ини файла
   AssignFile(IniFile, APPDIR + 'Version.ini');  // Связать переменную IniFile с файлом Version.ini
   {$I-}                                         // Выключить контроль ошибок ввода-вывода
   Reset(IniFile);                               // Открыть файл для чтения
@@ -128,7 +146,7 @@ begin
     end;
     CloseFile(IniFile);
   end;
-  
+
   if (POS('--user-data-dir=', ARGS) = 0) then ARGS := ARGS + '--user-data-dir=' + '"' + APPDIR + 'User Data' + '"' + ' ';
   if (POS('--disk-cache-dir=', ARGS) = 0) then ARGS := ARGS + '--disk-cache-dir=' + '"' + APPDIR + 'Cache' + '"' + ' ';
   RESULT := ARGS + ARGSSTART;
@@ -144,9 +162,10 @@ begin
   FileName := AppPatch;
   PARAMS := ADDParam(PARAM);
   APPDIR := GetAPPDir(AppPatch);
+  // MessageBox(0, pchar(PARAMS), 'Параметры перед запуском', MB_OK);       // Вывод окна перед запуском. Для отладки
   // Заполнение структуры для запуска программы
-  FillChar(ShellExecuteInfo, SizeOf(TShellExecuteInfo), 0) ;                 // Очистить структуру от случайных данных
-  ShellExecuteInfo.cbSize := sizeof(TShellExecuteInfo);                      // Размер структуры в байтах
+  FillChar(ShellExecuteInfo, SizeOf(TShellExecuteInfo), 0) ;                // Очистить структуру от случайных данных
+  ShellExecuteInfo.cbSize := sizeof(TShellExecuteInfo);                     // Размер структуры в байтах
   ShellExecuteInfo.fMask := SEE_MASK_NOCLOSEPROCESS or SEE_MASK_FLAG_NO_UI; // Комбинация флагов, определяющих используемую часть структуры
   ShellExecuteInfo.lpVerb := 'open';                                        // Строка, определяющее действие с файлом. 'open' запускает исполняемый файл
   ShellExecuteInfo.lpFile := pchar(FileName);                               // Имя файла (полный путь к файлу)
@@ -182,21 +201,7 @@ begin
   EntryADDR := MI.EntryPoint;               // Считать в переменную адрес точки входа из поля EntryPoint структуры MI
   CodeHook(EntryADDR, ADDR(REDIRECT), 1);   // Подмена адреса точки входа в процессе на адрес функции из DLL.
   ADDR(ExeMain) := ADDR(EPCODE);            // Назначить адрес процедуры ExeMain равным адресу структуры EPCODE
-  // Определить версию ОС
-  OSINFO.dwOSVersionInfoSize := SizeOf(OSINFO);
-  if GetVersionEx(OSINFO) then
-  begin
-  if (OSINFO.dwMajorVersion = 5) and (OSINFO.dwMinorVersion = 1) then OS := 1;                                      // Windows XP 32
-  if (OSINFO.dwMajorVersion = 5) and (OSINFO.dwMinorVersion = 2) then OS := 1;                                      // Windows XP 64
-  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 1) then OS := 2;                                      // Windows 7
-  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 2) then OS := 2;                                      // Windows 8
-  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 3) then OS := 2;                                      // Windows 8.1
-  if (OSINFO.dwMajorVersion = 10) and (OSINFO.dwMinorVersion = 0) and (OSINFO.dwBuildNumber < 20000) then OS := 2;  // Windows 10
-  if (OSINFO.dwMajorVersion = 10) and (OSINFO.dwMinorVersion = 0) and (OSINFO.dwBuildNumber > 20000) then OS := 3;  // Windows 11
-  end;
-
   HookPreferences;
-  //HookLoader;
 end;
 
 // Обертка для переадресации экспортируемых функций
@@ -214,6 +219,10 @@ begin
   Addr(proc[4]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoSizeA');   // Определить адрес функции
   Addr(proc[5]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoA');       // Определить адрес функции
   Addr(proc[6]) := GetProcAddress(DLLHandle, 'VerQueryValueA');            // Определить адрес функции
+  if OS > 1 then begin
+  Addr(proc[7]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoExW');     // Определить адрес функции
+  Addr(proc[8]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoSizeExW'); // Определить адрес функции
+  end;
 end;
 
 // Основная стартовая функция
@@ -223,6 +232,7 @@ begin
   begin
     DisableThreadLibraryCalls(hInstance);                     // Отключить уведомления DLL_THREAD_ATTACH и DLL_THREAD_DETACH
     READPARAM;                                                // Прочитать параметры REGOFF и AIDOFF
+    OSVER;                                                    // Определить версию ОС
     RedirectEXP;                                              // Шаг 1. Выполнить переадресацию функций экспорта
     RedirectEP;                                               // Шаг 2. Выполнить переадресацию точки входа
   end;

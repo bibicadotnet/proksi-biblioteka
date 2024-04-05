@@ -16,10 +16,6 @@ AIDOFF : boolean;          // Переменная для отключения �
 implementation
 
 type
-  // Объявление перечисляемого типа данных с именем COMPUTER_NAME_FORMAT
-  COMPUTER_NAME_FORMAT = (ComputerNameNetBIOS, ComputerNameDnsHostname, ComputerNameDnsDomain, ComputerNameDnsFullyQualified,
-                          ComputerNamePhysicalNetBIOS, ComputerNamePhysicalDnsHostname, ComputerNamePhysicalDnsDomain,
-                          ComputerNamePhysicalDnsFullyQualified, ComputerNameMax);
 
   NTStatus = UINT32;
 
@@ -103,16 +99,6 @@ begin
 end;
 
 function GetComputerNameW(lpBuffer: PWideChar; var nSize: DWORD): INTEGER; stdcall;
-begin
-  result := 0;
-end;
-
-function GetComputerNameExA(NameType: COMPUTER_NAME_FORMAT; lpBuffer: PChar; var nSize: DWORD): INTEGER; stdcall;
-begin
-  result := 0;
-end;
-
-function GetComputerNameExW(NameType: COMPUTER_NAME_FORMAT; lpBuffer: PChar; var nSize: DWORD): INTEGER; stdcall;
 begin
   result := 0;
 end;
@@ -335,10 +321,6 @@ begin
   CodeHook(Addr(Proc), ADDR(GetComputerNameA));                         // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetComputerNameW');          // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(GetComputerNameW));                         // Подмена адреса точки входа функции в процессе на адрес функции из DLL
-  Addr(Proc) := GetProcAddress(DLLHandle, 'GetComputerNameExA');        // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(GetComputerNameExA));                       // Подмена адреса точки входа функции в процессе на адрес функции из DLL
-  Addr(Proc) := GetProcAddress(DLLHandle, 'GetComputerNameExW');        // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(GetComputerNameExW));                       // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetVolumeInformationA');     // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(GetVolumeInformationA));                    // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetVolumeInformationW');     // Определить адрес функции
@@ -359,29 +341,29 @@ begin
   // Перехват вызова функций записи в реестр 
   if REGOFF = TRUE then begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'RegCreateKeyA');             // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(RegCreateKeyA));                            // Подмена адреса точки входа функции в процессе на адрес функции из DL
+  CodeHook(Addr(Proc), ADDR(RegCreateKeyA));                            // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'RegCreateKeyW');             // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(RegCreateKeyW));                            // Подмена адреса точки входа функции в процессе на адрес функции из DL
+  CodeHook(Addr(Proc), ADDR(RegCreateKeyW));                            // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'RegCreateKeyExA');           // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(RegCreateKeyExA));                          // Подмена адреса точки входа функции в процессе на адрес функции из DL
+  CodeHook(Addr(Proc), ADDR(RegCreateKeyExA));                          // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'RegCreateKeyExW');           // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(RegCreateKeyExW));                          // Подмена адреса точки входа функции в процессе на адрес функции из DL
+  CodeHook(Addr(Proc), ADDR(RegCreateKeyExW));                          // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+  Addr(Proc) := GetProcAddress(DLLHandle, 'RegSetValueA');              // Определить адрес функции
+  CodeHook(Addr(Proc), ADDR(RegSetValueA));                             // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+  Addr(Proc) := GetProcAddress(DLLHandle, 'RegSetValueW');              // Определить адрес функции
+  CodeHook(Addr(Proc), ADDR(RegSetValueW));                             // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+  Addr(Proc) := GetProcAddress(DLLHandle, 'RegSetValueExA');            // Определить адрес функции
+  CodeHook(Addr(Proc), ADDR(RegSetValueExA));                           // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+  Addr(Proc) := GetProcAddress(DLLHandle, 'RegSetValueExW');            // Определить адрес функции
+  CodeHook(Addr(Proc), ADDR(RegSetValueExW));                           // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'RegCreateKeyTransactedA');   // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(RegCreateKeyTransactedA));                  // Подмена адреса точки входа функции в процессе на адрес функции из DL
+  CodeHook(Addr(Proc), ADDR(RegCreateKeyTransactedA));                  // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   if OS > 1 then begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'RegCreateKeyTransactedW');   // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(RegCreateKeyTransactedW));                  // Подмена адреса точки входа функции в процессе на адрес функции из DL
+  CodeHook(Addr(Proc), ADDR(RegCreateKeyTransactedW));                  // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
-  Addr(Proc) := GetProcAddress(DLLHandle, 'RegSetValueA');              // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(RegSetValueA));                             // Подмена адреса точки входа функции в процессе на адрес функции из DL
-  Addr(Proc) := GetProcAddress(DLLHandle, 'RegSetValueW');              // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(RegSetValueW));                             // Подмена адреса точки входа функции в процессе на адрес функции из DL
-  Addr(Proc) := GetProcAddress(DLLHandle, 'RegSetValueExA');            // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(RegSetValueExA));                           // Подмена адреса точки входа функции в процессе на адрес функции из DL
-  Addr(Proc) := GetProcAddress(DLLHandle, 'RegSetValueExW');            // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(RegSetValueExW));                           // Подмена адреса точки входа функции в процессе на адрес функции из DL
   Addr(Proc) := GetProcAddress(DLLHandle, 'RegNotifyChangeKeyValue');   // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(RegNotifyChangeKeyValue));                  // Подмена адреса точки входа функции в процессе на адрес функции из DL
+  CodeHook(Addr(Proc), ADDR(RegNotifyChangeKeyValue));                  // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
   // Перехват вызова функций из Crypt32.dll
   FileName :=  SysPatch + '\Crypt32.dll';                               // Получить полное имя файла
