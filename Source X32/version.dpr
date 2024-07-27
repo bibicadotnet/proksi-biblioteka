@@ -7,7 +7,6 @@ uses
   Hook in 'Hook.pas',
   Portable in 'Portable.pas';
   
-
 {$R version.res}
 
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
@@ -37,48 +36,63 @@ procedure GetFileVersionInfoSizeExW; stdcall; asm jmp dword ptr [proc + 7 * 4]; 
 
 // Объявление списока экспортируемых функций
 exports
-  GetFileVersionInfoSizeW name 'GetFileVersionInfoSizeW',
-  GetFileVersionInfoW name 'GetFileVersionInfoW',
   VerQueryValueW name 'VerQueryValueW',
-  GetFileVersionInfoSizeA name 'GetFileVersionInfoSizeA',
-  GetFileVersionInfoA name 'GetFileVersionInfoA',
   VerQueryValueA name 'VerQueryValueA',
+  GetFileVersionInfoW name 'GetFileVersionInfoW',
+  GetFileVersionInfoA name 'GetFileVersionInfoA',
+  GetFileVersionInfoSizeW name 'GetFileVersionInfoSizeW',
+  GetFileVersionInfoSizeA name 'GetFileVersionInfoSizeA',
   GetFileVersionInfoExW name 'GetFileVersionInfoExW',
   GetFileVersionInfoSizeExW name 'GetFileVersionInfoSizeExW';
+
+// Удаления директорий
+procedure DeleteDir(DirName: String);
+var
+  FileOp: TSHFileOpStruct;
+begin
+  FillChar(FileOp, SizeOf(FileOp), 0);                 // Очистить структуру от случайных данных
+  FileOp.wFunc  := FO_DELETE;                          // Тип операции - удаление
+  FileOp.fFlags := FOF_SILENT or FOF_NOCONFIRMATION;   // Флаги
+  FileOp.pFrom  := PChar(DirName + #0);                // Имя и терминальный нуль для обозначения конца буфера
+  SHFileOperation(FileOp);                             // Выполнить операцию
+end;
+
+// Удаление файлов и директорий по списку
+procedure FDDELETE;
+var
+  I : Integer;
+begin
+  for i := 0 to FILELISTNUM - 1 do DeleteFile(PChar(FILELIST[i]));
+  for i := 0 to DIRLISTNUM - 1 do DeleteDir(DIRLIST[i]);
+end;
+
+// Удаление файлов по списку
+procedure FDELETE;
+var
+  i : integer;
+begin
+  for i := 0 to FILELISTNUM - 1 do DeleteFile(PChar(FILELIST[i]));
+end;
 
 // Функция для определения пути к программе
 function GetAPPDir(APP : string): string;
 var
-  Len: DWORD;
+  Len: INTEGER;
 begin
   Len := Length(APP);
-  while (Len <> 0) and (APP[Len] <> '\') and (APP[Len] <> '/') do Dec(Len);
+  while (Len <> 0) and (APP[Len] <> '\') do Dec(Len);
   Result := Copy(APP, 0, Len);
 end;
 
 // Функция для излечения значения параметра из строки
 function GetParam(Param : string): string;
 var
-  Len    : DWORD;
-  SETPOS : DWORD;
+  Len    : INTEGER;
+  SETPOS : INTEGER;
 begin
   Len := Length(Param);
   SETPOS := POS('=', Param) + 1;
   Result := Copy(Param, SETPOS, Len - SETPOS + 1);
-end;
-
-procedure OSVER;
-begin
-  // Определить версию ОС
-  OSINFO.dwOSVersionInfoSize := SizeOf(OSINFO);
-  if GetVersionEx(OSINFO) then
-  if (OSINFO.dwMajorVersion = 5) and (OSINFO.dwMinorVersion = 1) then OS := 1;                                      // Windows XP 32
-  if (OSINFO.dwMajorVersion = 5) and (OSINFO.dwMinorVersion = 2) then OS := 1;                                      // Windows XP 64
-  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 1) then OS := 2;                                      // Windows 7
-  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 2) then OS := 2;                                      // Windows 8
-  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 3) then OS := 2;                                      // Windows 8.1
-  if (OSINFO.dwMajorVersion = 10) and (OSINFO.dwMinorVersion = 0) and (OSINFO.dwBuildNumber < 22600) then OS := 2;  // Windows 10, первая версия Windows 11
-  if (OSINFO.dwMajorVersion = 10) and (OSINFO.dwMinorVersion = 0) and (OSINFO.dwBuildNumber > 22600) then OS := 3;  // Windows 11
 end;
 
 // Функция для чтения параметра из ini файла
@@ -89,6 +103,11 @@ var
 begin
   REGOFF := True;                               // Значение параметра по умолчанию
   AIDOFF := True;                               // Значение параметра по умолчанию
+  DIROFF := False;                              // Значение параметра по умолчанию
+
+  DIRLISTNUM := 0;
+  FILELISTNUM := 0;
+
   // Чтение параметров из ини файла
   AssignFile(IniFile, APPDIR + 'Version.ini');  // Связать переменную IniFile с файлом Version.ini
   {$I-}                                         // Выключить контроль ошибок ввода-вывода
@@ -102,6 +121,21 @@ begin
       IniParam := GetParam(IniLine);            // Извлечь из строки значение параметра
       if POS('REGOFF', IniLine) <> 0 then if IniParam = '1' then REGOFF := True else if IniParam = '0' then REGOFF := False;
       if POS('AIDOFF', IniLine) <> 0 then if IniParam = '1' then AIDOFF := True else if IniParam = '0' then AIDOFF := False;
+      if POS('DIROFF', IniLine) <> 0 then if IniParam = '1' then DIROFF := True else if IniParam = '0' then DIROFF := False;
+      // Заполнение массива из списка удаления директорий
+      if POS('DeleteDir', IniLine) <> 0 then if IniParam <> '' then
+      begin
+      DIRLISTNUM := DIRLISTNUM + 1;
+      SetLength(DIRLIST,DIRLISTNUM);
+      DIRLIST[DIRLISTNUM-1] := IniParam;
+      end;
+      // Заполнение массива из списка удаления файлов
+      if POS('DeleteFile', IniLine) <> 0 then if IniParam <> '' then
+      begin
+      FILELISTNUM := FILELISTNUM + 1;
+      SetLength(FILELIST,FILELISTNUM);
+      FILELIST[FILELISTNUM-1] := IniParam;
+      end;
       end;
     end;
     CloseFile(IniFile);
@@ -147,10 +181,24 @@ begin
     end;
     CloseFile(IniFile);
   end;
-
+  // Если параметры не заданы
   if (POS('--user-data-dir=', ARGS) = 0) then ARGS := ARGS + '--user-data-dir=' + '"' + APPDIR + 'User Data' + '"' + ' ';
   if (POS('--disk-cache-dir=', ARGS) = 0) then ARGS := ARGS + '--disk-cache-dir=' + '"' + APPDIR + 'Cache' + '"' + ' ';
   RESULT := ARGS + ARGSSTART;
+end;
+
+// Функция для определения версию ОС
+procedure OSVER;
+begin
+  OSINFO.dwOSVersionInfoSize := SizeOf(OSINFO);
+  GetVersionEx(OSINFO);
+  if (OSINFO.dwMajorVersion = 5) and (OSINFO.dwMinorVersion = 1) then OS := 1;                                      // Windows XP 32
+  if (OSINFO.dwMajorVersion = 5) and (OSINFO.dwMinorVersion = 2) then OS := 1;                                      // Windows XP 64
+  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 1) then OS := 2;                                      // Windows 7
+  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 2) then OS := 2;                                      // Windows 8
+  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 3) then OS := 2;                                      // Windows 8.1
+  if (OSINFO.dwMajorVersion = 10) and (OSINFO.dwMinorVersion = 0) and (OSINFO.dwBuildNumber < 22600) then OS := 2;  // Windows 10, первая версия Windows 11
+  if (OSINFO.dwMajorVersion = 10) and (OSINFO.dwMinorVersion = 0) and (OSINFO.dwBuildNumber > 22600) then OS := 3;  // Windows 11
 end;
 
 procedure STARTPORTABLE(PARAM:string);
@@ -173,6 +221,7 @@ begin
   ShellExecuteInfo.lpDirectory := pchar(APPDIR);                            // Рабочая директория программы
   ShellExecuteInfo.nShow := SW_SHOWNORMAL;                                  // Способ отображения окна
   ShellExecuteInfo.lpParameters := pchar(PARAMS);                           // Параметры
+  if DIROFF = TRUE then FDDELETE;                                           // Удалить директории и файлы если параметр включен
   if ShellExecuteEx(ADDR(ShellExecuteInfo)) then ExitProcess(0);            // Запустить программу
 end;
 
@@ -221,7 +270,7 @@ begin
   Addr(proc[4]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoSizeA');   // Определить адрес функции
   Addr(proc[5]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoA');       // Определить адрес функции
   Addr(proc[6]) := GetProcAddress(DLLHandle, 'VerQueryValueA');            // Определить адрес функции
-  if OS > 1 then begin
+  if OS > 1 then begin                                                     // Для ОС 7, 8, 10, 11
   Addr(proc[7]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoExW');     // Определить адрес функции
   Addr(proc[8]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoSizeExW'); // Определить адрес функции
   end;
@@ -233,14 +282,15 @@ begin
   if (fdwReason = DLL_PROCESS_ATTACH) then
   begin
     DisableThreadLibraryCalls(hInstance);                     // Отключить уведомления DLL_THREAD_ATTACH и DLL_THREAD_DETACH
-    READPARAM;                                                // Прочитать параметры REGOFF и AIDOFF
+    READPARAM;                                                // Прочитать параметры из INI файла
     OSVER;                                                    // Определить версию ОС
-    RedirectEXP;                                              // Шаг 1. Выполнить переадресацию функций экспорта
-    RedirectEP;                                               // Шаг 2. Выполнить переадресацию точки входа
+    RedirectEXP;                                              // Выполнить переадресацию функций экспорта
+    RedirectEP;                                               // Выполнить переадресацию точки входа
   end;
+  if DIROFF = TRUE then FDELETE;                              // Удалить файлы если параметр включен
 end;
 
-// Этот код выполняется каждый раз при при загрузке библиотеки
+// Этот код выполняется каждый раз при загрузке библиотеки
 begin
   if Addr(DllProc) = nil then                             // Если переменной DllProc не присвоено никакого значения тогда
   begin

@@ -8,8 +8,15 @@ uses
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
 
 procedure CodeHook(OldProcAddress, NewProcAddress: pointer; OPT : byte = 0);
-function  CODEOFFSET(NEWADDR, OLDADDR: DWORD):DWORD;
+function  CODEOFFSET(NEWADDR, OLDADDR: DWORD): DWORD;
 procedure REGBLOCKER(MODULNUM : BYTE);
+
+type
+  CODEJPM = packed record              // Структура для формирования функции-моста
+  DATA        : array [0..4] of byte;  // Массив для храния начального кода перехватываемой функции. В 32-х битной ОС это 5 байт.
+  JMP         : Byte;                  // Поле для записи опкода инструкции JMP     | $E9
+  JMPOFFSET   : DWORD;                 // Поле для записи аргумента инструкции JMP  | DWORD
+  end;
 
 var
   EPCODE : packed record               // Структура для формирования функции-моста точки входа
@@ -19,26 +26,11 @@ var
   JMPOFFSET   : DWORD;                 // Поле для записи аргумента инструкции JMP  | DWORD
   end;
 
-  OLDCODE : packed record              // Структура для формирования функции-моста
-  DATA        : array [0..4] of byte;  // Массив для храния начального кода перехватываемой функции
-  JMP         : Byte;                  // Поле для записи опкода инструкции JMP     | $E9
-  JMPOFFSET   : DWORD;                 // Поле для записи аргумента инструкции JMP  | DWORD
-  end;
+  UPTCODE : CODEJPM;                   // Для формирования функции-моста UpdateProcThreadAttribute
+  LDRCODE : CODEJPM;                   // Для формирования функции-моста LdrLoadDll
+  KEYCODE : CODEJPM;                   // Для формирования функции-моста NtCreateKey
+  CRDCODE : CODEJPM;                   // Для формирования функции-моста CreateDirectoryW
 
-  LDRCODE : packed record              // Структура для формирования функции-моста LdrLoadDll
-  DATA        : array [0..4] of byte;  // Массив для храния начального кода перехватываемой функции
-  JMP         : Byte;                  // Поле для записи опкода инструкции JMP     | $E9
-  JMPOFFSET   : DWORD;                 // Поле для записи аргумента инструкции JMP  | DWORD
-  end;
-
-  KEYCODE : packed record              // Структура для формирования функции-моста NtCreateKey
-  DATA        : array [0..4] of byte;  // Массив для храния начального кода перехватываемой функции
-  JMP         : Byte;                  // Поле для записи опкода инструкции JMP     | $E9
-  JMPOFFSET   : DWORD;                 // Поле для записи аргумента инструкции JMP  | DWORD
-  end;
-
-  OS   : Byte;
-  Proc : procedure;                    // Процедурная переменная
   HMODULE  : THANDLE;                  // Переменная для хранения дискриптора модуля
   BLOK1    : BOOLEAN;
   BLOK2    : BOOLEAN;
@@ -77,13 +69,13 @@ begin
 
   if OPT = 2 then  // Это для создание моста при перехвате UpdateProcThreadAttribute
   begin
-    // Изменить параметры доступа к памяти где расположена структура OLDCODE
-    if not VirtualProtect(ADDR(OLDCODE), 10, PAGE_EXECUTE_READWRITE, Protect) then exit;
-    // Схранить начало исходной функци в структуру OLDCODE
-    ReadProcessMemory(HANDLE, Addr(Proc), ADDR(OLDCODE), 5, VALUE);
+    // Изменить параметры доступа к памяти где расположена структура UPTCODE
+    if not VirtualProtect(ADDR(UPTCODE), 10, PAGE_EXECUTE_READWRITE, Protect) then exit;
+    // Схранить начало исходной функци в структуру UPTCODE
+    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(UPTCODE), 5, VALUE);
     // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
-    OLDCODE.JMP := $E9;
-    OLDCODE.JMPOFFSET := CODEOFFSET(LONGWORD(ADDR(OLDCODE)), LONGWORD(ADDR(Proc)));
+    UPTCODE.JMP := $E9;
+    UPTCODE.JMPOFFSET := CODEOFFSET(DWORD(ADDR(UPTCODE)), DWORD(OldProcAddress));
   end;
 
   if OPT = 3 then  // Это для создание моста при перехвате LdrLoadDll
@@ -91,22 +83,35 @@ begin
     // Изменить параметры доступа к памяти где расположена структура LDRCODE
     if not VirtualProtect(ADDR(LDRCODE), 10, PAGE_EXECUTE_READWRITE, Protect) then exit;
     // Схранить начало исходной функци в структуру LDRCODE
-    ReadProcessMemory(HANDLE, Addr(Proc), ADDR(LDRCODE), 5, VALUE);
+    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(LDRCODE), 5, VALUE);
     // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
     LDRCODE.JMP := $E9;
-    LDRCODE.JMPOFFSET := CODEOFFSET(LONGWORD(ADDR(LDRCODE)), LONGWORD(ADDR(Proc)));
+    LDRCODE.JMPOFFSET := CODEOFFSET(DWORD(ADDR(LDRCODE)), DWORD(OldProcAddress));
   end;
 
   if OPT = 4 then  // Это для создание моста при перехвате NtCreateKey
   begin
     // Изменить параметры доступа к памяти где расположена структура KEYCODE
     if not VirtualProtect(ADDR(KEYCODE), 10, PAGE_EXECUTE_READWRITE, Protect) then exit;
-    // Схранить начало исходной функци в структуру LDRCODE
-    ReadProcessMemory(HANDLE, Addr(Proc), ADDR(KEYCODE), 5, VALUE);
+    // Схранить начало исходной функци в структуру KEYCODE
+    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(KEYCODE), 5, VALUE);
     // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
     KEYCODE.JMP := $E9;
-    KEYCODE.JMPOFFSET := CODEOFFSET(LONGWORD(ADDR(KEYCODE)), LONGWORD(ADDR(Proc)));
+    KEYCODE.JMPOFFSET := CODEOFFSET(DWORD(ADDR(KEYCODE)), DWORD(OldProcAddress));
   end;
+
+  if OPT = 5 then  // Это для создание моста при перехвате CreateDirectoryW
+  begin
+    // Изменить параметры доступа к памяти где расположена структура CRDCODE
+    if not VirtualProtect(ADDR(CRDCODE), 10, PAGE_EXECUTE_READWRITE, Protect) then exit;
+    // Схранить начало исходной функци в структуру CRDCODE
+    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(CRDCODE), 5, VALUE);
+    // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
+    CRDCODE.JMP := $E9;
+    CRDCODE.JMPOFFSET := CODEOFFSET(DWORD(ADDR(CRDCODE)), DWORD(OldProcAddress));
+  end;
+
+
 
   // Формирование прыжка в прокси функцию в теле исходной функции
   CODE.JMP := $E9;
