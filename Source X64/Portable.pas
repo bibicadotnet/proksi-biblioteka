@@ -10,8 +10,14 @@ Hook;
 
 procedure HookPreferences;
 var
-REGOFF : boolean;          // Переменная для отключения записи в реестр
-AIDOFF : boolean;          // Переменная для отключения идентификации приложения
+  REGOFF : boolean;          // Переменная для отключения записи в реестр
+  AIDOFF : boolean;          // Переменная для отключения идентификации приложения
+  DIROFF : boolean;          // Переменная для отключения создания папок
+
+  FILELIST  : array of String;  // Массив для списка файлов
+  DIRLIST   : array of String;  // Массив для списка директорий
+  DIRLISTNUM : integer;
+  FILELISTNUM : integer;
 
 implementation
 
@@ -20,30 +26,27 @@ type
   NTStatus = UINT32;
 
   // Структура для функции LdrLoadDll и NtCreateKey
-  UNICODE_STRING = record
+  UNICODESTRING = record
   Length :        USHORT ;         // размер строки в байтах без учета символа конца строки
   MaximumLength : USHORT ;         // размер памяти, выделенной для буфера
   Buffer :   PWIDESTRING ;         // буффер - указатель на строку WideString (уникоде строка)
   end;
-  PUNICODESTR = ^UNICODE_STRING;   // указатель на структуру
 
   // Структура для функции NtCreateKey
   ObjectAttributes = packed record
   Length: ULONG;
   RootDirectory: THandle;
-  ObjectName: PUNICODESTR;
+  var ObjectName: UNICODESTRING;
   Attributes: ULONG;
   SecurityDescriptor: Pointer;
   SecurityQualityOfService: Pointer;
   end;
-  PObjectAttributes = ^ObjectAttributes;
 
   // Структура для функции PSStringFromPropertyKey
   PROPERTYKEY = packed record
   fmtid: TGUID ;
   pid: DWORD ;
   end;
-  REFPROPERTYKEY = ^PROPERTYKEY; // указатель на структуру
 
   // Структура для описания входных и выходных данных
   DATA_BLOB = record
@@ -61,15 +64,16 @@ type
 
   // Обявление типа фукции с парамеи вызова и возврата соответующими оригинальной функции  UpdateProcThreadAttribute
   UpdProcThrAttr = function (lpAttributeList: Pointer; dwFlags: DWORD; Attribute: DWORD_PTR; lpValue: Pointer;
-                             cbSize: SIZE_T; lpPreviousValue: PPointer; lpReturnSize: PSIZE_T): INTEGER; stdcall;
+                             cbSize: SIZE_T; lpPreviousValue: PPointer; lpReturnSize: PSIZE_T): BOOL; stdcall;
 
   // Обявление типа фукции с парамеи вызова и возврата соответующими оригинальной функции  LoadDll
-  LoadDll = function(PathToFile: PWideChar; Flags: DWORD; ModuleFileName: PUNICODESTR; ModuleHandle: PPointer):NTSTATUS; stdcall;
+  LoadDll = function(PathToFile: PWideChar; Flags: DWORD; var ModuleFileName: UNICODESTRING; ModuleHandle: PPointer):NTSTATUS; stdcall;
 
   // Обявление типа фукции с парамеи вызова и возврата соответующими оригинальной функции  NtCreateKey
-  CreateKey= function(KeyHandle : PHANDLE; DesiredAccess : ACCESS_MASK; ObjectAttributes : PObjectAttributes; TitleIndex:ULONG;
-                      ObjectClass : PUNICODESTR; CreateOptions:ULONG; Disposition:PULONG) : NTSTATUS; stdcall;
+  CreateKey= function(KeyHandle : PHANDLE; DesiredAccess : ACCESS_MASK; var ObjectAttributes : ObjectAttributes; TitleIndex:ULONG;
+                      var ObjectClass : UNICODESTRING; CreateOptions:ULONG; Disposition:PULONG) : NTSTATUS; stdcall;
 
+  CreateDirectory = function(lpPathName: PWideChar; lpSecurityAttributes: PSecurityAttributes): BOOL; stdcall;
 // Объявление константы с именем PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY
 // с типом данных DWORD и присвоение ей значения в соответствии с WinBase.h
 const PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY = DWORD ($00020007);
@@ -77,10 +81,12 @@ const PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY = DWORD ($00020007);
 var
   RawUpdateProcThreadAttribute : UpdProcThrAttr;
   RawCreateKey  : CreateKey;
+  RawCreateDirectoryW : CreateDirectory;
 
 {
   Описание функций для подмены в системных библиотеках
   kernel32.dll (GetComputerName, GetVolumeInformation, UpdateProcThreadAttribute)
+  kernelbase.dll (CreateDirectoryW)
   Advapi32.dll (LogonUserA, LogonUserW)
   Crypt32.dll (CryptProtectData, CryptUnprotectData)
   ntdll.dll (NtCreateKey, LoadDll)
@@ -88,19 +94,19 @@ var
 }
 
 // Модифицированная функция для блокировки System.AppUserModel.ID
-function PSStringFromPropertyKey(pkey: REFPROPERTYKEY; psz: PWideChar; cch: INTEGER): HRESULT ; stdcall;
+function PSStringFromPropertyKey(var pkey: PROPERTYKEY; psz: PWideChar; cch: INTEGER): HRESULT ; stdcall;
 begin
   result := 0;
 end;
 
-function GetComputerNameA(lpBuffer: PChar; var nSize: DWORD): INTEGER; stdcall;
+function GetComputerNameA(lpBuffer: PChar; var nSize: DWORD): BOOL; stdcall;
 begin
-  result := 0;
+  result := False;
 end;
 
-function GetComputerNameW(lpBuffer: PWideChar; var nSize: DWORD): INTEGER; stdcall;
+function GetComputerNameW(lpBuffer: PWideChar; var nSize: DWORD): BOOL; stdcall;
 begin
-  result := 0;
+  result := False;
 end;
 
 function GetVolumeInformationA
@@ -112,9 +118,9 @@ function GetVolumeInformationA
    var lpMaximumComponentLength, lpFileSystemFlags: DWORD; // размер тома и тип файловой системы
    lpFileSystemNameBuffer: PChar;                          // название файловой системы
    nFileSystemNameSize: DWORD                              // размер буфера под название файловой системы
-  ): INTEGER; stdcall;
+  ): BOOL; stdcall;
 begin
-  result := 0;
+  result := False;
 end;
 
 function GetVolumeInformationW
@@ -126,12 +132,14 @@ function GetVolumeInformationW
    var lpMaximumComponentLength, lpFileSystemFlags: DWORD;  // размер тома и тип файловой системы
    lpFileSystemNameBuffer: PWideChar;                       // название файловой системы
    nFileSystemNameSize: DWORD                               // размер буфера под название файловой системы
-  ): INTEGER; stdcall;
+  ): BOOL; stdcall;
 begin
-  result := 0;
+  result := False;
 end;
 
-// Функция UpdateProcThreadAttribute модифирована чтобы сбрасывать бит PROCESS_CREATION_MITIGATION_POLICY_BLOCK_NON_MICROSOFT_BINARIES_ALWAYS_ON
+// Функция UpdateProcThreadAttribute модифирована чтобы сбрасывать 
+// бит PROCESS_CREATION_MITIGATION_POLICY_BLOCK_NON_MICROSOFT_BINARIES_ALWAYS_ON (0x00000001ui64 << 44)
+// бит PROCESS_CREATION_MITIGATION_POLICY_WIN32K_SYSTEM_CALL_DISABLE_ALWAYS_ON (0x00000001ui64 << 28)
 function UpdateProcThreadAttribute
   (
    lpAttributeList: Pointer;        // Указатель на список атрибутов
@@ -141,7 +149,7 @@ function UpdateProcThreadAttribute
    cbSize: SIZE_T;                  // Размер значения атрибута, заданного параметром lpValue
    lpPreviousValue: PPointer;       // Этот параметр зарезервирован и должен иметь значение NULL
    lpReturnSize: PSIZE_T            // Этот параметр зарезервирован и должен иметь значение NULL
-  ): INTEGER; stdcall;
+  ): BOOL; stdcall;
 var
   Buffer : array of byte;
 begin
@@ -149,23 +157,24 @@ begin
   begin
     SetLength(Buffer, cbSize);                     // Задать размер буфера
     CopyMemory(Addr(Buffer[0]), lpValue, cbSize);  // Скопировать в массив значение атрибута из адреса по указателю
-    Buffer[5] := Buffer[5] and (0 shl 4);          // Сбросить бит MICROSOFT_BINARIES_ALWAYS_ON - это пятый бит шестого байта Int64 $100000000000
+    Buffer[5] := Buffer[5] and (0 shl 4);          // Сбросить бит NON_MICROSOFT_BINARIES_ALWAYS_ON - это пятый бит шестого байта Int64
+    Buffer[3] := Buffer[3] and (0 shl 4);          // Сбросить бит WIN32K_SYSTEM_CALL_DISABLE_ALWAYS_ON - это пятый бит четвертого байта Int64	
     CopyMemory(lpValue, Addr(Buffer[0]), cbSize);  // Скопировать в адрес по указателю значения из буфера
     Buffer := nil;                                 // Освободить память буфера
   end;
   result := RawUpdateProcThreadAttribute(lpAttributeList, dwFlags, Attribute, lpValue, cbSize, lpPreviousValue, lpReturnSize);
 end;
 
-function LogonUserA(lpszUsername, lpszDomain, lpszPassword: PAnsiChar; dwLogonType, dwLogonProvider: DWORD; var phToken: THandle): DWORD; stdcall;
+function LogonUserA(lpszUsername, lpszDomain, lpszPassword: PAnsiChar; dwLogonType, dwLogonProvider: DWORD; var phToken: THandle): BOOL; stdcall;
 begin
   phToken := $09051945;
-  result := $09051945;
+  result := True;
 end;
 
-function LogonUserW(lpszUsername, lpszDomain, lpszPassword: PWideChar; dwLogonType, dwLogonProvider: DWORD; var phToken: THandle): DWORD; stdcall;
+function LogonUserW(lpszUsername, lpszDomain, lpszPassword: PWideChar; dwLogonType, dwLogonProvider: DWORD; var phToken: THandle): BOOL; stdcall;
 begin
   phToken := $09051945;
-  result := $09051945;
+  result := True;
 end;
 
 // Модифицированная функция CryptProtectData. Входные данные передаются в выходные без шифрования.
@@ -292,19 +301,44 @@ end;
 
 // Модифицированная функция NtCreateKey для блокировки записи в реестр
 function NtCreateKey(
-                     KeyHandle : PHANDLE;
-                     DesiredAccess : ACCESS_MASK;
-                     ObjectAttributes : PObjectAttributes;
-                     TitleIndex:ULONG;
-                     ObjectClass : PUNICODESTR;
-                     CreateOptions:ULONG;
-                     Disposition:PULONG
+                     KeyHandle : PHANDLE;                    // Указатель на переменную-дескриптор, которая получает дескриптор ключа.
+                     DesiredAccess : ACCESS_MASK;            // Указывает значение ACCESS_MASK, которое определяет запрашиваемый доступ к объекту.
+                     var ObjectAttributes : ObjectAttributes;// Указатель на структуру ObjectAttributes, которая определяет имя объекта и другие атрибуты.
+                     TitleIndex:ULONG;                       // Драйверы устройств и промежуточных устройств устанавливают этот параметр равным нулю.
+                     var ObjectClass : UNICODESTRING;        // Указатель на строку UNICODESTRING, содержащую класс объекта ключа.
+                     CreateOptions:ULONG;                    // Определяет параметры, применяемые при создании или открытии ключа.
+                     Disposition:PULONG                      // указатель на переменную, которая получает значение, указывающее, был ли создан новый ключ или открыт существующий.
                      ): NTSTATUS; stdcall;
+var
+Name : String;
 begin
+  //Name := PWIDECHAR(ObjectAttributes.ObjectName.Buffer);     // Узнать имя раздела реестра к которому осуществляется доступ
+  //if (POS('Software', Name) <> 0) then DesiredAccess := 0;   // Если в имени есть Software то установить атрибут доступа только чтение
   if DesiredAccess = 1 then DesiredAccess := 0;
   if DesiredAccess = 3 then DesiredAccess := 0;
   if DesiredAccess = 514 then DesiredAccess := 0;
   Result := RawCreateKey(KeyHandle, DesiredAccess, ObjectAttributes, TitleIndex, ObjectClass, CreateOptions, Disposition);
+end;
+
+// Модифицированная функция CreateDirectoryW для блокировки создания папок из списка
+function CreateDirectoryW(lpPathName: PWideChar; lpSecurityAttributes: PSecurityAttributes): BOOL; stdcall;
+var
+  PathName : String;
+  DirName  : String;
+  I: integer;
+  NoCreate : boolean;
+begin
+  PathName := PWIDECHAR(lpPathName);                         // Взять имя директории из указателя
+  NoCreate := False;                                         // Снять флаг
+  for I := 0 to DIRLISTNUM - 1 do                            // Цикл сравнения имени директории со списком
+  begin
+    DirName := DIRLIST[i];                                   // Имя из списка в переменную
+    DELETE(DirName,1,2);                                     // Удалить первые да символа из имени в переменной. Это '.\'
+    if (POS(DirName, PathName) <> 0) then NoCreate := True;  // Если имя совпадает с именем из списка установить флаг
+    if NoCreate = True then break;                           // Если флаг установлен прервать цикл
+  end;
+  // Если флаг не установлен выполнить функции RawCreateDirectoryW иначе просто вернуть положительный результат
+  if NoCreate = False then Result := RawCreateDirectoryW(lpPathName, lpSecurityAttributes) else Result := True;
 end;
 
 procedure HookPreferences;
@@ -328,8 +362,17 @@ begin
   if OS > 1 then begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'UpdateProcThreadAttribute'); // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(UpdateProcThreadAttribute), 2);             // Подмена адреса точки входа функции в процессе на адрес функции из DLL
-  if OS = 2 then ADDR(RawUpdateProcThreadAttribute) := ADDR(OLDCODE710);// Присвоить адрес функции RawUpdateProcThreadAttribute
-  if OS = 3 then ADDR(RawUpdateProcThreadAttribute) := ADDR(OLDCODE11); // Присвоить адрес функции RawUpdateProcThreadAttribute
+  if OS = 2 then ADDR(RawUpdateProcThreadAttribute) := ADDR(UPTCODE710);// Присвоить адрес функции RawUpdateProcThreadAttribute
+  if OS = 3 then ADDR(RawUpdateProcThreadAttribute) := ADDR(UPTCODE11); // Присвоить адрес функции RawUpdateProcThreadAttribute
+  end;
+  // Перехват вызова функций из kernelbase.dll
+  if DIROFF = TRUE then begin
+  FileName :=  SysPatch + '\kernelbase.dll';                            // Получить полное имя файла
+  DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
+  Addr(Proc) := GetProcAddress(DLLHandle, 'CreateDirectoryW');          // Определить адрес функции
+  CodeHook(Addr(Proc), ADDR(CreateDirectoryW), 4);                      // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+  if OS = 2 then ADDR(RAWCreateDirectoryW) := ADDR(CRDCODE710);         // Присвоить адрес функции RAWCreateDirectoryW
+  if OS = 3 then ADDR(RAWCreateDirectoryW) := ADDR(CRDCODE11);          // Присвоить адрес функции RAWCreateDirectoryW
   end;
   // Перехват вызова функций из advapi32.dll
   FileName :=  SysPatch + '\advapi32.dll';                              // Получить полное имя файла
@@ -379,6 +422,7 @@ begin
   CodeHook(Addr(Proc), ADDR(NtCreateKey), 3);                           // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   ADDR(RawCreateKey) := ADDR(KEYCODE);                                  // Присвоить адрес функции RawCreateKey
   end;
+  // Перехват вызова функций из Propsys.dll
   if AIDOFF = TRUE then begin  
   FileName :=  SysPatch + '\Propsys.dll';   ;                           // Получить полное имя файла
   DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
