@@ -1,4 +1,4 @@
-﻿unit Hook;
+unit Hook;
 
 interface
 
@@ -35,6 +35,12 @@ var
 
   KEYCODE   : packed record             // Структура для формирования функции-моста NtCreateKey
   DATA      : array [0..23] of byte;    // Массив для храния начального кода перехватываемой функции 11 байт XP и 7 или 24 байта 10 и 11
+  end;
+
+  CRDCODEXP  : packed record             // Структура для формирования функции-моста CreateDirectoryW в XP
+  DATA       : array [0..17] of byte;    // Массив для храния начального кода перехватываемой функции 18 байт в XP
+  JMPOP      : array [0..2] of Word;     // Опкод инструкции  Jmp qword ptr              | FF 25 00 00 00 00
+  JMPARG     : POINTER;                  // Поле для записи аргумента инструкции Jmp     | QWORD $11 22 33 44 55 66 77 88
   end;
 
   CRDCODE710 : packed record             // Структура для формирования функции-моста CreateDirectoryW в 7 и 10
@@ -101,7 +107,7 @@ begin
   begin
     // Изменить параметры доступа к памяти где расположена структура OLDCODE
     if not VirtualProtect(ADDR(UPTCODE710), 35, PAGE_EXECUTE_READWRITE, Protect) then exit;
-    // Схранить начало исходной функци в структуру OLDCODE. Целое число инструкций занимает 15 байт.
+    // Схранить начало исходной функци в структуру OLDCODE. Целое число инструкций занимает 21 байт.
     ReadProcessMemory(HANDLE, OldProcAddress, ADDR(UPTCODE710), 21, VALUE);
     // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
     UPTCODE710.JMPOP[0] := $25FF;
@@ -114,7 +120,7 @@ begin
   begin
     // Изменить параметры доступа к памяти где расположена структура OLDCODE
     if not VirtualProtect(ADDR(UPTCODE11), 34, PAGE_EXECUTE_READWRITE, Protect) then exit;
-    // Схранить начало исходной функци в структуру UPTCODE. Целое число инструкций занимает 15 байт.
+    // Схранить начало исходной функци в структуру UPTCODE. Целое число инструкций занимает 20 байт.
     ReadProcessMemory(HANDLE, OldProcAddress, ADDR(UPTCODE11), 20, VALUE);
     // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
     UPTCODE11.JMPOP[0] := $25FF;
@@ -131,11 +137,24 @@ begin
     ReadProcessMemory(HANDLE, OldProcAddress, ADDR(KEYCODE), 24, VALUE);
   end;
 
+  if (OPT = 4) and (OS = 1) then  // Это для создание моста при перехвате CreateDirectoryW  WINXP
+  begin
+    // Изменить параметры доступа к памяти где расположена структура CRDCODE
+    if not VirtualProtect(ADDR(CRDCODEXP), 32, PAGE_EXECUTE_READWRITE, Protect) then exit;
+    // Схранить начало исходной функци в структуру CRDCODE. Целое число инструкций занимает 18 байт.
+    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(CRDCODEXP), 18, VALUE);
+    // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
+    CRDCODEXP.JMPOP[0] := $25FF;
+    CRDCODEXP.JMPOP[1] := $0000;
+    CRDCODEXP.JMPOP[2] := $0000;
+    CRDCODEXP.JMPARG := Pointer(UInt64(OldProcAddress) + 18);
+  end;
+
   if (OPT = 4) and (OS = 2) then  // Это для создание моста при перехвате CreateDirectoryW  WIN7-10
   begin
     // Изменить параметры доступа к памяти где расположена структура CRDCODE
     if not VirtualProtect(ADDR(CRDCODE710), 43, PAGE_EXECUTE_READWRITE, Protect) then exit;
-    // Схранить начало исходной функци в структуру CRDCODE
+    // Схранить начало исходной функци в структуру CRDCODE. Целое число инструкций занимает 29 байт.
     ReadProcessMemory(HANDLE, OldProcAddress, ADDR(CRDCODE710), 29, VALUE);
     // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
     CRDCODE710.JMPOP[0] := $25FF;
@@ -148,7 +167,7 @@ begin
   begin
     // Изменить параметры доступа к памяти где расположена структура CRDCODE
     if not VirtualProtect(ADDR(CRDCODE11), 40, PAGE_EXECUTE_READWRITE, Protect) then exit;
-    // Схранить начало исходной функци в структуру CRDCODE
+    // Схранить начало исходной функци в структуру CRDCODE. Целое число инструкций занимает 26 байт.
     ReadProcessMemory(HANDLE, OldProcAddress, ADDR(CRDCODE11), 26, VALUE);
     // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
     CRDCODE11.JMPOP[0] := $25FF;
