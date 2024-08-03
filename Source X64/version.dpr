@@ -1,11 +1,12 @@
-﻿library version;
+library version;
 
 uses
   Windows,
   PSAPI,
   ShellAPI,
   Hook in 'Hook.pas',
-  Portable in 'Portable.pas';
+  Portable in 'Portable.pas',
+  Utils in 'Utils.pas';
 
 {$R version.res}
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
@@ -57,21 +58,43 @@ begin
   ShFileOperation(FileOp);                             // Выполнить операцию
 end;
 
+// Удаление файлов по списку и шаблону
+procedure FDELETE;
+var
+  i : INTEGER;
+  DirName : String;
+  Len: INTEGER;
+  SearchResult : TSearchRec;
+begin
+  for i := 0 to FILELISTNUM - 1 do
+  begin
+  if XPOS('*', FILELIST[i]) = 0 then DeleteFile(PChar(FILELIST[i]));
+  if XPOS('*', FILELIST[i]) <> 0 then
+    begin
+      DirName := '';
+      // Извлечь путь к файлу
+      Len := Length(FILELIST[i]);
+      while (Len <> 0) and (FILELIST[i][Len] <> '\') do Dec(Len);
+      DirName := Copy(FILELIST[i], 0, Len);
+      // Найти и удалить файлы по шаблону
+      if FindFirst(FILELIST[i], faAnyFile, SearchResult) = 0 then
+        begin
+          repeat
+            DeleteFile(PChar(DirName + SearchResult.Name));
+          until FindNext(SearchResult) <> 0;
+          FindClose(SearchResult);
+        end;
+    end;
+  end;
+end;
+
 // Удаление файлов и директорий по списку
 procedure FDDELETE;
 var
   i : integer;
 begin
-  for i := 0 to FILELISTNUM - 1 do DeleteFile(PChar(FILELIST[i]));
+  FDELETE;
   for i := 0 to DIRLISTNUM - 1 do DeleteDir(DIRLIST[i]);
-end;
-
-// Удаление файлов по списку
-procedure FDELETE;
-var
-  i : integer;
-begin
-  for i := 0 to FILELISTNUM - 1 do DeleteFile(PChar(FILELIST[i]));
 end;
 
 // Функция для определения пути к программе
