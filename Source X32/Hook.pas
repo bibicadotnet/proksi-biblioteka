@@ -1,4 +1,4 @@
-﻿unit Hook;
+unit Hook;
 
 interface
 
@@ -110,8 +110,6 @@ begin
     CRDCODE.JMP := $E9;
     CRDCODE.JMPOFFSET := CODEOFFSET(DWORD(ADDR(CRDCODE)), DWORD(OldProcAddress));
   end;
-
-
 
   // Формирование прыжка в прокси функцию в теле исходной функции
   CODE.JMP := $E9;
