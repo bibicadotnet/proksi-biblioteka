@@ -1,11 +1,12 @@
-﻿library version;
+library version;
 
 uses
   Windows,
   PSAPI,
   ShellAPI,
   Hook in 'Hook.pas',
-  Portable in 'Portable.pas';
+  Portable in 'Portable.pas',
+  Utils in 'Utils.pas';
   
 {$R version.res}
 
@@ -57,21 +58,43 @@ begin
   SHFileOperation(FileOp);                             // Выполнить операцию
 end;
 
+// Удаление файлов по списку и шаблону
+procedure FDELETE;
+var
+  i : INTEGER;
+  DirName : String;
+  Len: INTEGER;
+  SearchResult : TSearchRec;
+begin
+  for i := 0 to FILELISTNUM - 1 do
+  begin
+  if XPOS('*', FILELIST[i]) = 0 then DeleteFile(PChar(FILELIST[i]));
+  if XPOS('*', FILELIST[i]) <> 0 then
+    begin
+      DirName := '';
+      // Извлечь путь к файлу
+      Len := Length(FILELIST[i]);
+      while (Len <> 0) and (FILELIST[i][Len] <> '\') do Dec(Len);
+      DirName := Copy(FILELIST[i], 0, Len);
+      // Найти и удалить файлы по шаблону
+      if FindFirst(FILELIST[i], faAnyFile, SearchResult) = 0 then
+        begin
+          repeat
+            DeleteFile(PChar(DirName + SearchResult.Name));
+          until FindNext(SearchResult) <> 0;
+          FindClose(SearchResult);
+        end;
+    end;
+  end;
+end;
+
 // Удаление файлов и директорий по списку
 procedure FDDELETE;
 var
   I : Integer;
 begin
-  for i := 0 to FILELISTNUM - 1 do DeleteFile(PChar(FILELIST[i]));
+  FDELETE;
   for i := 0 to DIRLISTNUM - 1 do DeleteDir(DIRLIST[i]);
-end;
-
-// Удаление файлов по списку
-procedure FDELETE;
-var
-  i : integer;
-begin
-  for i := 0 to FILELISTNUM - 1 do DeleteFile(PChar(FILELIST[i]));
 end;
 
 // Функция для определения пути к программе
@@ -104,6 +127,7 @@ begin
   REGOFF := True;                               // Значение параметра по умолчанию
   AIDOFF := True;                               // Значение параметра по умолчанию
   DIROFF := False;                              // Значение параметра по умолчанию
+  RMDISK := False;                              // Значение параметра по умолчанию
 
   DIRLISTNUM := 0;
   FILELISTNUM := 0;
@@ -122,6 +146,8 @@ begin
       if POS('REGOFF', IniLine) <> 0 then if IniParam = '1' then REGOFF := True else if IniParam = '0' then REGOFF := False;
       if POS('AIDOFF', IniLine) <> 0 then if IniParam = '1' then AIDOFF := True else if IniParam = '0' then AIDOFF := False;
       if POS('DIROFF', IniLine) <> 0 then if IniParam = '1' then DIROFF := True else if IniParam = '0' then DIROFF := False;
+      if POS('RMDISK', IniLine) <> 0 then if IniParam = '1' then RMDISK := True else if IniParam = '0' then RMDISK := False;
+
       // Заполнение массива из списка удаления директорий
       if POS('DeleteDir', IniLine) <> 0 then if IniParam <> '' then
       begin
