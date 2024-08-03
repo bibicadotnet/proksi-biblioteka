@@ -1,9 +1,11 @@
-﻿unit Portable;
+unit Portable;
 
 interface
 
 uses
 Windows,
+PsApi,
+Utils,
 Hook;
 
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
@@ -13,6 +15,7 @@ var
   REGOFF : boolean;          // Переменная для отключения записи в реестр
   AIDOFF : boolean;          // Переменная для отключения идентификации приложения
   DIROFF : boolean;          // Переменная для отключения создания папок
+  RMDISK : boolean;          // Переменная для включения определения пути к TEMP на рамдиске
 
   FILELIST  : array of String;  // Массив для списка файлов
   DIRLIST   : array of String;  // Массив для списка директорий
@@ -187,15 +190,11 @@ function CryptProtectData  (
                             dwFlags: DWORD;                               // флаги, управляющие процессом шифрования
                             var pDataOut: DATA_BLOB                       // указатель на структуру pDataOut типа DATA_BLOB с выходными данными
                             ): BOOL; stdcall;
-var
-  Buffer : array of byte;
+
 begin
   pDataOut.cbData := pDataIn.cbData;                                      // Размер выходных данных равен размеру входных
-  SetLength(Buffer, pDataIn.cbData);                                      // Задать размер буфера равным размеру входных данных
-  CopyMemory(Addr(Buffer[0]), pDataIn.pbData, pDataIn.cbData);            // Скопировать в массив входные данные
   pDataOut.pbData := PBYTE(LocalAlloc(LMEM_FIXED, pDataIn.cbData));       // Выделить фиксированную память для блока выходных данных
-  CopyMemory(pDataOut.pbData, Addr(Buffer[0]), pDataIn.cbData);           // Скопировать из массива в блок выходных данных
-  Buffer := nil;                                                          // Освободить память буфера
+  CopyMemory(pDataOut.pbData, pDataIn.pbData, pDataIn.cbData);            // Скопировать входные данные в блок выходных данных
   result := TRUE;
 end;
 
@@ -209,15 +208,11 @@ function CryptUnprotectData(
                             dwFlags: DWORD;                               // флаги, управляющие процессом шифрования
                             var pDataOut: DATA_BLOB                       // указатель на структуру pDataOut типа DATA_BLOB с выходными данными
                             ): BOOL; stdcall;
-var
-  Buffer : array of byte;
+
 begin
   pDataOut.cbData := pDataIn.cbData;                                      // Размер выходных данных равен размеру входных
-  SetLength(Buffer, pDataOut.cbData);                                     // Задать размер буфера равным размеру входных данных
-  CopyMemory(Addr(Buffer[0]), pDataIn.pbData, pDataIn.cbData);            // Скопировать в массив входные данные
   pDataOut.pbData := PBYTE(LocalAlloc(LMEM_FIXED, pDataIn.cbData));       // Выделить фиксированную память для блока выходных данных
-  CopyMemory(pDataOut.pbData, Addr(Buffer[0]), pDataIn.cbData);           // Скопировать из массива в блок выходных данных
-  Buffer := nil;                                                          // Освободить память буфера
+  CopyMemory(pDataOut.pbData, pDataIn.pbData, pDataIn.cbData);            // Скопировать входные данные в блок выходных данных
   result := TRUE;
 end;
 
@@ -309,11 +304,7 @@ function NtCreateKey(
                      CreateOptions:ULONG;                    // Определяет параметры, применяемые при создании или открытии ключа.
                      Disposition:PULONG                      // указатель на переменную, которая получает значение, указывающее, был ли создан новый ключ или открыт существующий.
                      ): NTSTATUS; stdcall;
-var
-Name : String;
 begin
-  //Name := PWIDECHAR(ObjectAttributes.ObjectName.Buffer);     // Узнать имя раздела реестра к которому осуществляется доступ
-  //if (POS('Software', Name) <> 0) then DesiredAccess := 0;   // Если в имени есть Software то установить атрибут доступа только чтение
   if DesiredAccess = 1 then DesiredAccess := 0;
   if DesiredAccess = 3 then DesiredAccess := 0;
   if DesiredAccess = 514 then DesiredAccess := 0;
@@ -334,11 +325,38 @@ begin
   begin
     DirName := DIRLIST[i];                                   // Имя из списка в переменную
     DELETE(DirName,1,2);                                     // Удалить первые да символа из имени в переменной. Это '.\'
-    if (POS(DirName, PathName) <> 0) then NoCreate := True;  // Если имя совпадает с именем из списка установить флаг
+    if XPOS(DirName, PathName) <> 0 then NoCreate := True;   // Если имя совпадает с именем из списка установить флаг
     if NoCreate = True then break;                           // Если флаг установлен прервать цикл
   end;
   // Если флаг не установлен выполнить функции RawCreateDirectoryW иначе просто вернуть положительный результат
   if NoCreate = False then Result := RawCreateDirectoryW(lpPathName, lpSecurityAttributes) else Result := True;
+end;
+
+// Модифицированная функция для получения имени файла из его указателя
+function GetFinalPathNameByHandleW(hFile: THandle; lpszFilePath: PWidechar; cchFilePath: DWORD; dwFlags: DWORD): DWORD; stdcall;
+var
+  FileSizeHi, FileSizeLo : cardinal;
+  hFileMap : THandle;
+  FileName : array [0..MAX_PATH] of WideChar;
+  pMem : pointer;
+begin
+  FileSizeHi := 0;
+  FileSizeLo := GetFileSize(hFile, ADDR(FileSizeHi));                              // Получить размер файла по указателб на него
+  hFileMap := CreateFileMapping(hFile, nil, PAGE_READONLY, 0, FileSizeLo, nil);    // Создать объект "проецируемый файл"
+  if (hFileMap <> 0) then                                                          // Если успешно, тогда
+  begin
+    pMem := MapViewOfFile (hFileMap, FILE_MAP_READ, 0, 0, 1);                      // Создать проецируемый файл, чтобы получить имя файла.
+    if (pMem <> nil) then                                                          // если успешно, тогда
+      begin
+      if GetMappedFileNameW(GetCurrentProcess, pMem, FileName, MAX_PATH) <> 0 then // Получить имя файла в виде пути к имени устройства, если успешно тогда
+        begin
+            CopyMemory(lpszFilePath, ADDR(FileName), Length(FileName));
+        end;
+      UnmapViewOfFile(pMem);
+      end;
+    CloseHandle(hFileMap);
+  end;
+  Result := Length(FileName);
 end;
 
 procedure HookPreferences;
@@ -365,14 +383,23 @@ begin
   if OS = 2 then ADDR(RawUpdateProcThreadAttribute) := ADDR(UPTCODE710);// Присвоить адрес функции RawUpdateProcThreadAttribute
   if OS = 3 then ADDR(RawUpdateProcThreadAttribute) := ADDR(UPTCODE11); // Присвоить адрес функции RawUpdateProcThreadAttribute
   end;
+  if (OS = 1) and (DIROFF = TRUE) then begin
+  Addr(Proc) := GetProcAddress(DLLHandle, 'CreateDirectoryW');          // Определить адрес функции
+  CodeHook(Addr(Proc), ADDR(CreateDirectoryW), 4);                      // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+  ADDR(RAWCreateDirectoryW) := ADDR(CRDCODEXP);                         // Присвоить адрес функции RAWCreateDirectoryW
+  end;
   // Перехват вызова функций из kernelbase.dll
-  if DIROFF = TRUE then begin
+  if (OS > 1) and (DIROFF = TRUE) then begin
   FileName :=  SysPatch + '\kernelbase.dll';                            // Получить полное имя файла
   DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
   Addr(Proc) := GetProcAddress(DLLHandle, 'CreateDirectoryW');          // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(CreateDirectoryW), 4);                      // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   if OS = 2 then ADDR(RAWCreateDirectoryW) := ADDR(CRDCODE710);         // Присвоить адрес функции RAWCreateDirectoryW
   if OS = 3 then ADDR(RAWCreateDirectoryW) := ADDR(CRDCODE11);          // Присвоить адрес функции RAWCreateDirectoryW
+  end;
+  if (OS > 1) and (RMDISK = TRUE) then begin
+  Addr(Proc) := GetProcAddress(DLLHandle, 'GetFinalPathNameByHandleW'); // Определить адрес функции
+  CodeHook(Addr(Proc), ADDR(GetFinalPathNameByHandleW));                // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
   // Перехват вызова функций из advapi32.dll
   FileName :=  SysPatch + '\advapi32.dll';                              // Получить полное имя файла
