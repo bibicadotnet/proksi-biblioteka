@@ -17,10 +17,11 @@ var
   DIROFF : boolean;          // Переменная для отключения создания папок
   RMDISK : boolean;          // Переменная для включения определения пути к TEMP на рамдиске
 
-  FILELIST  : array of String;  // Массив для списка файлов
-  DIRLIST   : array of String;  // Массив для списка директорий
-  DIRLISTNUM : integer;
-  FILELISTNUM : integer;
+  FILELIST     : array of String;  // Массив списка файлов
+  DELDIRLIST   : array of String;  // Массив списка директорий для удаления
+  BLOCKDIRLIST : array of String;  // Массив списка директорий для блокировки
+  DIRLISTNUM   : integer;          // Число эдементов массива списка директорий
+  FILELISTNUM  : integer;          // Число эдементов массива списка файлов
 
 implementation
 
@@ -88,8 +89,8 @@ var
 
 {
   Описание функций для подмены в системных библиотеках
-  kernel32.dll (GetComputerName, GetVolumeInformation, UpdateProcThreadAttribute)
-  kernelbase.dll (CreateDirectoryW)
+  kernel32.dll (GetComputerName, GetVolumeInformation, UpdateProcThreadAttribute, CreateDirectoryW в XP)
+  kernelbase.dll (CreateDirectoryW в 7-11)
   Advapi32.dll (LogonUserA, LogonUserW)
   Crypt32.dll (CryptProtectData, CryptUnprotectData)
   ntdll.dll (NtCreateKey, LoadDll)
@@ -208,7 +209,6 @@ function CryptUnprotectData(
                             dwFlags: DWORD;                               // флаги, управляющие процессом шифрования
                             var pDataOut: DATA_BLOB                       // указатель на структуру pDataOut типа DATA_BLOB с выходными данными
                             ): BOOL; stdcall;
-
 begin
   pDataOut.cbData := pDataIn.cbData;                                      // Размер выходных данных равен размеру входных
   pDataOut.pbData := PBYTE(LocalAlloc(LMEM_FIXED, pDataIn.cbData));       // Выделить фиксированную память для блока выходных данных
@@ -323,8 +323,7 @@ begin
   NoCreate := False;                                         // Снять флаг
   for I := 0 to DIRLISTNUM - 1 do                            // Цикл сравнения имени директории со списком
   begin
-    DirName := DIRLIST[i];                                   // Имя из списка в переменную
-    DELETE(DirName,1,2);                                     // Удалить первые да символа из имени в переменной. Это '.\'
+    DirName := BLOCKDIRLIST[i];                              // Имя из списка блокировки в переменную
     if XPOS(DirName, PathName) <> 0 then NoCreate := True;   // Если имя совпадает с именем из списка установить флаг
     if NoCreate = True then break;                           // Если флаг установлен прервать цикл
   end;
