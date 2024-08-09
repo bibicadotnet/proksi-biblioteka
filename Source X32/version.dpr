@@ -17,10 +17,15 @@ VAR
   Proc      : array [1..8] of Procedure;   // массив типа Procedure
   FileName  : string;                      // Переменная для хранения полного имени файла
   APPDIR    : string;                      // Переменная для хранения пути к программе
-  PARAMS    : string;                      // Переменная для хранения параметров
+  PARAMS    : string;                      // Переменная для хранения параметров запуска
   ExeMain   : procedure;                   // Процедурная переменная для стартовой функции
   IniFile   : TextFile;                    // Переменная типа TextFile для файла настроек
   OSINFO    : TOSVersionInfo;
+
+  FULLPATCH : boolean;
+  DATADIR   : string;
+  CACHEDIR  : string;
+  RUNPARAM  : string;
 
 // Описание функций для метода dll wraper
 // Функции представляют собой джампы на адреса функций системного файла version.dll.
@@ -46,7 +51,7 @@ exports
   GetFileVersionInfoExW name 'GetFileVersionInfoExW',
   GetFileVersionInfoSizeExW name 'GetFileVersionInfoSizeExW';
 
-// Удаления директорий
+// Функция удаления директорий
 procedure DeleteDir(DirName: String);
 var
   FileOp: TSHFileOpStruct;
@@ -94,17 +99,17 @@ var
   I : Integer;
 begin
   FDELETE;
-  for i := 0 to DIRLISTNUM - 1 do DeleteDir(DIRLIST[i]);
+  for i := 0 to DIRLISTNUM - 1 do DeleteDir(DELDIRLIST[i]);
 end;
 
 // Функция для определения пути к программе
-function GetAPPDir(APP : string): string;
+function GetAPPDir(DIR : string): string;
 var
   Len: INTEGER;
 begin
-  Len := Length(APP);
-  while (Len <> 0) and (APP[Len] <> '\') do Dec(Len);
-  Result := Copy(APP, 0, Len);
+  Len := Length(DIR);
+  while (Len <> 0) and (DIR[Len] <> '\') do Dec(Len);
+  Result := Copy(DIR, 0, Len);
 end;
 
 // Функция для излечения значения параметра из строки
@@ -128,6 +133,11 @@ begin
   AIDOFF := True;                               // Значение параметра по умолчанию
   DIROFF := False;                              // Значение параметра по умолчанию
   RMDISK := False;                              // Значение параметра по умолчанию
+  FULLPATCH := True;                            // Значение параметра по умолчанию
+
+  DATADIR   := '';
+  CACHEDIR  := '';
+  RUNPARAM  := '';
 
   DIRLISTNUM := 0;
   FILELISTNUM := 0;
@@ -143,27 +153,37 @@ begin
     if POS(';', IniLine) = 0 then               // Если строка не комментарий
       begin
       IniParam := GetParam(IniLine);            // Извлечь из строки значение параметра
-      if POS('REGOFF', IniLine) <> 0 then if IniParam = '1' then REGOFF := True else if IniParam = '0' then REGOFF := False;
-      if POS('AIDOFF', IniLine) <> 0 then if IniParam = '1' then AIDOFF := True else if IniParam = '0' then AIDOFF := False;
-      if POS('DIROFF', IniLine) <> 0 then if IniParam = '1' then DIROFF := True else if IniParam = '0' then DIROFF := False;
-      if POS('RMDISK', IniLine) <> 0 then if IniParam = '1' then RMDISK := True else if IniParam = '0' then RMDISK := False;
+      if POS('REGOFF=', IniLine) <> 0 then if IniParam = '1' then REGOFF := True else if IniParam = '0' then REGOFF := False;
+      if POS('AIDOFF=', IniLine) <> 0 then if IniParam = '1' then AIDOFF := True else if IniParam = '0' then AIDOFF := False;
+      if POS('DIROFF=', IniLine) <> 0 then if IniParam = '1' then DIROFF := True else if IniParam = '0' then DIROFF := False;
+      if POS('RMDISK=', IniLine) <> 0 then if IniParam = '1' then RMDISK := True else if IniParam = '0' then RMDISK := False;
 
-      // Заполнение массива из списка удаления директорий
+      if POS('APPDIR=', IniLine) <> 0 then if IniParam = '0' then FULLPATCH := False else if IniParam = '1' then FULLPATCH := True;
+      if POS('DATADIR=', IniLine) <> 0 then if IniParam <> '' then DATADIR := IniParam;
+      if POS('CACHEDIR=', IniLine) <> 0 then if IniParam <> '' then CACHEDIR := IniParam;
+      if POS('RUNPARAM=', IniLine) <> 0 then if IniParam <> '' then RUNPARAM := IniParam;
+
+      // Заполнение массивов из списка удаления директорий
       if POS('DeleteDir', IniLine) <> 0 then if IniParam <> '' then
-      begin
-      DIRLISTNUM := DIRLISTNUM + 1;
-      SetLength(DIRLIST,DIRLISTNUM);
-      DIRLIST[DIRLISTNUM-1] := IniParam;
-      end;
+        begin
+        if DATADIR <> '' then REPLACE(IniParam, DATADIR);
+        DIRLISTNUM := DIRLISTNUM + 1;
+        SetLength(DELDIRLIST,DIRLISTNUM);
+        SetLength(BLOCKDIRLIST,DIRLISTNUM);
+        DELDIRLIST[DIRLISTNUM-1] := IniParam;
+        BLOCKDIRLIST[DIRLISTNUM-1] := DirNameDistil(IniParam);
+        end;
       // Заполнение массива из списка удаления файлов
       if POS('DeleteFile', IniLine) <> 0 then if IniParam <> '' then
-      begin
-      FILELISTNUM := FILELISTNUM + 1;
-      SetLength(FILELIST,FILELISTNUM);
-      FILELIST[FILELISTNUM-1] := IniParam;
+        begin
+        if DATADIR <> '' then REPLACE(IniParam, DATADIR);  // Заменить %DATADIR% на значение из параметра DATADIR
+        FILELISTNUM := FILELISTNUM + 1;
+        SetLength(FILELIST,FILELISTNUM);
+        FILELIST[FILELISTNUM-1] := IniParam;
+        end;
       end;
+
       end;
-    end;
     CloseFile(IniFile);
   end;
 end;
@@ -174,9 +194,12 @@ var
   IniLine : String;
   IniParam : String;
   APP : String;
-  ARGSSTART : STRING;
+  ARGSSTART : String;
+
+  USERDATADIR    : String;
+  DISKCACHEDIR   : String;
+
 begin
-  APPDIR := GetAPPDir(AppPatch);
   APP := APPDIR;
   ARGSSTART := '';
   // Проверка наличия параметра '--single-argument'
@@ -185,31 +208,31 @@ begin
     ARGSSTART := ARGS;
     ARGS := '';
   end;
+
   ARGS := ARGS + '--portable' + ' ';
   ARGS := ARGS + '--disable-features=RendererCodeIntegrity,FlashDeprecationWarning' + ' ';
 
-  // Чтение параметров из ини файла
-  AssignFile(IniFile, APPDIR + 'Version.ini');  // Связать переменную IniFile с файлом Version.ini
-  {$I-}                                         // Выключить контроль ошибок ввода-вывода
-  Reset(IniFile);                               // Открыть файл для чтения
-  {$I+}                                         // Включить контроль ошибок ввода-вывода
-  if IOResult = 0 then begin                    // Если ошибок нет (файл отрыт) выполнить построчное чтение файла
-  while (not EOF(IniFile)) do begin             // Пока не достигнут конец файла
-    Readln(IniFile, IniLine);                   // Прочитат строку в переменную IniLine
-    if POS(';', IniLine) = 0 then               // Если строка не комментарий
-      begin
-      IniParam := GetParam(IniLine);            // Извлечь из строки значение параметра
-      if POS('APPDIR', IniLine) <> 0 then if IniParam = '1' then APP := APPDIR else if IniParam = '0' then APP := '';
-      if POS('DATADIR', IniLine) <> 0 then if IniParam <> '' then ARGS := ARGS + '--user-data-dir=' + '"' + APP + IniParam + '"' + ' ';
-      if POS('CACHEDIR', IniLine) <> 0 then if IniParam <> '' then ARGS := ARGS + '--disk-cache-dir=' + '"' + APP + IniParam + '"' + ' ';
-      if POS('RUNPARAM', IniLine) <> 0 then ARGS := ARGS + IniParam + ' ';
-      end;
-    end;
-    CloseFile(IniFile);
-  end;
+  //if (POS('--disk-cache-dir=', ARGS) = 0) then ARGS := ARGS + '--disk-cache-dir=' + '"' + 'nul' + '"' + ' ';
+  //if (POS('--disk-cache-size=', ARGS) = 0) then ARGS := ARGS + '--disk-cache-size=' + '"' + '0' + '"' + ' ';
+  //if (POS('--media-cache-size=', ARGS) = 0) then ARGS := ARGS + '--media-cache-size=' + '"' + '0' + '"' + ' ';
+  //ARGS := ARGS + '--simulate-critical-update' + ' ';
+  //ARGS := ARGS + '--disable-logging' + ' ';
+  //ARGS := ARGS + '--no-first-run' + ' ';
+  //ARGS := ARGS + '--no-sandbox' + ' ';
+  //ARGS := ARGS + '--test-type' + ' ';
+  //ARGS := ARGS + '--ppapi-flash-path=' + '"' + APPDIR + 'plugins\pepflashplayer32.dll' + ' ';
+
+  if FULLPATCH = FALSE then APP := '';
+  if DATADIR <> '' then USERDATADIR := GETUSERDATADIR(APP, DATADIR);
+  if CACHEDIR <> '' then DISKCACHEDIR := GETDISKCACHEDIR(APP, CACHEDIR);
+
+  if DATADIR <> '' then ARGS := ARGS + '--user-data-dir=' + '"' + USERDATADIR + '"' + ' ';
+  if CACHEDIR <> '' then ARGS := ARGS + '--disk-cache-dir=' + '"' + DISKCACHEDIR + '"' + ' ';
+  if RUNPARAM <> '' then ARGS := ARGS + RUNPARAM + ' ';
+
   // Если параметры не заданы
-  if (POS('--user-data-dir=', ARGS) = 0) then ARGS := ARGS + '--user-data-dir=' + '"' + APPDIR + 'User Data' + '"' + ' ';
-  if (POS('--disk-cache-dir=', ARGS) = 0) then ARGS := ARGS + '--disk-cache-dir=' + '"' + APPDIR + 'Cache' + '"' + ' ';
+  if POS('--user-data-dir=', ARGS) = 0 then ARGS := ARGS + '--user-data-dir=' + '"' + APPDIR + 'User Data' + '"' + ' ';
+  if POS('--disk-cache-dir=', ARGS) = 0 then ARGS := ARGS + '--disk-cache-dir=' + '"' + APPDIR + 'Cache' + '"' + ' ';
   RESULT := ARGS + ARGSSTART;
 end;
 
@@ -227,7 +250,7 @@ begin
   if (OSINFO.dwMajorVersion = 10) and (OSINFO.dwMinorVersion = 0) and (OSINFO.dwBuildNumber > 22600) then OS := 3;  // Windows 11
 end;
 
-procedure STARTPORTABLE(PARAM:string);
+procedure STARTPORTABLE(ARGS:string);
 var
   ShellExecuteInfo: TShellExecuteInfo;
 begin
@@ -235,8 +258,9 @@ begin
   // Если вместо 0 вписать hInstance, то будет путь к имени DLL файла
   GetModuleFileName(0, AppPatch, SizeOF(AppPatch));
   FileName := AppPatch;
-  PARAMS := ADDParam(PARAM);
+
   APPDIR := GetAPPDir(AppPatch);
+  PARAMS := ADDParam(ARGS);
   // MessageBox(0, pchar(PARAMS), 'Параметры перед запуском', MB_OK);       // Вывод окна перед запуском. Для отладки
   // Заполнение структуры для запуска программы
   FillChar(ShellExecuteInfo, SizeOf(TShellExecuteInfo), 0) ;                // Очистить структуру от случайных данных
