@@ -44,8 +44,65 @@ procedure FindClose(var F: TSearchRec);
 function FindFirst(const Path: string; Attr: Integer; var  F: TSearchRec): Integer;
 function FindNext(var F: TSearchRec): Integer;
 function XPOS(Const SubStr, Str : String) : Integer;
+procedure REPLACE(var STR1: string; STR2: string);
+function GETUSERDATADIR(const APPDIR: string; DATADIR : string): string;
+function GETDISKCACHEDIR(const APPDIR: string; CACHEDIR : string): string;
+function DirNameDistil(const Dir : string): string;
 
 implementation
+
+// Удалить из имени директории последовательно все '..\' и '.'
+function DirNameDistil(const Dir : string): string;
+var DirName : String;
+begin
+  DirName := Dir;
+  while (XPOS('..\', DirName) <> 0) do DELETE(DirName, XPOS('..\', DirName), 3);
+  if XPOS('.\', DirName) <> 0 then DELETE(DirName, XPOS('.\', DirName), 1);
+  Result := DirName;
+end;
+
+// Функция для формирования пути к DATADIR
+function GETUSERDATADIR(const APPDIR: string; DATADIR : string): string;
+var
+  Len    : INTEGER;
+begin
+  Len := Length(APPDIR);
+  while (POS('..\', DATADIR) <> 0) and (Len <> 0) do
+    begin
+      if (APPDIR[Len] = '\') then Dec(Len);
+      while (Len <> 0) and (APPDIR[Len] <> '\') do Dec(Len);
+      Delete(DATADIR, POS('..\', DATADIR), 3);
+    end;
+  Result := Copy(APPDIR, 0, Len) + DATADIR;
+end;
+
+// Функция для формирования пути к CACHEDIR
+function GETDISKCACHEDIR(const APPDIR: string; CACHEDIR : string): string;
+var
+  Len    : INTEGER;
+begin
+  Len := Length(APPDIR);
+  while (POS('..\', CACHEDIR) <> 0) and (Len <> 0) do
+    begin
+      if (APPDIR[Len] = '\') then Dec(Len);
+      while (Len <> 0) and (APPDIR[Len] <> '\') do Dec(Len);
+      Delete(CACHEDIR, POS('..\', CACHEDIR), 3);
+    end;
+  Result := Copy(APPDIR, 0, Len) + CACHEDIR;
+end;
+
+// Процедура для замены подстановочных строк
+procedure REPLACE(var STR1: string; STR2: string);
+var
+  SETPOS : INTEGER;
+begin
+  SETPOS := POS('%DATADIR%', STR1);
+  if SETPOS <> 0 then
+  begin
+    Delete(STR1, SETPOS, 9);
+    Insert(STR2, STR1, SETPOS);
+  end;
+end;
 
 // -----------------------------------------------------
 // Описание функций для поиска файлов и папок по шаблону
