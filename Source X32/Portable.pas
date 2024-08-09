@@ -22,10 +22,11 @@ var
   OS   : Byte;               // Переменная условного номера версии ОС
   Proc : procedure;          // Процедурная переменная
 
-  FILELIST  : array of String;
-  DIRLIST   : array of String;
-  DIRLISTNUM : integer;
-  FILELISTNUM : integer;
+  FILELIST     : array of String;  // Массив списка файлов
+  DELDIRLIST   : array of String;  // Массив списка директорий для удаления
+  BLOCKDIRLIST : array of String;  // Массив списка директорий для блокировки
+  DIRLISTNUM   : integer;          // Число эдементов массива списка директорий
+  FILELISTNUM  : integer;          // Число эдементов массива списка файлов
 
 implementation
 
@@ -312,11 +313,11 @@ begin
   NoCreate := False;                                         // Снять флаг
   for I := 0 to DIRLISTNUM - 1 do                            // Цикл сравнения имени директории со списком
   begin
-    DirName := DIRLIST[i];                                   // Имя из списка в переменную
-    DELETE(DirName,1,2);                                     // Удалить первые да символа из имени в переменной. Это '.\'
+    DirName := BLOCKDIRLIST[i];                              // Имя из списка блокировки в переменную
     if XPOS(DirName, PathName) <> 0 then NoCreate := True;   // Если имя совпадает с именем из списка установить флаг
     if NoCreate = True then break;                           // Если флаг установлен прервать цикл
   end;
+  // Если флаг не установлен выполнить функции RawCreateDirectoryW иначе просто вернуть положительный результат
   if NoCreate = False then Result := RawCreateDirectoryW(lpPathName, lpSecurityAttributes) else Result := True;
 end;
 
