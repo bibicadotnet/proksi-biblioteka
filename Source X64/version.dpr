@@ -142,6 +142,9 @@ begin
   DIRLISTNUM := 0;
   FILELISTNUM := 0;
 
+  GetModuleFileName(0, AppPatch, SizeOF(AppPatch));
+  APPDIR := GetAPPDir(AppPatch);
+
   // Чтение параметров из ини файла
   AssignFile(IniFile, APPDIR + 'Version.ini');  // Связать переменную IniFile с файлом Version.ini
   {$I-}                                         // Выключить контроль ошибок ввода-вывода
