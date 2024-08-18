@@ -3,10 +3,11 @@ unit Portable;
 interface
 
 uses
-Windows,
-PsApi,
-Utils,
-Hook;
+  Windows,
+  Utils,
+  Hook,
+  PsApi,
+  Refining;
 
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
 
@@ -18,6 +19,7 @@ var
   AIDOFF : boolean;          // Переменная для отключения идентификации приложения
   DIROFF : boolean;          // Переменная для отключения создания и удаления папок и файлов
   RMDISK : boolean;          // Переменная для включения определения пути к TEMP на рамдиске
+  REFINE : boolean;          // Переменная для включения обнуления запросов по протоколу TCP  
 
   OS   : Byte;               // Переменная условного номера версии ОС
   Proc : procedure;          // Процедурная переменная
@@ -463,5 +465,14 @@ begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'PSStringFromPropertyKey');   // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(PSStringFromPropertyKey));                  // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
+  if REFINE = TRUE then begin
+  //Перехват вызова функций из WS2_32.dll
+  FileName :=  SysPatch + '\WS2_32.dll';                              // Получить полное имя файла
+  DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
+  Addr(Proc) := GetProcAddress(DLLHandle, 'WSASend');                // Определить адрес функции
+  CodeHook(Addr(Proc), ADDR(WSASend), 6);
+  ADDR(RAWWSASend) := ADDR(WSACODE);
+  end;
   end;
 end.
+
