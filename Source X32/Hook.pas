@@ -31,6 +31,8 @@ var
   KEYCODE : CODEJPM;                   // Для формирования функции-моста NtCreateKey
   CRDCODE : CODEJPM;                   // Для формирования функции-моста CreateDirectoryW
 
+  WSACODE : CODEJPM;                   // Для формирования функции-моста WSASend
+
   HMODULE  : THANDLE;                  // Переменная для хранения дискриптора модуля
   BLOK1    : BOOLEAN;
   BLOK2    : BOOLEAN;
@@ -109,6 +111,17 @@ begin
     // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
     CRDCODE.JMP := $E9;
     CRDCODE.JMPOFFSET := CODEOFFSET(DWORD(ADDR(CRDCODE)), DWORD(OldProcAddress));
+  end;
+
+  if OPT = 6 then  // Это для создание моста при перехвате WSASend
+  begin
+    // Изменить параметры доступа к памяти где расположена структура WSACODE
+    if not VirtualProtect(ADDR(WSACODE), 10, PAGE_EXECUTE_READWRITE, Protect) then exit;
+    // Схранить начало исходной функци в структуру WSACODE
+    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(WSACODE), 5, VALUE);
+    // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
+    WSACODE.JMP := $E9;
+    WSACODE.JMPOFFSET := CODEOFFSET(DWORD(ADDR(WSACODE)), DWORD(OldProcAddress));
   end;
 
   // Формирование прыжка в прокси функцию в теле исходной функции
