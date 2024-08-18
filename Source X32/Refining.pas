@@ -99,6 +99,7 @@ begin
   if XPOS('wide-plus.l.google', msg) <>0  then block := true;
   if XPOS('withgoogle', msg) <>0  then block := true;
   Buff := nil;
+  //FreeMem(Buff);
   if block = false then Result := RAWWSASend(S, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpOverlapped,	lpCompletionRoutine) else Result := 0;
 end;
 
