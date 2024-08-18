@@ -6,7 +6,8 @@ uses
   ShellAPI,
   Hook in 'Hook.pas',
   Portable in 'Portable.pas',
-  Utils in 'Utils.pas';
+  Utils in 'Utils.pas',
+  Refining in 'Refining.pas';
   
 {$R version.res}
 
@@ -102,7 +103,7 @@ begin
   for i := 0 to DIRLISTNUM - 1 do DeleteDir(DELDIRLIST[i]);
 end;
 
-// Функция для определения пути к программе
+// Функция для извлечения пути к программе
 function GetAPPDir(DIR : string): string;
 var
   Len: INTEGER;
@@ -133,6 +134,7 @@ begin
   AIDOFF := True;                               // Значение параметра по умолчанию
   DIROFF := False;                              // Значение параметра по умолчанию
   RMDISK := False;                              // Значение параметра по умолчанию
+  REFINE := True;                               // Значение параметра по умолчанию
   FULLPATCH := True;                            // Значение параметра по умолчанию
 
   DATADIR   := '';
@@ -160,6 +162,7 @@ begin
       if POS('AIDOFF=', IniLine) <> 0 then if IniParam = '1' then AIDOFF := True else if IniParam = '0' then AIDOFF := False;
       if POS('DIROFF=', IniLine) <> 0 then if IniParam = '1' then DIROFF := True else if IniParam = '0' then DIROFF := False;
       if POS('RMDISK=', IniLine) <> 0 then if IniParam = '1' then RMDISK := True else if IniParam = '0' then RMDISK := False;
+      if POS('REFINE=', IniLine) <> 0 then if IniParam = '1' then REFINE := True else if IniParam = '0' then REFINE := False;
 
       if POS('APPDIR=', IniLine) <> 0 then if IniParam = '0' then FULLPATCH := False else if IniParam = '1' then FULLPATCH := True;
       if POS('DATADIR=', IniLine) <> 0 then if IniParam <> '' then DATADIR := IniParam;
