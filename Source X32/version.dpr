@@ -143,6 +143,7 @@ begin
 
   DIRLISTNUM := 0;
   FILELISTNUM := 0;
+  REFINELISTNUM := 0;
 
   GetModuleFileName(0, AppPatch, SizeOF(AppPatch));
   APPDIR := GetAPPDir(AppPatch);
@@ -186,6 +187,13 @@ begin
         FILELISTNUM := FILELISTNUM + 1;
         SetLength(FILELIST,FILELISTNUM);
         FILELIST[FILELISTNUM-1] := IniParam;
+        end;
+      // Заполнение массива из списка обнуления запросов к гугло и его доменам
+      if POS('NullDomain', IniLine) <> 0 then if IniParam <> '' then
+        begin
+        REFINELISTNUM := REFINELISTNUM + 1;
+        SetLength(REFINELIST,REFINELISTNUM);
+        REFINELIST[REFINELISTNUM-1] := IniParam;
         end;
       end;
 
