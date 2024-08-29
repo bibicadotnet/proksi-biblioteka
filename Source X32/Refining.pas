@@ -30,13 +30,6 @@ TWSASend = function(
                     S: TSocket;	var lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
                     var lpOverlapped: WSAOverlapped;	lpCompletionRoutine: TWSAOverlappedCompletionRoutine
                     ): Integer; stdcall;
-{
-TWSASendTo = function(
-                        s: TSocket; var lpBuffers: WSABUF; dwBufferCount: DWORD; lpNumberOfBytesSent: LPDWORD; dwFlags: DWORD;
-                        const lpTo: TSockAddr; iTolen: Integer;  var lpOverlapped: WSAOVERLAPPED;
-                        lpCompletionRoutine: TWSAOverlappedCompletionRoutine
-                       ): Integer; stdcall;
-}
 
 function WSASend(
                  S: TSocket;	var lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
