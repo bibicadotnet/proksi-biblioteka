@@ -55,6 +55,18 @@ var
   JMPARG    : POINTER;                   // Поле для записи аргумента инструкции Jmp     | QWORD $11 22 33 44 55 66 77 88
   end;
 
+  WSACODEXP   : packed record          // Структура для формирования функции-моста WSASend в в XP
+  DATA      : array [0..21] of byte;   // Массив для храния начального кода перехватываемой функции 22 байта в XP
+  JMPOP     : array [0..2] of Word;    // Опкод инструкции  Jmp qword ptr              | FF 25 00 00 00 00
+  JMPARG    : POINTER;                 // Поле для записи аргумента инструкции Jmp     | QWORD $11 22 33 44 55 66 77 88
+  end;
+
+  WSACODE711   : packed record         // Структура для формирования функции-моста WSASend в в 7 - 11
+  DATA      : array [0..19] of byte;   // Массив для храния начального кода перехватываемой функции 20 байт в 7 - 11
+  JMPOP     : array [0..2] of Word;    // Опкод инструкции  Jmp qword ptr              | FF 25 00 00 00 00
+  JMPARG    : POINTER;                 // Поле для записи аргумента инструкции Jmp     | QWORD $11 22 33 44 55 66 77 88
+  end;
+
   OS   : Byte = 0;
   Proc : procedure;                    // Процедурная переменная
 
@@ -63,7 +75,6 @@ var
 // Функция установливает перехват
 procedure CodeHook(OldProcAddress, NewProcAddress: pointer; OPT : byte = 0);
 var
-
   OEP : packed record                  // структура для чтения исходного кода OEP
   SUB         : DWORD;                 // Поле для записи опкода инструкции SUB     |
   CALL        : BYTE;                  // Поле для записи опкода инструкции CALL    | $E8
@@ -80,8 +91,10 @@ var
 
   Protect : DWORD;                     // Переменная для хранения параметров доступа к странице памяти
   VALUE   : SIZE_T;                    // Переменная для функции WriteProcessMemory
+
 const
   HANDLE = THandle(-1);
+
 begin
 
   if OPT = 1 then  // Это для создание моста при перехвате точки входа
@@ -139,9 +152,9 @@ begin
 
   if (OPT = 4) and (OS = 1) then  // Это для создание моста при перехвате CreateDirectoryW  WINXP
   begin
-    // Изменить параметры доступа к памяти где расположена структура CRDCODE
+    // Изменить параметры доступа к памяти где расположена структура CRDCODEXP
     if not VirtualProtect(ADDR(CRDCODEXP), 32, PAGE_EXECUTE_READWRITE, Protect) then exit;
-    // Схранить начало исходной функци в структуру CRDCODE. Целое число инструкций занимает 18 байт.
+    // Схранить начало исходной функци в структуру CRDCODEXP. Целое число инструкций занимает 18 байт.
     ReadProcessMemory(HANDLE, OldProcAddress, ADDR(CRDCODEXP), 18, VALUE);
     // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
     CRDCODEXP.JMPOP[0] := $25FF;
@@ -152,9 +165,9 @@ begin
 
   if (OPT = 4) and (OS = 2) then  // Это для создание моста при перехвате CreateDirectoryW  WIN7-10
   begin
-    // Изменить параметры доступа к памяти где расположена структура CRDCODE
+    // Изменить параметры доступа к памяти где расположена структура CRDCODE710
     if not VirtualProtect(ADDR(CRDCODE710), 43, PAGE_EXECUTE_READWRITE, Protect) then exit;
-    // Схранить начало исходной функци в структуру CRDCODE. Целое число инструкций занимает 29 байт.
+    // Схранить начало исходной функци в структуру CRDCODE710. Целое число инструкций занимает 29 байт.
     ReadProcessMemory(HANDLE, OldProcAddress, ADDR(CRDCODE710), 29, VALUE);
     // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
     CRDCODE710.JMPOP[0] := $25FF;
@@ -165,15 +178,41 @@ begin
 
   if (OPT = 4) and (OS = 3) then  // Это для создание моста при перехвате CreateDirectoryW  WIN11
   begin
-    // Изменить параметры доступа к памяти где расположена структура CRDCODE
+    // Изменить параметры доступа к памяти где расположена структура CRDCODE11
     if not VirtualProtect(ADDR(CRDCODE11), 40, PAGE_EXECUTE_READWRITE, Protect) then exit;
-    // Схранить начало исходной функци в структуру CRDCODE. Целое число инструкций занимает 26 байт.
+    // Схранить начало исходной функци в структуру CRDCODE11. Целое число инструкций занимает 26 байт.
     ReadProcessMemory(HANDLE, OldProcAddress, ADDR(CRDCODE11), 26, VALUE);
     // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
     CRDCODE11.JMPOP[0] := $25FF;
     CRDCODE11.JMPOP[1] := $0000;
     CRDCODE11.JMPOP[2] := $0000;
     CRDCODE11.JMPARG := Pointer(UInt64(OldProcAddress) + 26);
+  end;
+
+  if (OPT = 5) and (OS = 1) then  // Это для создание моста при перехвате WSASend  WINXP
+  begin
+    // Изменить параметры доступа к памяти где расположена структура WSACODEXP
+    if not VirtualProtect(ADDR(WSACODEXP), 36, PAGE_EXECUTE_READWRITE, Protect) then exit;
+    // Схранить начало исходной функци в структуру WSACODEXP. Целое число инструкций занимает 22 байт.
+    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(WSACODEXP), 22, VALUE);
+    // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
+    WSACODEXP.JMPOP[0] := $25FF;
+    WSACODEXP.JMPOP[1] := $0000;
+    WSACODEXP.JMPOP[2] := $0000;
+    WSACODEXP.JMPARG := Pointer(UInt64(OldProcAddress) + 22);
+  end;
+
+  if (OPT = 5) and (OS > 1) then  // Это для создание моста при перехвате WSASend  WIN 7-11
+  begin
+    // Изменить параметры доступа к памяти где расположена структура WSACODE711
+    if not VirtualProtect(ADDR(WSACODE711), 34, PAGE_EXECUTE_READWRITE, Protect) then exit;
+    // Схранить начало исходной функци в структуру WSACODE711. Целое число инструкций занимает 20 байт.
+    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(WSACODE711), 20, VALUE);
+    // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
+    WSACODE711.JMPOP[0] := $25FF;
+    WSACODE711.JMPOP[1] := $0000;
+    WSACODE711.JMPOP[2] := $0000;
+    WSACODE711.JMPARG := Pointer(UInt64(OldProcAddress) + 20);
   end;
 
   // Формирование прыжка в прокси функцию в теле исходной функции методом mov rax,addr jmp rax (12 байт)
