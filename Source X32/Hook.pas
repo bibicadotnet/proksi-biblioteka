@@ -9,7 +9,6 @@ uses
 
 procedure CodeHook(OldProcAddress, NewProcAddress: pointer; OPT : byte = 0);
 function  CODEOFFSET(NEWADDR, OLDADDR: DWORD): DWORD;
-procedure REGBLOCKER(MODULNUM : BYTE);
 
 type
   CODEJPM = packed record              // Структура для формирования функции-моста
@@ -27,17 +26,11 @@ var
   end;
 
   UPTCODE : CODEJPM;                   // Для формирования функции-моста UpdateProcThreadAttribute
-  LDRCODE : CODEJPM;                   // Для формирования функции-моста LdrLoadDll
   KEYCODE : CODEJPM;                   // Для формирования функции-моста NtCreateKey
   CRDCODE : CODEJPM;                   // Для формирования функции-моста CreateDirectoryW
-
   WSACODE : CODEJPM;                   // Для формирования функции-моста WSASend
 
   HMODULE  : THANDLE;                  // Переменная для хранения дискриптора модуля
-  BLOK1    : BOOLEAN;
-  BLOK2    : BOOLEAN;
-  DATAADDR : DWORD;                    // Переменная для хранения адреса модуля
-  DATASIZE : DWORD;                    // Переменная для хранения размера секции модуля
 
 implementation
 
@@ -80,18 +73,7 @@ begin
     UPTCODE.JMPOFFSET := CODEOFFSET(DWORD(ADDR(UPTCODE)), DWORD(OldProcAddress));
   end;
 
-  if OPT = 3 then  // Это для создание моста при перехвате LdrLoadDll
-  begin
-    // Изменить параметры доступа к памяти где расположена структура LDRCODE
-    if not VirtualProtect(ADDR(LDRCODE), 10, PAGE_EXECUTE_READWRITE, Protect) then exit;
-    // Схранить начало исходной функци в структуру LDRCODE
-    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(LDRCODE), 5, VALUE);
-    // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
-    LDRCODE.JMP := $E9;
-    LDRCODE.JMPOFFSET := CODEOFFSET(DWORD(ADDR(LDRCODE)), DWORD(OldProcAddress));
-  end;
-
-  if OPT = 4 then  // Это для создание моста при перехвате NtCreateKey
+  if OPT = 3 then  // Это для создание моста при перехвате NtCreateKey
   begin
     // Изменить параметры доступа к памяти где расположена структура KEYCODE
     if not VirtualProtect(ADDR(KEYCODE), 10, PAGE_EXECUTE_READWRITE, Protect) then exit;
@@ -102,7 +84,7 @@ begin
     KEYCODE.JMPOFFSET := CODEOFFSET(DWORD(ADDR(KEYCODE)), DWORD(OldProcAddress));
   end;
 
-  if OPT = 5 then  // Это для создание моста при перехвате CreateDirectoryW
+  if OPT = 4 then  // Это для создание моста при перехвате CreateDirectoryW
   begin
     // Изменить параметры доступа к памяти где расположена структура CRDCODE
     if not VirtualProtect(ADDR(CRDCODE), 10, PAGE_EXECUTE_READWRITE, Protect) then exit;
@@ -113,7 +95,7 @@ begin
     CRDCODE.JMPOFFSET := CODEOFFSET(DWORD(ADDR(CRDCODE)), DWORD(OldProcAddress));
   end;
 
-  if OPT = 6 then  // Это для создание моста при перехвате WSASend
+  if OPT = 5 then  // Это для создание моста при перехвате WSASend
   begin
     // Изменить параметры доступа к памяти где расположена структура WSACODE
     if not VirtualProtect(ADDR(WSACODE), 10, PAGE_EXECUTE_READWRITE, Protect) then exit;
@@ -150,64 +132,6 @@ begin
       Result := OLDADDR - NEWADDR;
       Result := Result - 5;
     end;
-end;
-
-// Поиск и замена последовательности в памяти
-procedure REGBLOCKER(MODULNUM : BYTE);
-const
-  SEARSH   : array [0..38] of Byte = ($83,$3D,$FF,$FF,$FF,$FF,$00,$0F,$84,$FF,$FF,$00,$00,$83,$3D,$FF,$FF,$FF,$FF,$00,$0F,$84,$FF,$FF,$00,$00,$83,$3D,$FF,$FF,$FF,$FF,$00,$0F,$84,$FF,$FF,$00,$00);
-  SEARCHM  : array [0..38] of Byte = ($00,$00,$01,$01,$01,$01,$00,$00,$00,$01,$01,$00,$00,$00,$00,$01,$01,$01,$01,$00,$00,$00,$01,$01,$00,$00,$00,$00,$01,$01,$01,$01,$00,$00,$00,$01,$01,$00,$00);
-  REPLACE  : array [0..38] of Byte = ($83,$3D,$FF,$FF,$FF,$FF,$00,$0F,$81,$FF,$FF,$00,$00,$83,$3D,$FF,$FF,$FF,$FF,$00,$0F,$81,$FF,$FF,$00,$00,$83,$3D,$FF,$FF,$FF,$FF,$00,$0F,$81,$FF,$FF,$00,$00);
-  REPLACEM : array [0..38] of Byte = ($00,$00,$00,$00,$00,$00,$00,$00,$01,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$01,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$01,$00,$00,$00,$00);
-var
-  DOSHeader     : PImageDosHeader;                                    // Переменная для хранения Dos-заголовока
-  NTHeader      : PImageNtHeaders;                                    // Переменная для хранения PE-заголовка
-  SectionHeader : PImageSectionHeader;                                // Переменная дя хранения заголовка секции
-  ASTR : String;                                                      // Переменная для хранения имени секции
-  i    : LONGWORD;                                                    // Преременная для цикла поиска в пределах памяти процесса
-  j    : BYTE;                                                        // Переменная для цикла поиска в пределах размера сигнатуры
-  Protect : DWORD;
-  BUFFER : array [0..38] of BYTE;
-  RESULT : BOOLEAN;
-begin
-  if MODULNUM = 1 then BLOK1 := TRUE;                                 // Блокировка первого модуля выполнена
-  if MODULNUM = 2 then BLOK2 := TRUE;                                 // Блокировка второго модуля выполнена
-  // 1. Получить адрес и размер секции
-  DOSHeader := POINTER(HMODULE);                                      // Прочитать DOS заголовок модуля
-  NTHeader  := POINTER(DWORD(DOSHeader) + DWORD(DOSHeader._lfanew));  // Прочитать NT заголовок модуля
-  SectionHeader := POINTER(DWORD(NTHeader) + NTheader.FileHeader.SizeOfOptionalHeader + SizeOF(NTheader.FileHeader) +  SizeOF(NTheader.Signature)); // Прочитать заголовок первой секции
-  // 2. Преобразовать имя секции в строку
-  for i := 0 to 7 do
-  begin
-    Astr := Astr + chr(SectionHeader.Name[i]);
-  end;
-  // 3. Получит адрес и размер секции с именем '.text' и выполнить поиск и замену
-  if Pchar(Astr) = '.text' then
-  begin
-    DATAADDR := SectionHeader.VirtualAddress + HMODULE;               // Адрес начала данных секции
-    DATASIZE := SectionHeader.SizeOfRawData;                          // Размер данных секции
-    for i := 0 to DATASIZE - 39 do                                    // Цикл поиска последовательности в сеции
-    begin
-      CopyMemory(ADDR(BUFFER), POINTER(DATAADDR), 39);                // Скопировать в буфер из памяти секции 39 байт
-      RESULT := TRUE;                                                 // Начальное значение результата совпадения
-      for j := 0 to 38 do                                             // Цикл проверки совпадения сигнатуры
-      begin
-        RESULT := RESULT and (BUFFER[j] = SEARSH[j]);                 // Установить при совпадении или снять при отличии
-        if SEARCHM[j] = $01 then RESULT := True;                      // Установить по маске поиска
-        if RESULT = False then break;                                 // Если нет совпадений то прервать цикл
-      end;
-      if RESULT = True then                                           // Если совпадение найдено тогда выполнить замену
-      begin
-        // MessageBox(0, pchar(Astr), 'Найдено совпадение', MB_OK);
-        for j := 0 to 38 do if REPLACEM[j] = $01 then BUFFER[j] := REPLACE[j];
-        if not VirtualProtect(POINTER(DATAADDR), 39, PAGE_EXECUTE_READWRITE, Protect) then exit;
-        CopyMemory(POINTER(DATAADDR), ADDR(BUFFER), 39);
-        VirtualProtect(POINTER(DATAADDR), 39, Protect, Protect);
-        break;
-      end;
-      inc(DATAADDR);                                                  // Увеличить значение адреса данных
-    end;
-  end;
 end;
 
 end.
