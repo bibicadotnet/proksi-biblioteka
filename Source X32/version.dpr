@@ -129,6 +129,8 @@ procedure READPARAM;
 var
   IniLine : String;
   IniParam : String;
+  I : integer;
+
 begin
   REGOFF := True;                               // Значение параметра по умолчанию
   AIDOFF := True;                               // Значение параметра по умолчанию
@@ -188,12 +190,15 @@ begin
         SetLength(FILELIST,FILELISTNUM);
         FILELIST[FILELISTNUM-1] := IniParam;
         end;
-      // Заполнение массива из списка обнуления запросов к гугло и его доменам
+
+      // Заполнить массив записей из списка обнуления запросов к гугло и его доменам
       if POS('NullDomain', IniLine) <> 0 then if IniParam <> '' then
         begin
         REFINELISTNUM := REFINELISTNUM + 1;
-        SetLength(REFINELIST,REFINELISTNUM);
-        REFINELIST[REFINELISTNUM-1] := IniParam;
+        SetLength(REFINELIST, REFINELISTNUM);
+        REFINELIST[REFINELISTNUM-1].len := Length(IniParam);
+        SetLength(REFINELIST[REFINELISTNUM-1].buf, REFINELIST[REFINELISTNUM-1].len);
+        for I := 0 to REFINELIST[REFINELISTNUM-1].len - 1 do REFINELIST[REFINELISTNUM-1].buf[I] := IniParam[I + 1];
         end;
       end;
 
@@ -205,8 +210,6 @@ end;
 // Функция для добавления параметров запуска
 function ADDParam(ARGS : string) : string;
 var
-  IniLine : String;
-  IniParam : String;
   APP : String;
   ARGSSTART : String;
 
@@ -316,7 +319,6 @@ begin
   CodeHook(EntryADDR, ADDR(REDIRECT), 1);   // Подмена адреса точки входа в процессе на адрес функции из DLL.
   ADDR(ExeMain) := ADDR(EPCODE);            // Назначить адрес процедуры ExeMain равным адресу структуры EPCODE
   HookPreferences;
-  //HookLoader;                             // Перехват функции LdrLoadDll. Использовать для поиска и замены сигнатуры в памяти процесса.
 end;
 
 // Обертка для переадресации экспортируемых функций
