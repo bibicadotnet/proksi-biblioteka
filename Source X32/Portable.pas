@@ -12,7 +12,6 @@ uses
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
 
 procedure HookPreferences;
-procedure HookLoader;
 
 var
   REGOFF : boolean;          // Переменная для отключения записи в реестр
@@ -54,7 +53,7 @@ type
   end;
 
   // Структура для функции PSStringFromPropertyKey
-  PROPERTYKEY = packed record
+  PROPERTYKEY = record
   fmtid: TGUID;
   pid: DWORD;
   end;
@@ -77,9 +76,6 @@ type
   UpdProcThrAttr = function (lpAttributeList: Pointer; dwFlags: DWORD; Attribute: DWORD; lpValue: Pointer;
                              cbSize: integer; lpPreviousValue: PPointer; lpReturnSize: PInteger): BOOL; stdcall;
 
-  // Обявление типа фукции с параметрами вызова и возврата соответующими оригинальной функции  LoadDll
-  LoadDll = function(PathToFile: PWideChar; Flags: DWORD; var ModuleFileName: UNICODESTRING; ModuleHandle: PPointer):NTSTATUS; stdcall;
-
   // Обявление типа фукции с параметрами вызова и возврата соответующими оригинальной функции  NtCreateKey
   CreateKey = function(KeyHandle : PHANDLE; DesiredAccess : ACCESS_MASK; var ObjectAttributes : ObjectAttributes; TitleIndex:ULONG;
                        var ObjectClass : UNICODESTRING; CreateOptions:ULONG; Disposition:PULONG) : NTSTATUS; stdcall;
@@ -93,7 +89,6 @@ const PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY = DWORD ($00020007);
 
 var
   RawUpdateProcThreadAttribute : UpdProcThrAttr;
-  RawLdrLoadDll : LoadDll;
   RawCreateKey  : CreateKey;
   RawCreateDirectoryW : CreateDirectory;
 
@@ -108,7 +103,7 @@ var
 }
 
 // Это модифицированная функция для блокировки System.AppUserModel.ID
-function PSStringFromPropertyKey(var pkey: PROPERTYKEY; psz: PWideChar; cch: INTEGER): HRESULT ; stdcall;
+function PSStringFromPropertyKey(const pkey: PROPERTYKEY; psz: PWideChar; cch: INTEGER): HRESULT ; stdcall;
 begin
   result := 0;
 end;
@@ -349,27 +344,6 @@ begin
   end;
   Result := Length(FileName);
 end;
-// Модифицированная функция LdrLoadDll для блокировки через загрузчик
-function LdrLoadDll(PathToFile: PWideChar; Flags: DWORD; var ModuleFileName: UNICODESTRING; ModuleHandle: PPointer): NTSTATUS; stdcall;
-var
-Name : String;
-begin
-  Result := RawLdrLoadDll(PathToFile, Flags, ModuleFileName, ModuleHandle);
-  Name := PWIDECHAR(ModuleFileName.Buffer);
-  if (Result = 0) then HMODULE := GetModuleHandle('chrome_elf.dll');
-  if (HMODULE <> 0) and (BLOK1 = FALSE) then REGBLOCKER(1);
-  if (Result = 0) then HMODULE := GetModuleHandle('chrome.dll');
-  if (HMODULE <> 0) and (BLOK2 = FALSE) then REGBLOCKER(2);
-end;
-
-// Включить перехват функции LdrLoadDll
-procedure HookLoader;
-begin
-  HMODULE := GetModuleHandle('ntdll.dll');                              // HMODULE = дескриптор модуля (адрес по которому он загружен)
-  Addr(Proc) := GetProcAddress(HMODULE, 'LdrLoadDll');                  // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(LdrLoadDll), 3);                            // Подмена адреса точки входа функции в процессе на адрес функции из DLL
-  ADDR(RawLdrLoadDll) := ADDR(LDRCODE);                                 // Присвоить адрес функции RawLdrLoadDll
-end;
 
 procedure HookPreferences;
 var
@@ -396,14 +370,14 @@ begin
   end;
   if (OS = 1) and (DIROFF = TRUE) then begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'CreateDirectoryW');          // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(CreateDirectoryW), 5);                      // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+  CodeHook(Addr(Proc), ADDR(CreateDirectoryW), 4);                      // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   ADDR(RAWCreateDirectoryW) := ADDR(CRDCODE);                           // Присвоить адрес функции RAWCreateDirectoryW
   end;
   if (OS > 1) and (DIROFF = TRUE) then begin
   FileName :=  SysPatch + '\kernelbase.dll';                            // Получить полное имя файла
   DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
   Addr(Proc) := GetProcAddress(DLLHandle, 'CreateDirectoryW');          // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(CreateDirectoryW), 5);                      // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+  CodeHook(Addr(Proc), ADDR(CreateDirectoryW), 4);                      // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   ADDR(RAWCreateDirectoryW) := ADDR(CRDCODE);                           // Присвоить адрес функции RAWCreateDirectoryW
   end;
   if (OS > 1) and (RMDISK = TRUE) then begin
@@ -455,7 +429,7 @@ begin
   if REGOFF = TRUE then begin
   DLLHandle := GetModuleHandle('ntdll.dll');                            // DLLHandle = дескриптор модуля (адрес по которому он загружен)
   Addr(Proc) := GetProcAddress(DLLHandle, 'NtCreateKey');               // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(NtCreateKey), 4);                           // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+  CodeHook(Addr(Proc), ADDR(NtCreateKey), 3);                           // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   ADDR(RawCreateKey) := ADDR(KEYCODE);                                  // Присвоить адрес функции RawCreateKey
   end;
   // Перехват вызова функций из Propsys.dll
@@ -470,9 +444,8 @@ begin
   FileName :=  SysPatch + '\WS2_32.dll';                              // Получить полное имя файла
   DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
   Addr(Proc) := GetProcAddress(DLLHandle, 'WSASend');                // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(WSASend), 6);
+  CodeHook(Addr(Proc), ADDR(WSASend), 5);
   ADDR(RAWWSASend) := ADDR(WSACODE);
   end;
   end;
 end.
-
