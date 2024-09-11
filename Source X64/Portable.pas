@@ -6,7 +6,8 @@ uses
 Windows,
 PsApi,
 Utils,
-Hook;
+Hook,
+Refining;
 
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
 
@@ -16,6 +17,7 @@ var
   AIDOFF : boolean;          // Переменная для отключения идентификации приложения
   DIROFF : boolean;          // Переменная для отключения создания папок
   RMDISK : boolean;          // Переменная для включения определения пути к TEMP на рамдиске
+  REFINE : boolean;          // Переменная для включения обнуления запросов к серверам
 
   FILELIST     : array of String;  // Массив списка файлов
   DELDIRLIST   : array of String;  // Массив списка директорий для удаления
@@ -37,7 +39,7 @@ type
   end;
 
   // Структура для функции NtCreateKey
-  ObjectAttributes = packed record
+  ObjectAttributes = record
   Length: ULONG;
   RootDirectory: THandle;
   var ObjectName: UNICODESTRING;
@@ -47,7 +49,7 @@ type
   end;
 
   // Структура для функции PSStringFromPropertyKey
-  PROPERTYKEY = packed record
+  PROPERTYKEY = record
   fmtid: TGUID ;
   pid: DWORD ;
   end;
@@ -78,6 +80,7 @@ type
                       var ObjectClass : UNICODESTRING; CreateOptions:ULONG; Disposition:PULONG) : NTSTATUS; stdcall;
 
   CreateDirectory = function(lpPathName: PWideChar; lpSecurityAttributes: PSecurityAttributes): BOOL; stdcall;
+
 // Объявление константы с именем PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY
 // с типом данных DWORD и присвоение ей значения в соответствии с WinBase.h
 const PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY = DWORD ($00020007);
@@ -98,7 +101,7 @@ var
 }
 
 // Модифицированная функция для блокировки System.AppUserModel.ID
-function PSStringFromPropertyKey(var pkey: PROPERTYKEY; psz: PWideChar; cch: INTEGER): HRESULT ; stdcall;
+function PSStringFromPropertyKey(const pkey: PROPERTYKEY; psz: PWideChar; cch: INTEGER): HRESULT ; stdcall;
 begin
   result := 0;
 end;
@@ -454,6 +457,16 @@ begin
   DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
   Addr(Proc) := GetProcAddress(DLLHandle, 'PSStringFromPropertyKey');   // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(PSStringFromPropertyKey));                  // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+  end;
+  if REFINE = TRUE then begin
+  //Перехват вызова функций из WS2_32.dll
+  FileName :=  SysPatch + '\WS2_32.dll';                                // Получить полное имя файла
+  DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
+  Addr(Proc) := GetProcAddress(DLLHandle, 'WSASend');                   // Определить адрес функции
+  CodeHook(Addr(Proc), ADDR(WSASend), 5);                               // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+  if OS = 1 then ADDR(RAWWSASend) := ADDR(WSACODEXP);                   // Присвоить адрес функции RAWWSASend
+  if OS > 1 then ADDR(RAWWSASend) := ADDR(WSACODE711);
+
   end;
   end;
 end.
