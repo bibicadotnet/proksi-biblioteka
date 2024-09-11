@@ -6,7 +6,8 @@ uses
   ShellAPI,
   Hook in 'Hook.pas',
   Portable in 'Portable.pas',
-  Utils in 'Utils.pas';
+  Utils in 'Utils.pas',
+  Refining in 'Refining.pas';
 
 {$R version.res}
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
@@ -128,11 +129,13 @@ procedure READPARAM;
 var
   IniLine : String;
   IniParam : String;
+  I : integer;
 begin
   REGOFF := True;                               // Значение параметра по умолчанию
   AIDOFF := True;                               // Значение параметра по умолчанию
   DIROFF := False;                              // Значение параметра по умолчанию
   RMDISK := False;                              // Значение параметра по умолчанию
+  REFINE := True;                               // Значение параметра по умолчанию
   FULLPATCH := True;                            // Значение параметра по умолчанию
 
   DATADIR   := '';
@@ -141,6 +144,7 @@ begin
 
   DIRLISTNUM := 0;
   FILELISTNUM := 0;
+  REFINELISTNUM := 0;
 
   GetModuleFileName(0, AppPatch, SizeOF(AppPatch));
   APPDIR := GetAPPDir(AppPatch);
@@ -160,6 +164,7 @@ begin
       if POS('AIDOFF=', IniLine) <> 0 then if IniParam = '1' then AIDOFF := True else if IniParam = '0' then AIDOFF := False;
       if POS('DIROFF=', IniLine) <> 0 then if IniParam = '1' then DIROFF := True else if IniParam = '0' then DIROFF := False;
       if POS('RMDISK=', IniLine) <> 0 then if IniParam = '1' then RMDISK := True else if IniParam = '0' then RMDISK := False;
+      if POS('REFINE=', IniLine) <> 0 then if IniParam = '1' then REFINE := True else if IniParam = '0' then REFINE := False;
 
       if POS('APPDIR=', IniLine) <> 0 then if IniParam = '0' then FULLPATCH := False else if IniParam = '1' then FULLPATCH := True;
       if POS('DATADIR=', IniLine) <> 0 then if IniParam <> '' then DATADIR := IniParam;
@@ -179,13 +184,22 @@ begin
       // Заполнение массива из списка удаления файлов
       if POS('DeleteFile', IniLine) <> 0 then if IniParam <> '' then
       begin
-        if DATADIR <> '' then REPLACE(IniParam, DATADIR);
+        if DATADIR <> '' then REPLACE(IniParam, DATADIR);  // Заменить %DATADIR% на значение из параметра DATADIR
         FILELISTNUM := FILELISTNUM + 1;
         SetLength(FILELIST,FILELISTNUM);
         FILELIST[FILELISTNUM-1] := IniParam;
       end;
+      // Заполнить массив записей из списка обнуления запросов к гугло и его доменам
+      if POS('NullDomain', IniLine) <> 0 then if IniParam <> '' then
+      begin
+        REFINELISTNUM := REFINELISTNUM + 1;
+        SetLength(REFINELIST, REFINELISTNUM);
+        REFINELIST[REFINELISTNUM-1].len := Length(IniParam);
+        SetLength(REFINELIST[REFINELISTNUM-1].buf, REFINELIST[REFINELISTNUM-1].len);
+        for I := 0 to REFINELIST[REFINELISTNUM-1].len - 1 do REFINELIST[REFINELISTNUM-1].buf[I] := AnsiChar(IniParam[I + 1]);
       end;
 
+      end;
     end;
     CloseFile(IniFile);
   end;
