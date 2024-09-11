@@ -22,7 +22,7 @@ TYPE
     FindData: TWin32FindData platform;
   end;
 
-  LongRec = packed record
+  LongRec = record
     case Integer of
       0: (Lo, Hi: Word);
       1: (Words: array [0..1] of Word);
@@ -92,7 +92,7 @@ begin
   Result := Copy(APPDIR, 0, Len) + CACHEDIR;
 end;
 
-// Процедура для замены подстановочных символов
+// Процедура для замены подстановочных строк
 procedure REPLACE(var STR1: string; STR2: string);
 var
   SETPOS : INTEGER;
@@ -157,9 +157,7 @@ begin
   if FindNextFile(F.FindHandle, F.FindData) then Result := FindMatchingFile(F) else Result := GetLastError;
 end;
 
-// -----------------------------------------------------------------
 // Поиск позиции подстроки в строке не зависимо от регистра символов
-// -----------------------------------------------------------------
 function XPOS(Const SubStr, Str : String) : Integer;
 var
   StrLen, SubStrLen : Integer;
