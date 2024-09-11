@@ -9,12 +9,22 @@ uses
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
 
 type
-  WSABUF = packed record
-    len: Cardinal;
-    buf: PChar;
+
+
+  // Запись для хранения имен доменов к которым обнуляются запросы
+  TDomainList = record
+    len : byte;
+    buf : array of Char;
   end;
 
-  WSAOVERLAPPED = packed record
+  // Запись для функции WSASend
+  WSABUF = record
+    len: Cardinal;
+    buf: PAnsiChar;
+  end;
+  
+  // Запись для функции WSASend
+  WSAOVERLAPPED = record
     Internal: DWORD;
     InternalHigh : DWORD;
     Offset : DWORD;
@@ -38,7 +48,7 @@ function WSASend(
 
 VAR
   RAWWSASend : TWSASend;
-  REFINELIST : array of String;   // Массив списка для обнуления запросов к гугле и его доменам
+  REFINELIST : array of TDomainList;  // Массив записей для обнуления запросов к гугле и его доменам
   REFINELISTNUM : integer;        // Число эдементов массива списка обнуления
 
 implementation
@@ -51,29 +61,33 @@ function WSASend(
                  S: TSocket;	var lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
                  var lpOverlapped: WSAOverlapped;	lpCompletionRoutine: TWSAOverlappedCompletionRoutine
                  ): Integer; stdcall;
+
 Var
-  Msg : String;
-  Domain : String;
-  Buff : array of Char;
-  //Buff : PChar;
-  block : boolean;
   I: integer;
+  Cmp : boolean;
+  X, Y: integer;
+
 begin
-  SetLength(Buff, lpBuffers.len);
-  //GetMem(buff, lpBuffers.len);
-  Move(lpBuffers.buf[0], Buff[0], lpBuffers.len);
-  Msg := String(Buff) + #0;
+  Cmp := false;
   lpCompletionRoutine := nil;
-  block := false;
-  for I := 0 to REFINELISTNUM - 1 do                         // Цикл сравнения со списком
+
+  // Цикл сравнения содержимого буффера со списком
+  for I := 0 to REFINELISTNUM - 1 do
   begin
-    Domain := REFINELIST[i];                                 // Имя из списка обнуления в переменную
-    if XPOS(Domain, Msg) <> 0 then block := True;            // Если имя совпадает с именем из списка установить флаг
-    if block = True then break;                              // Если флаг установлен прервать цикл
+    for X := 0 to lpBuffers.len - REFINELIST[I].len do
+      begin
+      Cmp := TRUE;
+      for Y := 0 to REFINELIST[I].len - 1 do
+        begin
+        Cmp := Cmp and (UpCase(lpBuffers.buf[X+Y]) = UpCase(REFINELIST[I].buf[Y]));
+        if Cmp = False then break;
+        end;
+      if Cmp = True then break;
+      end;
+  if Cmp = True then break;
   end;
-  Buff := nil;
-  //FreeMem(Buff);
-  if block = false then Result := RAWWSASend(S, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpOverlapped,	lpCompletionRoutine) else Result := 0;
+
+  if Cmp = false then Result := RAWWSASend(S, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpOverlapped,	lpCompletionRoutine) else Result := 0;
 end;
 
 end.
