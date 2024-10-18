@@ -9,6 +9,14 @@ uses
 
 procedure CodeHook(OldProcAddress, NewProcAddress: pointer; OPT : byte = 0);
 
+type
+  HOOKDATA = packed record              // Структура для хранения данных перехвата
+  FUNCADDRES : POINTER;                 // Адрес исходной функции
+  OLDDATA    : array [0..11] of byte;   // Массив для храния начального кода перехватываемой функции. 12 байт.
+  NEWDATA    : array [0..11] of byte;   // Массив для храния кода прыжка в прокси функцию. 12 байт.
+  end;
+
+procedure SetHook(HOOK: HOOKDATA; OPT: byte);
 var
 
   EPCODE : packed record               // Структура для формирования функции-моста точки входа
@@ -28,31 +36,13 @@ var
   end;
 
   UPTCODE11 : packed record             // Структура для формирования функции-моста UpdateProcThreadAttribute для 11
-  DATA        : array [0..19] of byte;  // Массив для храния начального кода перехватываемой функции 20 байт
+  DATA        : array [0..14] of byte;  // Массив для храния начального кода перехватываемой функции 15 (20) байт
   JMPOP       : array [0..2] of Word;   // Опкод инструкции  Jmp qword ptr              | FF 25 00 00 00 00
   JMPARG      : POINTER;                // Поле для записи аргумента инструкции Jmp     | QWORD $11 22 33 44 55 66 77 88
   end;
 
   KEYCODE   : packed record             // Структура для формирования функции-моста NtCreateKey
   DATA      : array [0..23] of byte;    // Массив для храния начального кода перехватываемой функции 11 байт XP и 7 или 24 байта 10 и 11
-  end;
-
-  CRDCODEXP  : packed record             // Структура для формирования функции-моста CreateDirectoryW в XP
-  DATA       : array [0..17] of byte;    // Массив для храния начального кода перехватываемой функции 18 байт в XP
-  JMPOP      : array [0..2] of Word;     // Опкод инструкции  Jmp qword ptr              | FF 25 00 00 00 00
-  JMPARG     : POINTER;                  // Поле для записи аргумента инструкции Jmp     | QWORD $11 22 33 44 55 66 77 88
-  end;
-
-  CRDCODE710 : packed record             // Структура для формирования функции-моста CreateDirectoryW в 7 и 10
-  DATA       : array [0..28] of byte;    // Массив для храния начального кода перехватываемой функции 29 байт в 7 и 10
-  JMPOP      : array [0..2] of Word;     // Опкод инструкции  Jmp qword ptr              | FF 25 00 00 00 00
-  JMPARG     : POINTER;                  // Поле для записи аргумента инструкции Jmp     | QWORD $11 22 33 44 55 66 77 88
-  end;
-
-  CRDCODE11 : packed record              // Структура для формирования функции-моста CreateDirectoryW в 11
-  DATA      : array [0..25] of byte;     // Массив для храния начального кода перехватываемой функции 26 байт в 11
-  JMPOP     : array [0..2] of Word;      // Опкод инструкции  Jmp qword ptr              | FF 25 00 00 00 00
-  JMPARG    : POINTER;                   // Поле для записи аргумента инструкции Jmp     | QWORD $11 22 33 44 55 66 77 88
   end;
 
   WSACODEXP   : packed record          // Структура для формирования функции-моста WSASend в в XP
@@ -67,7 +57,9 @@ var
   JMPARG    : POINTER;                 // Поле для записи аргумента инструкции Jmp     | QWORD $11 22 33 44 55 66 77 88
   end;
 
-  OS   : Byte = 0;
+  CRDCODE : HOOKDATA;                  // Структурная переменная для формирования перхвата CreateDirectoryW
+
+  OS   : Byte = 0;                     // Условный номер ОС
   Proc : procedure;                    // Процедурная переменная
 
   implementation
@@ -82,7 +74,7 @@ var
   ADD         : DWORD;                 // Поле для записи опкода инструкции ADD     |
   end;
 
-  // структура для формирования прыжка в прокси функцию методом 1. mov rax,addr 2. jmp rax (12 байт)
+  // структура для формирования кода прыжка в прокси функцию методом 1. mov rax,addr 2. jmp rax (12 байт)
   RAXJUMP    : packed record
   MOVRRAXOP  : WORD;                    // Поле для записи опкода инструкции MOV RAX    | 49 B8
   MOVRRAXARG : POINTER;                 // Поле для записи аргумента инструкции MOV RAX | QWORD $1122334455667788
@@ -101,7 +93,7 @@ begin
   begin
     // Изменить параметры доступа к памяти где расположена структура EPCODE
     if not VirtualProtect(ADDR(EPCODE), 32, PAGE_EXECUTE_READWRITE, Protect) then exit;
-    // Схранить начало исходной функци точки входа в структуру OEP. Это 3 инструкции подряд SUB CALL ADD.
+    // Схранить начало исходной функци точки входа в структуру EPCODE. Это 3 инструкции подряд SUB CALL ADD.
     ReadProcessMemory(HANDLE, OldProcAddress, ADDR(OEP), 13, VALUE);
     // Заполнить структуру EPCODE. Расчитать смещение и записать его значение в поле структуры
     EPCODE.SUB := OEP.SUB;
@@ -118,9 +110,9 @@ begin
 
   if (OPT = 2) and (OS = 2) then  // Это для создание моста при перехвате UpdateProcThreadAttribute WIN7-10
   begin
-    // Изменить параметры доступа к памяти где расположена структура OLDCODE
+    // Изменить параметры доступа к памяти где расположена структура UPTCODE710
     if not VirtualProtect(ADDR(UPTCODE710), 35, PAGE_EXECUTE_READWRITE, Protect) then exit;
-    // Схранить начало исходной функци в структуру OLDCODE. Целое число инструкций занимает 21 байт.
+    // Схранить начало исходной функци в структуру UPTCODE710. Целое число инструкций занимает 21 байт.
     ReadProcessMemory(HANDLE, OldProcAddress, ADDR(UPTCODE710), 21, VALUE);
     // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
     UPTCODE710.JMPOP[0] := $25FF;
@@ -131,15 +123,15 @@ begin
 
   if (OPT = 2) and (OS = 3) then  // Это для создание моста при перехвате UpdateProcThreadAttribute  WIN11
   begin
-    // Изменить параметры доступа к памяти где расположена структура OLDCODE
-    if not VirtualProtect(ADDR(UPTCODE11), 34, PAGE_EXECUTE_READWRITE, Protect) then exit;
-    // Схранить начало исходной функци в структуру UPTCODE. Целое число инструкций занимает 20 байт.
-    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(UPTCODE11), 20, VALUE);
+    // Изменить параметры доступа к памяти где расположена структура UPTCODE11
+    if not VirtualProtect(ADDR(UPTCODE11), 29, PAGE_EXECUTE_READWRITE, Protect) then exit;
+    // Схранить начало исходной функци в структуру UPTCODE11. Целое число инструкций занимает 15 (20) байт.
+    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(UPTCODE11), 15, VALUE);
     // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
     UPTCODE11.JMPOP[0] := $25FF;
     UPTCODE11.JMPOP[1] := $0000;
     UPTCODE11.JMPOP[2] := $0000;
-    UPTCODE11.JMPARG := Pointer(UInt64(OldProcAddress) + 20);
+    UPTCODE11.JMPARG := Pointer(UInt64(OldProcAddress) + 15);
   end;
 
   if OPT = 3 then  // Это для создание моста при перехвате NtCreateKey
@@ -150,43 +142,12 @@ begin
     ReadProcessMemory(HANDLE, OldProcAddress, ADDR(KEYCODE), 24, VALUE);
   end;
 
-  if (OPT = 4) and (OS = 1) then  // Это для создание моста при перехвате CreateDirectoryW  WINXP
+  if OPT = 4 then  // Это для создание перехвата CreateDirectoryW WIN XP - 11
   begin
-    // Изменить параметры доступа к памяти где расположена структура CRDCODEXP
-    if not VirtualProtect(ADDR(CRDCODEXP), 32, PAGE_EXECUTE_READWRITE, Protect) then exit;
-    // Схранить начало исходной функци в структуру CRDCODEXP. Целое число инструкций занимает 18 байт.
-    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(CRDCODEXP), 18, VALUE);
-    // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
-    CRDCODEXP.JMPOP[0] := $25FF;
-    CRDCODEXP.JMPOP[1] := $0000;
-    CRDCODEXP.JMPOP[2] := $0000;
-    CRDCODEXP.JMPARG := Pointer(UInt64(OldProcAddress) + 18);
-  end;
-
-  if (OPT = 4) and (OS = 2) then  // Это для создание моста при перехвате CreateDirectoryW  WIN7-10
-  begin
-    // Изменить параметры доступа к памяти где расположена структура CRDCODE710
-    if not VirtualProtect(ADDR(CRDCODE710), 43, PAGE_EXECUTE_READWRITE, Protect) then exit;
-    // Схранить начало исходной функци в структуру CRDCODE710. Целое число инструкций занимает 29 байт.
-    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(CRDCODE710), 29, VALUE);
-    // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
-    CRDCODE710.JMPOP[0] := $25FF;
-    CRDCODE710.JMPOP[1] := $0000;
-    CRDCODE710.JMPOP[2] := $0000;
-    CRDCODE710.JMPARG := Pointer(UInt64(OldProcAddress) + 29);
-  end;
-
-  if (OPT = 4) and (OS = 3) then  // Это для создание моста при перехвате CreateDirectoryW  WIN11
-  begin
-    // Изменить параметры доступа к памяти где расположена структура CRDCODE11
-    if not VirtualProtect(ADDR(CRDCODE11), 40, PAGE_EXECUTE_READWRITE, Protect) then exit;
-    // Схранить начало исходной функци в структуру CRDCODE11. Целое число инструкций занимает 26 байт.
-    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(CRDCODE11), 26, VALUE);
-    // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
-    CRDCODE11.JMPOP[0] := $25FF;
-    CRDCODE11.JMPOP[1] := $0000;
-    CRDCODE11.JMPOP[2] := $0000;
-    CRDCODE11.JMPARG := Pointer(UInt64(OldProcAddress) + 26);
+    // Сохранить адрес функции
+    CRDCODE.FUNCADDRES := OldProcAddress;
+    // Схранить начало исходной функци в структуру CRDCODE
+    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(CRDCODE.OLDDATA), 12, VALUE);
   end;
 
   if (OPT = 5) and (OS = 1) then  // Это для создание моста при перехвате WSASend  WINXP
@@ -215,18 +176,37 @@ begin
     WSACODE711.JMPARG := Pointer(UInt64(OldProcAddress) + 20);
   end;
 
-  // Формирование прыжка в прокси функцию в теле исходной функции методом mov rax,addr jmp rax (12 байт)
+  // Формирование кода прыжка в прокси функцию в теле исходной функции методом mov rax,addr jmp rax (12 байт)
   RAXJUMP.MOVRRAXOP := $B848;
   RAXJUMP.MOVRRAXARG := NewProcAddress;
   RAXJUMP.JMPRAXOP := $E0FF;
+  // Записать код прыжка в структуру CRDCODE
+  if OPT = 4 then  Move(RAXJUMP, CRDCODE.NEWDATA, 12);
   // Изменить параметры доступа к области памяти
-  if not VirtualProtect(OldProcAddress, 12, PAGE_EXECUTE_READWRITE, Protect) then exit;
-  // Записать в память процесса прыжок на прокси функцию
+  if not VirtualProtect(OldProcAddress, 12, PAGE_EXECUTE_READWRITE, ADDR(Protect)) then exit;
+  // Записать в память процесса код прыжка в прокси функцию
   // HANDLE := GetCurrentProcess; // Определить идентификатор текущего процесса
-  // Вместо HANDLE можно вписать INVALID_HANDLE_VALUE - это идентификатор текущего процесса.
   WriteProcessMemory(HANDLE, OldProcAddress, ADDR(RAXJUMP), 12, VALUE);
   // Восстановить прежние параметры доступа к памяти
-  VirtualProtect(OldProcAddress, 12, Protect, Protect);
+  VirtualProtect(OldProcAddress, 12, Protect, ADDR(Protect));
+end;
+
+// Включить или Отключить перхват
+procedure SetHook(HOOK: HOOKDATA; OPT: byte);
+var
+  Protect : DWORD;                      // Переменная для хранения параметров доступа к странице памяти
+  VALUE   : SIZE_T;                     // Переменная для функции WriteProcessMemory
+const
+  HANDLE = THandle(-1);
+begin
+  // Изменить параметры доступа к памяти где расположена функция
+  if not VirtualProtect(HOOK.FUNCADDRES, 12, PAGE_EXECUTE_READWRITE, ADDR(Protect)) then exit;
+  // Записать в память где расположена функция исходный код
+  if OPT = 0 then WriteProcessMemory(HANDLE, HOOK.FUNCADDRES, ADDR(HOOK.OLDDATA), 12, VALUE);
+  // Записать в память где расположена функция код прыжка
+  if OPT = 1 then WriteProcessMemory(HANDLE, HOOK.FUNCADDRES, ADDR(HOOK.NEWDATA), 12, VALUE);
+  // Восстановить прежние параметры доступа к памяти
+  VirtualProtect(HOOK.FUNCADDRES, 12, Protect, ADDR(Protect));
 end;
 
 end.
