@@ -18,12 +18,15 @@ var
   DIROFF : boolean;          // Переменная для отключения создания папок
   RMDISK : boolean;          // Переменная для включения определения пути к TEMP на рамдиске
   REFINE : boolean;          // Переменная для включения обнуления запросов к серверам
+  SPFOLD : boolean;          // Переменная для включения подмены пути к спецпапкам
 
   FILELIST     : array of String;  // Массив списка файлов
   DELDIRLIST   : array of String;  // Массив списка директорий для удаления
   BLOCKDIRLIST : array of String;  // Массив списка директорий для блокировки
   DIRLISTNUM   : integer;          // Число эдементов массива списка директорий
   FILELISTNUM  : integer;          // Число эдементов массива списка файлов
+
+  SPECFOLDER : string;
 
 implementation
 
@@ -50,8 +53,8 @@ type
 
   // Структура для функции PSStringFromPropertyKey
   PROPERTYKEY = record
-  fmtid: TGUID ;
-  pid: DWORD ;
+  fmtid: TGUID;
+  pid: DWORD;
   end;
 
   // Структура для описания входных и выходных данных
@@ -79,7 +82,6 @@ type
   CreateKey= function(KeyHandle : PHANDLE; DesiredAccess : ACCESS_MASK; var ObjectAttributes : ObjectAttributes; TitleIndex:ULONG;
                       var ObjectClass : UNICODESTRING; CreateOptions:ULONG; Disposition:PULONG) : NTSTATUS; stdcall;
 
-  CreateDirectory = function(lpPathName: PWideChar; lpSecurityAttributes: PSecurityAttributes): BOOL; stdcall;
 
 // Объявление константы с именем PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY
 // с типом данных DWORD и присвоение ей значения в соответствии с WinBase.h
@@ -88,7 +90,6 @@ const PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY = DWORD ($00020007);
 var
   RawUpdateProcThreadAttribute : UpdProcThrAttr;
   RawCreateKey  : CreateKey;
-  RawCreateDirectoryW : CreateDirectory;
 
 {
   Описание функций для подмены в системных библиотеках
@@ -315,7 +316,7 @@ begin
 end;
 
 // Модифицированная функция CreateDirectoryW для блокировки создания папок из списка
-function CreateDirectoryW(lpPathName: PWideChar; lpSecurityAttributes: PSecurityAttributes): BOOL; stdcall;
+function CreateDirectory(lpPathName: PWideChar; lpSecurityAttributes: PSecurityAttributes): BOOL; stdcall;
 var
   PathName : String;
   DirName  : String;
@@ -331,7 +332,9 @@ begin
     if NoCreate = True then break;                           // Если флаг установлен прервать цикл
   end;
   // Если флаг не установлен выполнить функции RawCreateDirectoryW иначе просто вернуть положительный результат
-  if NoCreate = False then Result := RawCreateDirectoryW(lpPathName, lpSecurityAttributes) else Result := True;
+  SetHook(CRDCODE, 0);
+  if NoCreate = False then Result := CreateDirectoryW(lpPathName, lpSecurityAttributes) else Result := True;
+  SetHook(CRDCODE, 1);
 end;
 
 // Модифицированная функция для получения имени файла из его указателя
@@ -361,6 +364,13 @@ begin
   Result := Length(FileName);
 end;
 
+// Модифицированная функция SHGetFolderPathW для блокировки доступа к специальным папкам
+function SHGetFolderPathW(hwnd: HWND; csidl: Integer; hToken: THandle; dwFlags: DWord; pszPath: PWideChar): HRESULT; stdcall;
+begin
+  if SPECFOLDER = '' then SPECFOLDER := 'nul';
+  CopyMemory(pszPath, PwideChar(WideString(SPECFOLDER + #0)), Length(WideString(SPECFOLDER + #0)) * 2);
+  if SPECFOLDER = 'nul' then Result := E_ABORT  else Result := S_OK;
+end;
 procedure HookPreferences;
 var
   DLLHandle : THandle;                                                  // Переменная типа THandle
@@ -369,8 +379,7 @@ var
 begin
   GetSystemDirectory(SysPatch, SizeOf(SysPatch));                       // Определить Путь к системной директории
   // Перехват вызова функций из kernel32.dll
-  FileName :=  SysPatch + '\kernel32.dll';                              // Получить полное имя файла
-  DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
+  DLLHandle := GetModuleHandle('kernel32.dll');
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetComputerNameA');          // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(GetComputerNameA));                         // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetComputerNameW');          // Определить адрес функции
@@ -387,18 +396,16 @@ begin
   end;
   if (OS = 1) and (DIROFF = TRUE) then begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'CreateDirectoryW');          // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(CreateDirectoryW), 4);                      // Подмена адреса точки входа функции в процессе на адрес функции из DLL
-  ADDR(RAWCreateDirectoryW) := ADDR(CRDCODEXP);                         // Присвоить адрес функции RAWCreateDirectoryW
+  CodeHook(Addr(Proc), ADDR(CreateDirectory), 4);                       // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
   // Перехват вызова функций из kernelbase.dll
   if (OS > 1) and (DIROFF = TRUE) then begin
   FileName :=  SysPatch + '\kernelbase.dll';                            // Получить полное имя файла
   DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
   Addr(Proc) := GetProcAddress(DLLHandle, 'CreateDirectoryW');          // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(CreateDirectoryW), 4);                      // Подмена адреса точки входа функции в процессе на адрес функции из DLL
-  if OS = 2 then ADDR(RAWCreateDirectoryW) := ADDR(CRDCODE710);         // Присвоить адрес функции RAWCreateDirectoryW
-  if OS = 3 then ADDR(RAWCreateDirectoryW) := ADDR(CRDCODE11);          // Присвоить адрес функции RAWCreateDirectoryW
+  CodeHook(Addr(Proc), ADDR(CreateDirectory), 4);                       // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
+
   if (OS > 1) and (RMDISK = TRUE) then begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetFinalPathNameByHandleW'); // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(GetFinalPathNameByHandleW));                // Подмена адреса точки входа функции в процессе на адрес функции из DLL
@@ -451,9 +458,16 @@ begin
   CodeHook(Addr(Proc), ADDR(NtCreateKey), 3);                           // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   ADDR(RawCreateKey) := ADDR(KEYCODE);                                  // Присвоить адрес функции RawCreateKey
   end;
+
+  // Перехват вызова функции SHGetFolderPathW
+  if SPFOLD = TRUE then begin
+  DLLHandle := GetModuleHandle('SHELL32.dll');
+  Addr(Proc) := GetProcAddress(DLLHandle, 'SHGetFolderPathW');
+  CodeHook(Addr(Proc), ADDR(SHGetFolderPathW));
+  end;
   // Перехват вызова функций из Propsys.dll
   if AIDOFF = TRUE then begin  
-  FileName :=  SysPatch + '\Propsys.dll';   ;                           // Получить полное имя файла
+  FileName :=  SysPatch + '\Propsys.dll';                               // Получить полное имя файла
   DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
   Addr(Proc) := GetProcAddress(DLLHandle, 'PSStringFromPropertyKey');   // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(PSStringFromPropertyKey));                  // Подмена адреса точки входа функции в процессе на адрес функции из DLL
