@@ -95,9 +95,8 @@ begin
     KEYCODE.JMPOFFSET := CODEOFFSET(DWORD(ADDR(KEYCODE)), DWORD(OldProcAddress));
   end;
 
-  if OPT = 4 then  // Это для создание моста при перехвате CreateDirectoryW
+  if OPT = 4 then  // Это для перехвата CreateDirectoryW
   begin
-
     // Сохранить адрес функции
     CRDCODE.FUNCADDRES := OldProcAddress;
     // Схранить начало исходной функци в структуру CRDCODE
@@ -119,12 +118,12 @@ begin
   CODE.JMP := $E9;
   CODE.OFFSET := DWORD (NewProcAddress) - DWORD (OldProcAddress) - 5;
 
-  // Запмсать код прыжка в структуру 
+  // Записать код прыжка в структуру 
   if OPT = 4 then  Move(CODE, CRDCODE.NEWDATA, 5);
   // Изменить параметры доступа к области памяти
   if not VirtualProtect(OldProcAddress, 5, PAGE_EXECUTE_READWRITE, ADDR(Protect)) then exit;
   // HANDLE := GetCurrentProcess; // Определить идентификатор текущего процесса
-  // Вместо HANDLE можно вписать INVALID_HANDLE_VALUE - это идентификатор текущего процесса.
+  // Когда HANDLE := -1 будет использоваться тпкущий процесс
   WriteProcessMemory(HANDLE, OldProcAddress, Addr(CODE), 5, VALUE);
   // Восстановить прежние параметры доступа к памяти
   VirtualProtect(OldProcAddress, 5, Protect, ADDR(Protect));
@@ -149,7 +148,7 @@ end;
 // Включить или Отключить перхват
 procedure SetHook(HOOK: HOOKDATA; OPT: byte);
 var
-  Protect : DWORD;                   // Переменная для хранения параметров доступа к странице памяти
+  Protect : DWORD;                     // Переменная для хранения параметров доступа к странице памяти
   VALUE   : DWORD;                     // Переменная для функции WriteProcessMemory
 const
   HANDLE = THandle(-1);
