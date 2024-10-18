@@ -136,11 +136,13 @@ begin
   DIROFF := False;                              // Значение параметра по умолчанию
   RMDISK := False;                              // Значение параметра по умолчанию
   REFINE := True;                               // Значение параметра по умолчанию
+  SPFOLD := False;                              // Значение параметра по умолчанию
   FULLPATCH := True;                            // Значение параметра по умолчанию
 
   DATADIR   := '';
   CACHEDIR  := '';
   RUNPARAM  := '';
+  SPECFOLDER := '';
 
   DIRLISTNUM := 0;
   FILELISTNUM := 0;
@@ -165,10 +167,12 @@ begin
       if POS('DIROFF=', IniLine) <> 0 then if IniParam = '1' then DIROFF := True else if IniParam = '0' then DIROFF := False;
       if POS('RMDISK=', IniLine) <> 0 then if IniParam = '1' then RMDISK := True else if IniParam = '0' then RMDISK := False;
       if POS('REFINE=', IniLine) <> 0 then if IniParam = '1' then REFINE := True else if IniParam = '0' then REFINE := False;
+      if POS('SPFOLD=', IniLine) <> 0 then if IniParam = '1' then SPFOLD := True else if IniParam = '0' then SPFOLD := False;
 
       if POS('APPDIR=', IniLine) <> 0 then if IniParam = '0' then FULLPATCH := False else if IniParam = '1' then FULLPATCH := True;
       if POS('DATADIR=', IniLine) <> 0 then if IniParam <> '' then DATADIR := IniParam;
       if POS('CACHEDIR=', IniLine) <> 0 then if IniParam <> '' then CACHEDIR := IniParam;
+      if POS('SPECFOLDER=', IniLine) <> 0 then if IniParam <> '' then SPECFOLDER := IniParam;
       if POS('RUNPARAM=', IniLine) <> 0 then if IniParam <> '' then RUNPARAM := IniParam;
 
       // Заполнение массивов из списка удаления директорий
