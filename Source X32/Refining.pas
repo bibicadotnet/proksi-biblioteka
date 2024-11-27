@@ -4,6 +4,7 @@ interface
 
 uses
   Windows,
+  Hook,
   Utils;
 
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
@@ -86,8 +87,9 @@ begin
       end;
   if Cmp = True then break;
   end;
-
+  SetHook(WSACODE, 0);
   if Cmp = false then Result := RAWWSASend(S, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpOverlapped,	lpCompletionRoutine) else Result := 0;
+  SetHook(WSACODE, 1);
 end;
 
 end.
