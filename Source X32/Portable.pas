@@ -171,7 +171,9 @@ begin
     CopyMemory(lpValue, Addr(Buffer[0]), cbSize);  // Скопировать в адрес по указателю значения из буфера
     Buffer := nil;                                 // Освободить память буфера
   end;
+  SetHook(UPTCODE, 0);
   result := RawUpdateProcThreadAttribute(lpAttributeList, dwFlags, Attribute, lpValue, cbSize, lpPreviousValue, lpReturnSize);
+  SetHook(UPTCODE, 1);
 end;
 
 function LogonUserA(lpszUsername, lpszDomain, lpszPassword: PAnsiChar; dwLogonType, dwLogonProvider: DWORD; var phToken: THandle): BOOL; stdcall;
@@ -295,7 +297,9 @@ begin
   if DesiredAccess = 1 then DesiredAccess := 0;
   if DesiredAccess = 3 then DesiredAccess := 0;
   if DesiredAccess = 514 then DesiredAccess := 0;
+  SetHook(KEYCODE, 0);
   Result := RawCreateKey(KeyHandle, DesiredAccess, ObjectAttributes, TitleIndex, ObjectClass, CreateOptions, Disposition);
+  SetHook(KEYCODE, 1);
 end;
 
 // Модифицированная функция CreateDirectoryW для блокировки создания директорий по списку
@@ -362,6 +366,7 @@ var
   FileName  : string;                                                   // Переменная для хранения полного имени файла
 begin
   GetSystemDirectory(SysPatch, SizeOf(SysPatch));                       // Определить Путь к системной директории
+
   // Перехват вызова функций из kernel32.dll
   DLLHandle := GetModuleHandle('kernel32.dll');                         // Получить идентификатор
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetComputerNameA');          // Определить адрес функции
@@ -375,14 +380,12 @@ begin
   if OS > 1 then begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'UpdateProcThreadAttribute'); // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(UpdateProcThreadAttribute), 2);             // Подмена адреса точки входа функции в процессе на адрес функции из DLL
-  ADDR(RawUpdateProcThreadAttribute) := ADDR(UPTCODE);                  // Присвоить адрес функции RawUpdateProcThreadAttribute
+  ADDR(RawUpdateProcThreadAttribute) := ADDR(Proc);                     // Присвоить адрес функции RawUpdateProcThreadAttribute
   end;
-
   if DIROFF = TRUE then begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'CreateDirectoryW');          // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(CreateDirectory), 4);                       // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
-
   if (OS > 1) and (RMDISK = TRUE) then begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetFinalPathNameByHandleW'); // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(GetFinalPathNameByHandleW));                // Подмена адреса точки входа функции в процессе на адрес функции из DLL
@@ -435,7 +438,7 @@ begin
   DLLHandle := GetModuleHandle('ntdll.dll');                            // DLLHandle = идентификатор модуля (адрес по которому он загружен)
   Addr(Proc) := GetProcAddress(DLLHandle, 'NtCreateKey');               // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(NtCreateKey), 3);                           // Подмена адреса точки входа функции в процессе на адрес функции из DLL
-  ADDR(RawCreateKey) := ADDR(KEYCODE);                                  // Присвоить адрес функции RawCreateKey
+  ADDR(RawCreateKey) := ADDR(Proc);                                     // Присвоить адрес функции RawCreateKey
   end;
 
   // Перехват вызова функции SHGetFolderPathW
@@ -459,7 +462,8 @@ begin
   DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
   Addr(Proc) := GetProcAddress(DLLHandle, 'WSASend');                   // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(WSASend), 5);                               // Подмена адреса точки входа функции в процессе на адрес функции из DLL
-  ADDR(RAWWSASend) := ADDR(WSACODE);                                    // Присвоить адрес функции RAWWSASend
+  ADDR(RAWWSASend) := ADDR(Proc);                                       // Присвоить адрес функции RAWWSASend
   end;
+
   end;
 end.
