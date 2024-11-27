@@ -274,30 +274,26 @@ end;
 
 procedure STARTPORTABLE(ARGS:string);
 var
-  ShellExecuteInfo: TShellExecuteInfo;
+  StartupInfo: TStartupInfo;
+  ProcessInfo: TProcessInformation;
 begin
   // Получить полное именя файла с использованием API функции GetModuleFileName
   // Если вместо 0 вписать hInstance, то будет путь к имени DLL файла
   GetModuleFileName(0, AppPatch, SizeOF(AppPatch));
   FileName := AppPatch;
-
-  APPDIR := GetAPPDir(AppPatch);
   PARAMS := ADDParam(ARGS);
-  // MessageBox(0, pchar(PARAMS), 'Параметры перед запуском', MB_OK);       // Вывод окна перед запуском. Для отладки
-  // Заполнение структуры для запуска программы
-  FillChar(ShellExecuteInfo, SizeOf(TShellExecuteInfo), 0) ;                // Очистить структуру от случайных данных
-  ShellExecuteInfo.cbSize := sizeof(TShellExecuteInfo);                     // Размер структуры в байтах
-  ShellExecuteInfo.fMask := SEE_MASK_NOCLOSEPROCESS or SEE_MASK_FLAG_NO_UI; // Комбинация флагов, определяющих используемую часть структуры
-  ShellExecuteInfo.lpVerb := 'open';                                        // Строка, определяющее действие с файлом. 'open' запускает исполняемый файл
-  ShellExecuteInfo.lpFile := pchar(FileName);                               // Имя файла (полный путь к файлу)
-  ShellExecuteInfo.lpDirectory := pchar(APPDIR);                            // Рабочая директория программы
-  ShellExecuteInfo.nShow := SW_SHOWNORMAL;                                  // Способ отображения окна
-  ShellExecuteInfo.lpParameters := pchar(PARAMS);                           // Параметры
-  if DIROFF = TRUE then FDDELETE;                                           // Удалить директории и файлы если параметр включен
-  if ShellExecuteEx(ADDR(ShellExecuteInfo)) then ExitProcess(0);            // Запустить программу
+  APPDIR := GetAPPDir(AppPatch);
+  if DIROFF = TRUE then FDDELETE;
+  //MessageBox(0, pchar(PARAMS), 'Параметры перед запуском', MB_OK);       // Вывод окна перед запуском. Для отладки
+  FillChar(StartupInfo, SizeOf(StartupInfo), 0);
+  StartupInfo.cb := SizeOf(StartupInfo);
+  if CreateProcess(nil, pchar(FileName + ' ' + PARAMS), nil, nil, false, 0, nil, pchar(APPDIR), StartupInfo, ProcessInfo) then
+  begin
+    ExitProcess(0);
+  end;
 end;
 
-// Определить параметры коммандной строки, отключить шифрование и запустить программу
+// Определить параметры коммандной строки и запустить программу
 procedure REDIRECT;
 var
   ARG: String;
@@ -310,7 +306,9 @@ begin
   for i := 1 to ParamCount do ARG := ARG + ParamStr(i) + ' ';
   // Если в командной строке нет параметров -type= и --portable тогда выполнить процедуру STARTPORTABLE
   if (POS('-type=', ARG) = 0) and (POS('--portable', ARG) = 0) then STARTPORTABLE(ARG);
+  SetHook(OEPCODE, 0);
   ExeMain;
+  SetHook(OEPCODE, 1);
 end;
 
 // Определение и подмена адреса точки входа
@@ -321,8 +319,8 @@ var
 begin
   GetModuleInformation(GetCurrentProcess, GetModuleHandle(NIL), Addr(MI), sizeof(MODULEINFO)); // Считать информацию о процессе
   EntryADDR := MI.EntryPoint;               // Считать в переменную адрес точки входа из поля EntryPoint структуры MI
-  CodeHook(EntryADDR, ADDR(REDIRECT), 1);   // Подмена адреса точки входа в процессе на адрес функции из DLL.
-  ADDR(ExeMain) := ADDR(EPCODE);            // Назначить адрес процедуры ExeMain равным адресу структуры EPCODE
+  CodeHook(EntryADDR, ADDR(REDIRECT), 1);   // Подмена адреса точки входа на адрес функции из прокси библиотеки.
+  ADDR(ExeMain) := EntryADDR;               // Назначить адрес процедуры ExeMain равным адресу структуры EPCODE
   HookPreferences;
 end;
 
