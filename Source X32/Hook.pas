@@ -19,26 +19,12 @@ type
 
 procedure SetHook(HOOK: HOOKDATA; OPT: byte);
 
-type
-  CODEJPM = packed record              // Структура для формирования функции-моста
-  DATA        : array [0..4] of byte;  // Массив для храния начального кода перехватываемой функции. В 32-х битной ОС это 5 байт.
-  JMP         : Byte;                  // Поле для записи опкода инструкции JMP     | $E9
-  JMPOFFSET   : DWORD;                 // Поле для записи аргумента инструкции JMP  | DWORD
-  end;
-
 var
-  EPCODE : packed record               // Структура для формирования функции-моста точки входа
-  CALL        : Byte;                  // Поле для записи опкода инструкции CALL    | $E8
-  CALLOFFSET  : DWORD;                 // Поле для записи аргумента инструкции CALL | DWORD
-  JMP         : Byte;                  // Поле для записи опкода инструкции JMP     | $E9
-  JMPOFFSET   : DWORD;                 // Поле для записи аргумента инструкции JMP  | DWORD
-  end;
-
-  UPTCODE : CODEJPM;                   // Для формирования функции-моста UpdateProcThreadAttribute
-  KEYCODE : CODEJPM;                   // Для формирования функции-моста NtCreateKey
-  WSACODE : CODEJPM;                   // Для формирования функции-моста WSASend
-
-  CRDCODE : HOOKDATA;                  // Для формирования перхвата CreateDirectoryW
+  KEYCODE : HOOKDATA;                  // Для формирования перехвата NtCreateKey
+  UPTCODE : HOOKDATA;                  // Для формирования перехвата UpdateProcThreadAttribute
+  CRDCODE : HOOKDATA;                  // Для формирования перхвата  CreateDirectoryW
+  WSACODE : HOOKDATA;                  // Для формирования перхвата  WSASend
+  OEPCODE : HOOKDATA;                  // Для формирования перхвата  точки входа
 
 implementation
 
@@ -59,40 +45,28 @@ const
   HANDLE = THandle(-1);
 begin
 
-  if OPT = 1 then  // Это для создание моста при перехвате точки входа
+  if OPT = 1 then  // Это для перехвата точки входа
   begin
-    // Изменить параметры доступа к памяти где расположена структура EPCODE
-    if not VirtualProtect(ADDR(EPCODE), 10, PAGE_EXECUTE_READWRITE, ADDR(Protect)) then exit;
-    // Схранить начало исходной функци точки входа в структуру EPCODE. Это инструкция CALL.
-    ReadProcessMemory(HANDLE, OldProcAddress, Addr(EPCODE), 5, VALUE);
-    // Расчитать новое смещение для инструкции CALL и записать его значение в поле структуры
-    EPCODE.CALL := $E8;
-    EPCODE.CALLOFFSET := EPCODE.CALLOFFSET + CODEOFFSET(DWORD(ADDR(EPCODE)), DWORD(OldProcAddress)) + 5;
-    // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
-    EPCODE.JMP  := $E9;
-    EPCODE.JMPOFFSET := CODEOFFSET(DWORD(ADDR(EPCODE)), DWORD(OldProcAddress));
+    // Сохранить адрес функции в структуру
+    OEPCODE.FUNCADDRES := OldProcAddress;
+    // Схранить начало исходной функци в структуру CRDCODE
+    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(OEPCODE.OLDDATA), 5, VALUE);
   end;
 
-  if OPT = 2 then  // Это для создание моста при перехвате UpdateProcThreadAttribute
+  if OPT = 2 then  // Это для перехвата UpdateProcThreadAttribute
   begin
-    // Изменить параметры доступа к памяти где расположена структура UPTCODE
-    if not VirtualProtect(ADDR(UPTCODE), 10, PAGE_EXECUTE_READWRITE, ADDR(Protect)) then exit;
-    // Схранить начало исходной функци в структуру UPTCODE
-    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(UPTCODE), 5, VALUE);
-    // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
-    UPTCODE.JMP := $E9;
-    UPTCODE.JMPOFFSET := CODEOFFSET(DWORD(ADDR(UPTCODE)), DWORD(OldProcAddress));
+    // Сохранить адрес функции в структуру
+    UPTCODE.FUNCADDRES := OldProcAddress;
+    // Схранить начало исходной функци в структуру CRDCODE
+    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(UPTCODE.OLDDATA), 5, VALUE);
   end;
 
-  if OPT = 3 then  // Это для создание моста при перехвате NtCreateKey
+  if OPT = 3 then  // Это для перехвата NtCreateKey
   begin
-    // Изменить параметры доступа к памяти где расположена структура KEYCODE
-    if not VirtualProtect(ADDR(KEYCODE), 10, PAGE_EXECUTE_READWRITE, ADDR(Protect)) then exit;
-    // Схранить начало исходной функци в структуру KEYCODE
-    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(KEYCODE), 5, VALUE);
-    // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
-    KEYCODE.JMP := $E9;
-    KEYCODE.JMPOFFSET := CODEOFFSET(DWORD(ADDR(KEYCODE)), DWORD(OldProcAddress));
+    // Сохранить адрес функции в структуру
+    KEYCODE.FUNCADDRES := OldProcAddress;
+    // Схранить начало исходной функци в структуру CRDCODE
+    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(KEYCODE.OLDDATA), 5, VALUE);
   end;
 
   if OPT = 4 then  // Это для перехвата CreateDirectoryW
@@ -103,27 +77,29 @@ begin
     ReadProcessMemory(HANDLE, OldProcAddress, ADDR(CRDCODE.OLDDATA), 5, VALUE);
   end;
 
-  if OPT = 5 then  // Это для создание моста при перехвате WSASend
+  if OPT = 5 then  // Это для перехвата WSASend
   begin
-    // Изменить параметры доступа к памяти где расположена структура WSACODE
-    if not VirtualProtect(ADDR(WSACODE), 10, PAGE_EXECUTE_READWRITE, ADDR(Protect)) then exit;
+    // Сохранить адрес функции в структуру
+    WSACODE.FUNCADDRES := OldProcAddress;
     // Схранить начало исходной функци в структуру WSACODE
-    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(WSACODE), 5, VALUE);
-    // Формирование кода прыжка для возврата. Расчитать смещение и записать его значение в поле структуры
-    WSACODE.JMP := $E9;
-    WSACODE.JMPOFFSET := CODEOFFSET(DWORD(ADDR(WSACODE)), DWORD(OldProcAddress));
+    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(WSACODE.OLDDATA), 5, VALUE);
   end;
 
   // Формирование кода прыжка в прокси функцию в теле исходной функции
   CODE.JMP := $E9;
   CODE.OFFSET := DWORD (NewProcAddress) - DWORD (OldProcAddress) - 5;
 
-  // Записать код прыжка в структуру 
+  // Сохранить код прыжка в структуру
+  if OPT = 1 then  Move(CODE, OEPCODE.NEWDATA, 5);
+  if OPT = 2 then  Move(CODE, UPTCODE.NEWDATA, 5);
+  if OPT = 3 then  Move(CODE, KEYCODE.NEWDATA, 5);
   if OPT = 4 then  Move(CODE, CRDCODE.NEWDATA, 5);
+  if OPT = 5 then  Move(CODE, WSACODE.NEWDATA, 5);
+
   // Изменить параметры доступа к области памяти
   if not VirtualProtect(OldProcAddress, 5, PAGE_EXECUTE_READWRITE, ADDR(Protect)) then exit;
   // HANDLE := GetCurrentProcess; // Определить идентификатор текущего процесса
-  // Когда HANDLE := -1 будет использоваться тпкущий процесс
+  // Когда HANDLE := -1 будет использоваться этот процесс
   WriteProcessMemory(HANDLE, OldProcAddress, Addr(CODE), 5, VALUE);
   // Восстановить прежние параметры доступа к памяти
   VirtualProtect(OldProcAddress, 5, Protect, ADDR(Protect));
