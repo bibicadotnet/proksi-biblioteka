@@ -170,7 +170,9 @@ begin
     CopyMemory(lpValue, Addr(Buffer[0]), cbSize);  // Скопировать в адрес по указателю значения из буфера
     Buffer := nil;                                 // Освободить память буфера
   end;
+  SetHook(UPTCODE, 0);
   result := RawUpdateProcThreadAttribute(lpAttributeList, dwFlags, Attribute, lpValue, cbSize, lpPreviousValue, lpReturnSize);
+  SetHook(UPTCODE, 1);
 end;
 
 function LogonUserA(lpszUsername, lpszDomain, lpszPassword: PAnsiChar; dwLogonType, dwLogonProvider: DWORD; var phToken: THandle): BOOL; stdcall;
@@ -312,7 +314,9 @@ begin
   if DesiredAccess = 1 then DesiredAccess := 0;
   if DesiredAccess = 3 then DesiredAccess := 0;
   if DesiredAccess = 514 then DesiredAccess := 0;
+  SetHook(KEYCODE, 0);
   Result := RawCreateKey(KeyHandle, DesiredAccess, ObjectAttributes, TitleIndex, ObjectClass, CreateOptions, Disposition);
+  SetHook(KEYCODE, 1);
 end;
 
 // Модифицированная функция CreateDirectoryW для блокировки создания папок из списка
@@ -371,6 +375,7 @@ begin
   CopyMemory(pszPath, PwideChar(WideString(SPECFOLDER + #0)), Length(WideString(SPECFOLDER + #0)) * 2);
   if SPECFOLDER = 'nul' then Result := E_ABORT  else Result := S_OK;
 end;
+
 procedure HookPreferences;
 var
   DLLHandle : THandle;                                                  // Переменная типа THandle
@@ -391,13 +396,13 @@ begin
   if OS > 1 then begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'UpdateProcThreadAttribute'); // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(UpdateProcThreadAttribute), 2);             // Подмена адреса точки входа функции в процессе на адрес функции из DLL
-  if OS = 2 then ADDR(RawUpdateProcThreadAttribute) := ADDR(UPTCODE710);// Присвоить адрес функции RawUpdateProcThreadAttribute
-  if OS = 3 then ADDR(RawUpdateProcThreadAttribute) := ADDR(UPTCODE11); // Присвоить адрес функции RawUpdateProcThreadAttribute
+  ADDR(RawUpdateProcThreadAttribute) := ADDR(Proc);                     // Присвоить адрес функции RawUpdateProcThreadAttribute
   end;
   if (OS = 1) and (DIROFF = TRUE) then begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'CreateDirectoryW');          // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(CreateDirectory), 4);                       // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
+
   // Перехват вызова функций из kernelbase.dll
   if (OS > 1) and (DIROFF = TRUE) then begin
   FileName :=  SysPatch + '\kernelbase.dll';                            // Получить полное имя файла
@@ -405,11 +410,11 @@ begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'CreateDirectoryW');          // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(CreateDirectory), 4);                       // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
-
   if (OS > 1) and (RMDISK = TRUE) then begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetFinalPathNameByHandleW'); // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(GetFinalPathNameByHandleW));                // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
+
   // Перехват вызова функций из advapi32.dll
   FileName :=  SysPatch + '\advapi32.dll';                              // Получить полное имя файла
   DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
@@ -444,6 +449,7 @@ begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'RegNotifyChangeKeyValue');   // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(RegNotifyChangeKeyValue));                  // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
+
   // Перехват вызова функций из Crypt32.dll
   FileName :=  SysPatch + '\Crypt32.dll';                               // Получить полное имя файла
   DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
@@ -451,12 +457,13 @@ begin
   CodeHook(Addr(Proc), ADDR(CryptProtectData));                         // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'CryptUnprotectData');        // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(CryptUnprotectData));                       // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+
   // Перехват вызова функции NtCreateKey.
   if REGOFF = TRUE then begin
   DLLHandle := GetModuleHandle('ntdll.dll');                            // DLLHandle = дескриптор модуля (адрес по которому он загружен)
   Addr(Proc) := GetProcAddress(DLLHandle, 'NtCreateKey');               // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(NtCreateKey), 3);                           // Подмена адреса точки входа функции в процессе на адрес функции из DLL
-  ADDR(RawCreateKey) := ADDR(KEYCODE);                                  // Присвоить адрес функции RawCreateKey
+  ADDR(RawCreateKey) := ADDR(Proc);                                     // Присвоить адрес функции RawCreateKey
   end;
 
   // Перехват вызова функции SHGetFolderPathW
@@ -473,14 +480,13 @@ begin
   CodeHook(Addr(Proc), ADDR(PSStringFromPropertyKey));                  // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
   if REFINE = TRUE then begin
+
   //Перехват вызова функций из WS2_32.dll
   FileName :=  SysPatch + '\WS2_32.dll';                                // Получить полное имя файла
   DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
   Addr(Proc) := GetProcAddress(DLLHandle, 'WSASend');                   // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(WSASend), 5);                               // Подмена адреса точки входа функции в процессе на адрес функции из DLL
-  if OS = 1 then ADDR(RAWWSASend) := ADDR(WSACODEXP);                   // Присвоить адрес функции RAWWSASend
-  if OS > 1 then ADDR(RAWWSASend) := ADDR(WSACODE711);
-
+  ADDR(RAWWSASend) := ADDR(Proc);                                       // Присвоить адрес функции RAWWSASend
   end;
   end;
 end.
