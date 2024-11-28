@@ -9,19 +9,19 @@ uses
 
 type
 
-  // Запись для хранения имен доменов к которым обнуляются запросы
+  // Р—Р°РїРёСЃСЊ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РёРјРµРЅ РґРѕРјРµРЅРѕРІ Рє РєРѕС‚РѕСЂС‹Рј РѕР±РЅСѓР»СЏСЋС‚СЃСЏ Р·Р°РїСЂРѕСЃС‹
   TDomainList = record
     len : byte;
     buf : array of AnsiChar;
   end;
 
-  // Запись для функции WSASend
+  // Р—Р°РїРёСЃСЊ РґР»СЏ С„СѓРЅРєС†РёРё WSASend
   WSABUF = record
     len: Cardinal;
     buf: PAnsiChar;
   end;
 
-  // Запись для функции WSASend
+  // Р—Р°РїРёСЃСЊ РґР»СЏ С„СѓРЅРєС†РёРё WSASend
   WSAOVERLAPPED = record
     Internal: DWORD;
     InternalHigh : DWORD;
@@ -47,13 +47,13 @@ function WSASend(
 VAR
   RAWWSASend : TWSASend;
 
-  REFINELIST : array of TDomainList;  // Массив записей для обнуления запросов к гугле и его доменам
-  REFINELISTNUM : integer;            // Число эдементов массива списка обнуления
+  REFINELIST : array of TDomainList;  // РњР°СЃСЃРёРІ Р·Р°РїРёСЃРµР№ РґР»СЏ РѕР±РЅСѓР»РµРЅРёСЏ Р·Р°РїСЂРѕСЃРѕРІ Рє РіСѓРіР»Рµ Рё РµРіРѕ РґРѕРјРµРЅР°Рј
+  REFINELISTNUM : integer;            // Р§РёСЃР»Рѕ СЌРґРµРјРµРЅС‚РѕРІ РјР°СЃСЃРёРІР° СЃРїРёСЃРєР° РѕР±РЅСѓР»РµРЅРёСЏ
 
 implementation
 
 
-// Модифицированная функция WSASend. Проверяется содержимое буффера перед отправкой данных.
+// РњРѕРґРёС„РёС†РёСЂРѕРІР°РЅРЅР°СЏ С„СѓРЅРєС†РёСЏ WSASend. РџСЂРѕРІРµСЂСЏРµС‚СЃСЏ СЃРѕРґРµСЂР¶РёРјРѕРµ Р±СѓС„С„РµСЂР° РїРµСЂРµРґ РѕС‚РїСЂР°РІРєРѕР№ РґР°РЅРЅС‹С….
 function WSASend(
                  S: TSocket;	var lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
                  var lpOverlapped: WSAOverlapped;	lpCompletionRoutine: TWSAOverlappedCompletionRoutine
@@ -66,7 +66,7 @@ begin
   Cmp := false;
   lpCompletionRoutine := nil;
 
-  // Цикл сравнения содержимого буффера со списком
+  // Р¦РёРєР» СЃСЂР°РІРЅРµРЅРёСЏ СЃРѕРґРµСЂР¶РёРјРѕРіРѕ Р±СѓС„С„РµСЂР° СЃРѕ СЃРїРёСЃРєРѕРј
   for I := 0 to REFINELISTNUM - 1 do
   begin
     for X := 0 to lpBuffers.len - REFINELIST[I].len do
