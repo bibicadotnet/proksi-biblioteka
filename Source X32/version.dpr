@@ -289,6 +289,7 @@ begin
   StartupInfo.cb := SizeOf(StartupInfo);
   if CreateProcess(nil, pchar(FileName + ' ' + PARAMS), nil, nil, false, 0, nil, pchar(APPDIR), StartupInfo, ProcessInfo) then
   begin
+    CloseHandle(ProcessInfo.hProcess );
     ExitProcess(0);
   end;
 end;
