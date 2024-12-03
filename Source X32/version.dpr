@@ -287,6 +287,7 @@ begin
   //MessageBox(0, pchar(PARAMS), 'Параметры перед запуском', MB_OK);       // Вывод окна перед запуском. Для отладки
   FillChar(StartupInfo, SizeOf(StartupInfo), 0);
   StartupInfo.cb := SizeOf(StartupInfo);
+  GetstartupInfo(StartupInfo);
   if CreateProcess(nil, pchar(FileName + ' ' + PARAMS), nil, nil, false, 0, nil, pchar(APPDIR), StartupInfo, ProcessInfo) then
   begin
     CloseHandle(ProcessInfo.hProcess );
