@@ -49,7 +49,7 @@ begin
   begin
     // Сохранить адрес функции в структуру
     OEPCODE.FUNCADDRES := OldProcAddress;
-    // Схранить начало исходной функци в структуру CRDCODE
+    // Схранить начало исходной функци в структуру OEPCODE
     ReadProcessMemory(HANDLE, OldProcAddress, ADDR(OEPCODE.OLDDATA), 5, VALUE);
   end;
 
@@ -57,7 +57,7 @@ begin
   begin
     // Сохранить адрес функции в структуру
     UPTCODE.FUNCADDRES := OldProcAddress;
-    // Схранить начало исходной функци в структуру CRDCODE
+    // Схранить начало исходной функци в структуру UPTCODE
     ReadProcessMemory(HANDLE, OldProcAddress, ADDR(UPTCODE.OLDDATA), 5, VALUE);
   end;
 
@@ -65,7 +65,7 @@ begin
   begin
     // Сохранить адрес функции в структуру
     KEYCODE.FUNCADDRES := OldProcAddress;
-    // Схранить начало исходной функци в структуру CRDCODE
+    // Схранить начало исходной функци в структуру KEYCODE
     ReadProcessMemory(HANDLE, OldProcAddress, ADDR(KEYCODE.OLDDATA), 5, VALUE);
   end;
 
