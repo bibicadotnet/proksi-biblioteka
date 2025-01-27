@@ -88,6 +88,9 @@ begin
   if Cmp = True then break;
   end;
   SetHook(WSACODE, 0);
+  // Врианты результата функции
+  // 10050 - Сеть не работает, 10051 - Сеть не доступна, 10053 - Соединение прервано, 10054 - Соединение сбрасывается одноранговым узлом
+  // 10057 - Сокет не подключен, 10060 - Время ожидания соединения истекло, 10061 - В соединении отказано. 1064 - Хост не работает.
   if Cmp = false then Result := RAWWSASend(S, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpOverlapped,	lpCompletionRoutine) else Result := 0;
   SetHook(WSACODE, 1);
 end;
