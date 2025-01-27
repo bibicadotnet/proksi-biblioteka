@@ -21,13 +21,6 @@ TYPE
     FindData: TWin32FindData  platform;
   end;
 
-  LongRec = packed record
-    case Integer of
-      0: (Lo, Hi: Word);
-      1: (Words: array [0..1] of Word);
-      2: (Bytes: array [0..3] of Byte);
-  end;
-
 CONST
 
   faReadOnly  = $00000001 platform;
@@ -108,8 +101,6 @@ end;
 // Описание функций для поиска файлов и папок по шаблону
 // -----------------------------------------------------
 function FindMatchingFile(var F: TSearchRec): Integer;
-var
-  LocalFileTime: TFileTime;
 begin
   with F do
   begin
@@ -119,8 +110,6 @@ begin
         Result := GetLastError;
         Exit;
       end;
-    FileTimeToLocalFileTime(FindData.ftLastWriteTime, LocalFileTime);
-    FileTimeToDosDateTime(LocalFileTime, LongRec(Time).Hi, LongRec(Time).Lo);
     Size := FindData.nFileSizeLow or Int64(FindData.nFileSizeHigh) shl 32;
     Attr := FindData.dwFileAttributes;
     Name := FindData.cFileName;
