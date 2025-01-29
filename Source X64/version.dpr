@@ -232,8 +232,8 @@ begin
   ARGS := ARGS + '--disable-features=RendererCodeIntegrity,FlashDeprecationWarning' + ' ';
 
   if FULLPATCH = FALSE then APP := '';
-  if DATADIR <> '' then USERDATADIR := GETUSERDATADIR(APP, DATADIR);
-  if CACHEDIR <> '' then DISKCACHEDIR := GETDISKCACHEDIR(APP, CACHEDIR);
+  if DATADIR <> '' then USERDATADIR := GETDIR(APP, DATADIR);
+  if CACHEDIR <> '' then DISKCACHEDIR := GETDIR(APP, CACHEDIR);
 
   if DATADIR <> '' then ARGS := ARGS + '--user-data-dir=' + '"' + USERDATADIR + '"' + ' ';
   if CACHEDIR <> '' then ARGS := ARGS + '--disk-cache-dir=' + '"' + DISKCACHEDIR + '"' + ' ';
