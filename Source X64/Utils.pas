@@ -10,23 +10,15 @@ uses
 {$WARN SYMBOL_DEPRECATED OFF}
 
 TYPE
-  TFileName = type string;
 
   TSearchRec = record
     Time: Integer platform deprecated;
     Size: Int64;
     Attr: Integer;
-    Name: TFileName;
+    Name: String;
     ExcludeAttr: Integer;
     FindHandle: THandle platform;
     FindData: TWin32FindData platform;
-  end;
-
-  LongRec = record
-    case Integer of
-      0: (Lo, Hi: Word);
-      1: (Words: array [0..1] of Word);
-      2: (Bytes: array [0..3] of Byte);
   end;
 
 CONST
@@ -45,9 +37,8 @@ procedure FindClose(var F: TSearchRec);
 function FindFirst(const Path: string; Attr: Integer; var  F: TSearchRec): Integer;
 function FindNext(var F: TSearchRec): Integer;
 function XPOS(Const SubStr, Str : String) : Integer;
-procedure REPLACE(var STR1: string; STR2: string);
-function GETUSERDATADIR(const APPDIR: string; DATADIR : string): string;
-function GETDISKCACHEDIR(const APPDIR: string; CACHEDIR : string): string;
+procedure REPLACE(var PSTR: string; RSTR: string);
+function GETDIR(const APPDIR: string; PROFDIR : string): string;
 function DirNameDistil(const Dir : string): string;
 
 implementation
@@ -62,46 +53,31 @@ begin
   Result := DirName;
 end;
 
-// Функция для формирования пути к DATADIR
-function GETUSERDATADIR(const APPDIR: string; DATADIR : string): string;
+// Функция для формирования пути к DATADIR и CACHEDIR
+function GETDIR(const APPDIR: string; PROFDIR : string): string;
 var
-  Len    : INTEGER;
+  Len : INTEGER;
 begin
   Len := Length(APPDIR);
-  while (POS('..\', DATADIR) <> 0) and (Len <> 0) do
+  while (POS('..\', PROFDIR) <> 0) and (Len <> 0) do
     begin
       if (APPDIR[Len] = '\') then Dec(Len);
       while (Len <> 0) and (APPDIR[Len] <> '\') do Dec(Len);
-      Delete(DATADIR, POS('..\', DATADIR), 3);
+      Delete(PROFDIR, POS('..\', PROFDIR), 3);
     end;
-  Result := Copy(APPDIR, 0, Len) + DATADIR;
-end;
-
-// Функция для формирования пути к CACHEDIR
-function GETDISKCACHEDIR(const APPDIR: string; CACHEDIR : string): string;
-var
-  Len    : INTEGER;
-begin
-  Len := Length(APPDIR);
-  while (POS('..\', CACHEDIR) <> 0) and (Len <> 0) do
-    begin
-      if (APPDIR[Len] = '\') then Dec(Len);
-      while (Len <> 0) and (APPDIR[Len] <> '\') do Dec(Len);
-      Delete(CACHEDIR, POS('..\', CACHEDIR), 3);
-    end;
-  Result := Copy(APPDIR, 0, Len) + CACHEDIR;
+  Result := Copy(APPDIR, 0, Len) + PROFDIR;
 end;
 
 // Процедура для замены подстановочных строк
-procedure REPLACE(var STR1: string; STR2: string);
+procedure REPLACE(var PSTR: string; RSTR: string);
 var
   SETPOS : INTEGER;
 begin
-  SETPOS := POS('%DATADIR%', STR1);
+  SETPOS := POS('%DATADIR%', PSTR);
   if SETPOS <> 0 then
   begin
-    Delete(STR1, SETPOS, 9);
-    Insert(STR2, STR1, SETPOS);
+    Delete(PSTR, SETPOS, 9);
+    Insert(RSTR, PSTR, SETPOS);
   end;
 end;
 
@@ -109,8 +85,6 @@ end;
 // Описание функций для поиска файлов и папок по шаблону
 // -----------------------------------------------------
 function FindMatchingFile(var F: TSearchRec): Integer;
-var
-  LocalFileTime: TFileTime;
 begin
   with F do
   begin
@@ -120,9 +94,6 @@ begin
         Result := GetLastError;
         Exit;
       end;
-    FileTimeToLocalFileTime(FindData.ftLastWriteTime, LocalFileTime);
-    FileTimeToDosDateTime(LocalFileTime, LongRec(Time).Hi, LongRec(Time).Lo);
-    Size := FindData.nFileSizeLow or Int64(FindData.nFileSizeHigh) shl 32;
     Attr := FindData.dwFileAttributes;
     Name := FindData.cFileName;
   end;
