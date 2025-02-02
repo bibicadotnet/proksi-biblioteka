@@ -91,10 +91,10 @@ begin
   if Cmp = True then break;
   end;
   SetHook(WSACODE, 0);
-  if Cmp = TRUE then Closesocket(s);
+  if Cmp = true then Closesocket(s); // Закрыть сокет.
   // Врианты результата выполнения функции WSASend
   // 0 - выполнена без ошибок. 10050 - Сеть не работает. 10053 - Соединение прервано. 10057 - Сокет не подключен.
-  if Cmp = false then Result := RAWWSASend(S, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpOverlapped,	lpCompletionRoutine) else Result := 10053;
+  if Cmp = false then Result := 10053 else Result := RAWWSASend(S, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpOverlapped,	lpCompletionRoutine);
   SetHook(WSACODE, 1);
 end;
 
