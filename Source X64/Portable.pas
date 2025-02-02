@@ -479,14 +479,17 @@ begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'PSStringFromPropertyKey');   // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(PSStringFromPropertyKey));                  // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
-  if REFINE = TRUE then begin
 
+  if REFINE = TRUE then begin
   //Перехват вызова функций из WS2_32.dll
   FileName :=  SysPatch + '\WS2_32.dll';                                // Получить полное имя файла
   DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
   Addr(Proc) := GetProcAddress(DLLHandle, 'WSASend');                   // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(WSASend), 5);                               // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   ADDR(RAWWSASend) := ADDR(Proc);                                       // Присвоить адрес функции RAWWSASend
+  
+  // Импорт функции closesocket
+  ADDR(closesocket) := GetProcAddress(DLLHandle, 'closesocket');
   end;
   end;
 end.
