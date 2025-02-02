@@ -42,6 +42,8 @@ TWSASend = function(
                     var lpOverlapped: WSAOverlapped;	lpCompletionRoutine: TWSAOverlappedCompletionRoutine
                     ): Integer; stdcall;
 
+TClosesocket = function(s: TSocket): Integer; stdcall;
+
 function WSASend(
                  S: TSocket;	var lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
                  var lpOverlapped: WSAOverlapped;	lpCompletionRoutine: TWSAOverlappedCompletionRoutine
@@ -50,7 +52,8 @@ function WSASend(
 VAR
   RAWWSASend : TWSASend;
   REFINELIST : array of TDomainList;  // Массив записей для обнуления запросов к гугле и его доменам
-  REFINELISTNUM : integer;        // Число эдементов массива списка обнуления
+  REFINELISTNUM : integer;            // Число эдементов массива списка обнуления
+  Closesocket : TClosesocket;         // Функция закрытия сокета
 
 implementation
 
@@ -88,10 +91,10 @@ begin
   if Cmp = True then break;
   end;
   SetHook(WSACODE, 0);
-  // Врианты результата выполнения функции
-  // 10050 - Сеть не работает. 10051 - Сеть не доступна. 10053 - Соединение прервано. 10054 - Соединение сбрасывается одноранговым узлом.
-  // 10057 - Сокет не подключен. 10060 - Время ожидания соединения истекло. 10061 - В соединении отказано. 1064 - Хост не работает.
-  if Cmp = false then Result := RAWWSASend(S, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpOverlapped,	lpCompletionRoutine) else Result := 0;
+  if Cmp = TRUE then Closesocket(s);
+  // Врианты результата выполнения функции WSASend
+  // 0 - выполнена без ошибок. 10050 - Сеть не работает. 10053 - Соединение прервано. 10057 - Сокет не подключен.
+  if Cmp = false then Result := RAWWSASend(S, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpOverlapped,	lpCompletionRoutine) else Result := 10053;
   SetHook(WSACODE, 1);
 end;
 
