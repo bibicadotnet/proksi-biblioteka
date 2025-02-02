@@ -463,6 +463,9 @@ begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'WSASend');                   // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(WSASend), 5);                               // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   ADDR(RAWWSASend) := ADDR(Proc);                                       // Присвоить адрес функции RAWWSASend
+
+  // Импорт функции closesocket
+  ADDR(closesocket) := GetProcAddress(DLLHandle, 'closesocket');
   end;
 
   end;
