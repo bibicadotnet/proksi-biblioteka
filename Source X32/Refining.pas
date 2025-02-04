@@ -56,9 +56,9 @@ VAR
 
 implementation
 
-// ***********************************************************
-// Функции доступа к интернет
-// ***********************************************************
+// *******************************************
+//    Реализация функций доступа к интернет
+// *******************************************
 
 function WSASend(
                  S: TSocket;	var lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
@@ -89,6 +89,7 @@ begin
       end;
   if Cmp = True then break;
   end;
+
   SetHook(WSACODE, 0);
   if Cmp = true then Closesocket(s); // Закрыть сокет.
   // Врианты результата выполнения функции WSASend
