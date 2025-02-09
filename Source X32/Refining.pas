@@ -88,7 +88,8 @@ function Bind(s: TSocket; var name: TSockAddrin; namelen: Integer): Integer; std
 function Listen(s: TSocket; backlog: Integer): Integer; stdcall;                 
 
 VAR
-  RAWWSASend : TWSASend;              // Оригинальная функция WSASend   
+  RAWWSASend : TWSASend;              // Оригинальная функция WSASend
+  RAWSetsockopt : TSetsockopt;        // Оригинальная функция Setsockopt
   Closesocket : TClosesocket;         // Функция закрытия сокета
   REFINELIST : array of TDomainList;  // Массив записей для обнуления запросов к гугле и его доменам
   REFINELISTNUM : integer;            // Число эдементов массива списка обнуления
