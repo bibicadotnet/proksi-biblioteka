@@ -8,7 +8,7 @@ uses
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
 
 procedure CodeHook(OldProcAddress, NewProcAddress: pointer; OPT : byte = 0);
-function  CODEOFFSET(NEWADDR, OLDADDR: DWORD): DWORD;
+function  CodeOffset(NEWADDR, OLDADDR: DWORD): DWORD;
 
 type
   HOOKDATA = packed record              // Структура для хранения данных перехвата
@@ -20,11 +20,12 @@ type
 procedure SetHook(HOOK: HOOKDATA; OPT: byte);
 
 var
+  OEPCODE : HOOKDATA;                  // Для формирования перехвата точки входа
   KEYCODE : HOOKDATA;                  // Для формирования перехвата NtCreateKey
   UPTCODE : HOOKDATA;                  // Для формирования перехвата UpdateProcThreadAttribute
-  CRDCODE : HOOKDATA;                  // Для формирования перхвата  CreateDirectoryW
-  WSACODE : HOOKDATA;                  // Для формирования перхвата  WSASend
-  OEPCODE : HOOKDATA;                  // Для формирования перхвата  точки входа
+  CRDCODE : HOOKDATA;                  // Для формирования перехвата CreateDirectoryW
+  WSACODE : HOOKDATA;                  // Для формирования перехвата WSASend
+  SSOCODE : HOOKDATA;                  // Для формирования перехвата setsockopt
 
 implementation
 
@@ -85,6 +86,14 @@ begin
     ReadProcessMemory(HANDLE, OldProcAddress, ADDR(WSACODE.OLDDATA), 5, VALUE);
   end;
 
+  if OPT = 6 then  // Это для перехвата setsockopt
+  begin
+    // Сохранить адрес функции в структуру
+    SSOCODE.FUNCADDRES := OldProcAddress;
+    // Схранить начало исходной функци в структуру SSOCODE
+    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(SSOCODE.OLDDATA), 5, VALUE);
+  end;  
+
   // Формирование кода прыжка в прокси функцию в теле исходной функции
   CODE.JMP := $E9;
   CODE.OFFSET := DWORD (NewProcAddress) - DWORD (OldProcAddress) - 5;
@@ -95,6 +104,7 @@ begin
   if OPT = 3 then  Move(CODE, KEYCODE.NEWDATA, 5);
   if OPT = 4 then  Move(CODE, CRDCODE.NEWDATA, 5);
   if OPT = 5 then  Move(CODE, WSACODE.NEWDATA, 5);
+  if OPT = 6 then  Move(CODE, SSOCODE.NEWDATA, 5);  
 
   // Изменить параметры доступа к области памяти
   if not VirtualProtect(OldProcAddress, 5, PAGE_EXECUTE_READWRITE, ADDR(Protect)) then exit;
@@ -106,7 +116,7 @@ begin
 end;
 
 // Функция расчета смещения
-function CODEOFFSET(NEWADDR, OLDADDR: DWORD):DWORD;
+function CodeOffset(NEWADDR, OLDADDR: DWORD):DWORD;
 begin
   if(OLDADDR < NEWADDR) then
     begin
