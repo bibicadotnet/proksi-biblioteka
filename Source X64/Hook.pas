@@ -24,6 +24,7 @@ var
   CRDCODE : HOOKDATA;                  // Структурная переменная для формирования перхвата CreateDirectoryW
   WSACODE : HOOKDATA;                  // Структурная переменная для формирования перхвата WSASend
   KEYCODE : HOOKDATA;                  // Структурная переменная для формирования перхвата NtCreateKey
+  SSOCODE : HOOKDATA;                  // Структурная переменная для формирования перхвата Setsockopt
 
   OS   : Byte = 0;                     // Условный номер ОС
   Proc : procedure;                    // Процедурная переменная
@@ -33,7 +34,6 @@ var
 // Функция установливает перехват
 procedure CodeHook(OldProcAddress, NewProcAddress: pointer; OPT : byte = 0);
 var
-
 
   // структура для формирования кода прыжка в прокси функцию методом 1. mov rax,addr 2. jmp rax (12 байт)
   RAXJUMP    : packed record
@@ -90,17 +90,26 @@ begin
     ReadProcessMemory(HANDLE, OldProcAddress, ADDR(WSACODE.OLDDATA), 12, VALUE);
   end;
 
+  if OPT = 6 then // Это для перехвата setsockopt
+  begin
+    // Сохранить адрес функции в структуру
+    SSOCODE.FUNCADDRES := OldProcAddress;
+    // Схранить начало исходной функци в структуру SSOCODE
+    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(SSOCODE.OLDDATA), 12, VALUE);
+  end;
+
   // Формирование кода прыжка в прокси функцию в теле исходной функции методом mov rax,addr jmp rax (12 байт)
   RAXJUMP.MOVRRAXOP := $B848;
   RAXJUMP.MOVRRAXARG := NewProcAddress;
   RAXJUMP.JMPRAXOP := $E0FF;
 
   // Записать код прыжка в структуру
-  if OPT = 1 then  Move(RAXJUMP, OEPCODE.NEWDATA, 12);
-  if OPT = 2 then  Move(RAXJUMP, UPTCODE.NEWDATA, 12);
-  if OPT = 3 then  Move(RAXJUMP, KEYCODE.NEWDATA, 12);
-  if OPT = 4 then  Move(RAXJUMP, CRDCODE.NEWDATA, 12);
-  if OPT = 5 then  Move(RAXJUMP, WSACODE.NEWDATA, 12);
+  if OPT = 1 then Move(RAXJUMP, OEPCODE.NEWDATA, 12);
+  if OPT = 2 then Move(RAXJUMP, UPTCODE.NEWDATA, 12);
+  if OPT = 3 then Move(RAXJUMP, KEYCODE.NEWDATA, 12);
+  if OPT = 4 then Move(RAXJUMP, CRDCODE.NEWDATA, 12);
+  if OPT = 5 then Move(RAXJUMP, WSACODE.NEWDATA, 12);
+  if OPT = 6 then Move(RAXJUMP, SSOCODE.NEWDATA, 12);
 
   // Изменить параметры доступа к области памяти
   if not VirtualProtect(OldProcAddress, 12, PAGE_EXECUTE_READWRITE, ADDR(Protect)) then exit;
