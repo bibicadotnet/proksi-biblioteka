@@ -487,12 +487,14 @@ begin
   DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
   // Импорт функции closesocket
   ADDR(closesocket) := GetProcAddress(DLLHandle, 'closesocket');
+  
   if REFINE = TRUE then begin
   //Перехват функции WSASend
   ADDR(Proc) := GetProcAddress(DLLHandle, 'WSASend');                   // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(WSASend), 5);                               // Подмена адреса функции
   ADDR(RAWWSASend) := ADDR(Proc);
   end;
+  
   if BCTOFF = TRUE then begin
   // Перехват функции setsockopt
   Addr(Proc) := GetProcAddress(DLLHandle, 'setsockopt');                // Определить адрес функции
@@ -506,5 +508,6 @@ begin
   CodeHook(Addr(Proc), ADDR(Listen));
   end;
   end;
+  
   end;
 end.
