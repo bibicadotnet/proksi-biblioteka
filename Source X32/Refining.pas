@@ -100,6 +100,7 @@ implementation
 //    Реализация функций доступа к интернет
 // *******************************************
 
+// Функция отправляет данные в подключенный сокет.
 function WSASend(
                  S: TSocket;	var lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
                  var lpOverlapped: WSAOverlapped;	lpCompletionRoutine: TWSAOverlappedCompletionRoutine
@@ -161,7 +162,7 @@ begin
   Result := 10050;
 end;
 
-// Функция Listen переводит сокет в режим ожидания запросо от клиентов
+// Функция Listen переводит сокет в режим ожидания запросов от клиентов
 function Listen(s: TSocket; backlog: Integer): Integer; stdcall;
 begin
   Closesocket(s);
