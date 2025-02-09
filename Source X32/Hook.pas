@@ -33,7 +33,7 @@ implementation
 procedure CodeHook(OldProcAddress, NewProcAddress: pointer; OPT : byte = 0);
 var
 
-  // структура для хранения кода прыжка пехвата методом JMP NEAR OFFSET
+  // структура для хранения кода прыжка перехвата методом JMP NEAR OFFSET
   CODE   : packed record
   JMP    : BYTE;                       // Поле для записи опкода инструкции JMP     | $E9
   OFFSET : DWORD;                      // Поле для записи аргумента инструкции JMP  | DWORD
