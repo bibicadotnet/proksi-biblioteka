@@ -19,6 +19,7 @@ var
   RMDISK : boolean;          // Переменная для включения определения пути к TEMP на рамдиске
   REFINE : boolean;          // Переменная для включения обнуления запросов к серверам
   SPFOLD : boolean;          // Переменная для включения подмены пути к спецпапкам
+  BCTOFF : boolean;          // Переменная для отключения широковещательных рассылок
 
   FILELIST     : array of String;  // Массив списка файлов
   DELDIRLIST   : array of String;  // Массив списка директорий для удаления
@@ -480,16 +481,30 @@ begin
   CodeHook(Addr(Proc), ADDR(PSStringFromPropertyKey));                  // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
 
-  if REFINE = TRUE then begin
-  //Перехват вызова функций из WS2_32.dll
-  FileName :=  SysPatch + '\WS2_32.dll';                                // Получить полное имя файла
+  if REFINE = TRUE or BCTOFF = TRUE then begin
+  //Подключение библиотеки WS2_32.dll
+  FileName := SysPatch + '\WS2_32.dll';                                 // Получить полное имя файла
   DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
-  Addr(Proc) := GetProcAddress(DLLHandle, 'WSASend');                   // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(WSASend), 5);                               // Подмена адреса точки входа функции в процессе на адрес функции из DLL
-  ADDR(RAWWSASend) := ADDR(Proc);                                       // Присвоить адрес функции RAWWSASend
-  
   // Импорт функции closesocket
   ADDR(closesocket) := GetProcAddress(DLLHandle, 'closesocket');
+  if REFINE = TRUE then begin
+  //Перехват функции WSASend
+  ADDR(Proc) := GetProcAddress(DLLHandle, 'WSASend');                   // Определить адрес функции
+  CodeHook(Addr(Proc), ADDR(WSASend), 5);                               // Подмена адреса функции
+  ADDR(RAWWSASend) := ADDR(Proc);
+  end;
+  if BCTOFF = TRUE then begin
+  // Перехват функции setsockopt
+  Addr(Proc) := GetProcAddress(DLLHandle, 'setsockopt');                // Определить адрес функции
+  CodeHook(Addr(Proc), ADDR(Setsockopt), 6);                            // Подмена адреса функции
+  ADDR(RAWSetsockopt) := ADDR(Proc);
+  // Перехват функции bind
+  ADDR(Proc) := GetProcAddress(DLLHandle, 'bind');                      // Определить адрес функции
+  CodeHook(Addr(Proc), ADDR(Bind));
+  // Перехват функции Listen
+  ADDR(Proc) := GetProcAddress(DLLHandle, 'listen');                    // Определить адрес функции
+  CodeHook(Addr(Proc), ADDR(Listen));
+  end;
   end;
   end;
 end.
