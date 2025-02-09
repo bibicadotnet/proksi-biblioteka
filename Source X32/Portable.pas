@@ -456,16 +456,34 @@ begin
   CodeHook(Addr(Proc), ADDR(PSStringFromPropertyKey));                  // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
 
-  //Перехват вызова функций из WS2_32.dll
-  if REFINE = TRUE then begin
+  if REFINE = TRUE or BCTOFF = TRUE then begin
+  //Подключение библиотеки WS2_32.dll
   FileName :=  SysPatch + '\WS2_32.dll';                                // Получить полное имя файла
   DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
-  Addr(Proc) := GetProcAddress(DLLHandle, 'WSASend');                   // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(WSASend), 5);                               // Подмена адреса точки входа функции в процессе на адрес функции из DLL
-  ADDR(RAWWSASend) := ADDR(Proc);                                       // Присвоить адрес функции RAWWSASend
-
   // Импорт функции closesocket
   ADDR(closesocket) := GetProcAddress(DLLHandle, 'closesocket');
+
+  if REFINE = TRUE then begin
+  //Перехват функции WSASend
+  ADDR(Proc) := GetProcAddress(DLLHandle, 'WSASend');                   // Определить адрес функции
+  CodeHook(Addr(Proc), ADDR(WSASend), 5);                               // Подмена адреса функции
+  ADDR(RAWWSASend) := ADDR(Proc);
+  end;
+
+  if BCTOFF = TRUE then begin
+  // Перехват функции setsockopt
+  Addr(Proc) := GetProcAddress(DLLHandle, 'setsockopt');              // Определить адрес функции
+  CodeHook(Addr(Proc), ADDR(Setsockopt), 6);
+  ADDR(RAWSetsockopt) := ADDR(Proc);
+
+  // Перехват функции bind
+  ADDR(Proc) := GetProcAddress(DLLHandle, 'bind');
+  CodeHook(Addr(Proc), ADDR(Bind));
+
+  // Перехват функции Listen
+  ADDR(Proc) := GetProcAddress(DLLHandle, 'listen');
+  CodeHook(Addr(Proc), ADDR(Listen));
+  end;
   end;
 
   end;
