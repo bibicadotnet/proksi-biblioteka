@@ -138,7 +138,8 @@ begin
   RMDISK := False;                              // Значение параметра по умолчанию
   REFINE := True;                               // Значение параметра по умолчанию
   SPFOLD := False;                              // Значение параметра по умолчанию
-  BCTOFF := True;                               // Значение параметра по умолчанию  
+  BCTOFF := True;                               // Значение параметра по умолчанию
+  STARTM := false;                              // Значение параметра по умолчанию 
   FULLPATCH := True;                            // Значение параметра по умолчанию
 
   DATADIR   := '';
@@ -171,6 +172,7 @@ begin
       if POS('REFINE=', IniLine) <> 0 then if IniParam = '1' then REFINE := True else if IniParam = '0' then REFINE := False;
       if POS('SPFOLD=', IniLine) <> 0 then if IniParam = '1' then SPFOLD := True else if IniParam = '0' then SPFOLD := False;
       if POS('BCTOFF=', IniLine) <> 0 then if IniParam = '1' then BCTOFF := True else if IniParam = '0' then BCTOFF := False;
+      if POS('STARTM=', IniLine) <> 0 then if IniParam = '1' then STARTM := True else if IniParam = '0' then STARTM := False;
 
       if POS('APPDIR=', IniLine) <> 0 then if IniParam = '0' then FULLPATCH := False else if IniParam = '1' then FULLPATCH := True;
       if POS('DATADIR=', IniLine) <> 0 then if IniParam <> '' then DATADIR := IniParam;
@@ -274,26 +276,42 @@ begin
   if (OSINFO.dwMajorVersion = 10) and (OSINFO.dwMinorVersion = 0) and (OSINFO.dwBuildNumber > 22600) then OS := 3;  // Windows 11
 end;
 
+// Функция запуска браузера
 procedure STARTPORTABLE(ARGS:string);
 var
-  StartupInfo: TStartupInfo;
-  ProcessInfo: TProcessInformation;
+  ShellExecuteInfo: TShellExecuteInfo;     // Переменная для запуска через ShellExecuteEx
+  StartupInfo: TStartupInfo;               // Переменная для запуска через CreateProcess
+  ProcessInfo: TProcessInformation;        // Переменная для запуска через CreateProcess
 begin
   // Получить полное именя файла с использованием API функции GetModuleFileName
   // Если вместо 0 вписать hInstance, то будет путь к имени DLL файла
   GetModuleFileName(0, AppPatch, SizeOF(AppPatch));
   FileName := AppPatch;
-  PARAMS := ADDParam(ARGS);
   APPDIR := GetAPPDir(AppPatch);
-  if DIROFF = TRUE then FDDELETE;
-  //MessageBox(0, pchar(PARAMS), 'Параметры перед запуском', MB_OK);       // Вывод окна перед запуском. Для отладки
-  FillChar(StartupInfo, SizeOf(StartupInfo), 0);
-  StartupInfo.cb := SizeOf(StartupInfo);
-  GetstartupInfo(StartupInfo);
-  if CreateProcess(nil, pchar(FileName + ' ' + PARAMS), nil, nil, false, 0, nil, pchar(APPDIR), StartupInfo, ProcessInfo) then
+  PARAMS := ADDParam(ARGS);
+  if DIROFF = true then FDDELETE;                                           // Удалить директории и файлы если параметр включен
+  // MessageBox(0, pchar(PARAMS), 'Параметры перед запуском', MB_OK);       // Вывод окна перед запуском. Для отладки
+
+  if STARTM = false then
   begin
-    CloseHandle(ProcessInfo.hProcess );
-    ExitProcess(0);
+    // Заполнение структуры для запуска программы
+    FillChar(ShellExecuteInfo, SizeOf(TShellExecuteInfo), 0) ;                // Очистить структуру от случайных данных
+    ShellExecuteInfo.cbSize := sizeof(TShellExecuteInfo);                     // Размер структуры в байтах
+    ShellExecuteInfo.fMask := SEE_MASK_NOCLOSEPROCESS or SEE_MASK_FLAG_NO_UI; // Комбинация флагов, определяющих используемую часть структуры
+    ShellExecuteInfo.lpVerb := 'open';                                        // Строка, определяющее действие с файлом. 'open' запускает исполняемый файл
+    ShellExecuteInfo.lpFile := pchar(FileName);                               // Имя файла (полный путь к файлу)
+    ShellExecuteInfo.lpDirectory := pchar(APPDIR);                            // Рабочая директория программы
+    ShellExecuteInfo.nShow := SW_SHOWNORMAL;                                  // Способ отображения окна
+    ShellExecuteInfo.lpParameters := pchar(PARAMS);                           // Параметры
+    if ShellExecuteEx(ADDR(ShellExecuteInfo)) then ExitProcess(0);            // Запустить программу
+  end
+  else begin
+    FillChar(StartupInfo, SizeOf(StartupInfo), 0);
+    StartupInfo.cb := SizeOf(StartupInfo);
+    if CreateProcess(nil, pchar(FileName + ' ' + PARAMS), nil, nil, false, 0, nil, pchar(APPDIR), StartupInfo, ProcessInfo) then
+    begin
+      ExitProcess(0);
+    end;
   end;
 end;
 
