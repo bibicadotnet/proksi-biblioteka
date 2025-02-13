@@ -359,7 +359,7 @@ begin
   begin
     DisableThreadLibraryCalls(hInstance);                     // Отключить уведомления DLL_THREAD_ATTACH и DLL_THREAD_DETACH
     READPARAM;                                                // Прочитать параметры из INI файла
-    OSVER;                                                    // Определить версию ОС
+    GetOSVer;                                                    // Определить версию ОС
     RedirectEXP;                                              // Выполнить переадресацию функций экспорта
     RedirectEP;                                               // Выполнить переадресацию точки входа
   end;
