@@ -20,7 +20,6 @@ VAR
   PARAMS    : string;                      // Переменная для хранения параметров запуска
   ExeMain   : procedure;                   // Процедурная переменная для стартовой функции
   IniFile   : TextFile;                    // Переменная типа TextFile для файла настроек
-  OSINFO    : TOSVersionInfo;
 
   FULLPATCH : boolean;
   DATADIR   : string;
@@ -247,20 +246,6 @@ begin
   RESULT := ARGS + ARGSSTART;
 end;
 
-// Функция для определения версию ОС
-procedure OSVER;
-begin
-  OSINFO.dwOSVersionInfoSize := SizeOf(OSINFO);
-  GetVersionEx(OSINFO);
-  if (OSINFO.dwMajorVersion = 5) and (OSINFO.dwMinorVersion = 1) then OS := 1;                                      // Windows XP 32
-  if (OSINFO.dwMajorVersion = 5) and (OSINFO.dwMinorVersion = 2) then OS := 1;                                      // Windows XP 64
-  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 1) then OS := 2;                                      // Windows 7
-  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 2) then OS := 2;                                      // Windows 8
-  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 3) then OS := 2;                                      // Windows 8.1
-  if (OSINFO.dwMajorVersion = 10) and (OSINFO.dwMinorVersion = 0) and (OSINFO.dwBuildNumber < 22600) then OS := 2;  // Windows 10, первая версия Windows 11
-  if (OSINFO.dwMajorVersion = 10) and (OSINFO.dwMinorVersion = 0) and (OSINFO.dwBuildNumber > 22600) then OS := 3;  // Windows 11
-end;
-
 procedure STARTPORTABLE(ARGS:string);
 var
   StartupInfo: TStartupInfo;
@@ -343,7 +328,7 @@ begin
   begin
     DisableThreadLibraryCalls(hInstance);                     // Отключить уведомления DLL_THREAD_ATTACH и DLL_THREAD_DETACH
     READPARAM;                                                // Прочитать параметры из INI файла 
-    OSVER;                                                    // Определить версию ОС
+    GetOSVer;                                                    // Определить версию ОС
     RedirectEXP;                                              // Выполнить переадресацию функций экспорта
     RedirectEP;                                               // Выполнить переадресацию точки входа
   end;
