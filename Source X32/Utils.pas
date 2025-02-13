@@ -9,7 +9,6 @@ uses
 {$WARN SYMBOL_PLATFORM OFF}
 
 TYPE
-
   TSearchRec = record
     Time: Integer;
     Size: Int64;
@@ -21,7 +20,6 @@ TYPE
   end;
 
 CONST
-
   faReadOnly  = $00000001 platform;
   faHidden    = $00000002 platform;
   faSysFile   = $00000004 platform;
@@ -31,16 +29,36 @@ CONST
   faSymLink   = $00000040 platform;
   faAnyFile   = $0000003F;
 
-function FindMatchingFile(var F: TSearchRec): Integer;
+var
+  OS : Byte; // Переменная условного номера версии ОС  
+
 procedure FindClose(var F: TSearchRec);
+procedure Replace(var PSTR: string; RSTR: string);
+procedure GetOSVer;
 function FindFirst(const Path: string; Attr: Integer; var  F: TSearchRec): Integer;
 function FindNext(var F: TSearchRec): Integer;
 function XPOS(Const SubStr, Str : String) : Integer;
-procedure REPLACE(var PSTR: string; RSTR: string);
-function GETDIR(const APPDIR: string; PROFDIR : string): string;
+function FindMatchingFile(var F: TSearchRec): Integer;
+function GetDir(const APPDIR: string; PROFDIR : string): string;
 function DirNameDistil(const Dir : string): string;
 
 implementation
+
+// Функция для определения версию ОС
+procedure GetOSVer;
+var
+  OSINFO : TOSVersionInfo;
+begin
+  OSINFO.dwOSVersionInfoSize := SizeOf(OSINFO);
+  GetVersionEx(OSINFO);
+  if (OSINFO.dwMajorVersion = 5) and (OSINFO.dwMinorVersion = 1) then OS := 1; // Windows XP 32
+  if (OSINFO.dwMajorVersion = 5) and (OSINFO.dwMinorVersion = 2) then OS := 1; // Windows XP 64
+  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 1) then OS := 2; // Windows 7
+  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 2) then OS := 2; // Windows 8
+  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 3) then OS := 2; // Windows 8.1
+  if (OSINFO.dwMajorVersion = 10) and (OSINFO.dwMinorVersion = 0) and (OSINFO.dwBuildNumber < 22600) then OS := 2; // Windows 10, первая версия Windows 11
+  if (OSINFO.dwMajorVersion = 10) and (OSINFO.dwMinorVersion = 0) and (OSINFO.dwBuildNumber > 22600) then OS := 3; // Windows 11
+end;
 
 // Удалить из имени директории последовательно все '..\' и '.'
 function DirNameDistil(const Dir : string): string;
