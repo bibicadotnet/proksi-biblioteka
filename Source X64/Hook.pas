@@ -26,7 +26,6 @@ var
   KEYCODE : HOOKDATA;                  // Структурная переменная для формирования перхвата NtCreateKey
   SSOCODE : HOOKDATA;                  // Структурная переменная для формирования перхвата Setsockopt
 
-  OS   : Byte = 0;                     // Условный номер ОС
   Proc : procedure;                    // Процедурная переменная
 
   implementation
