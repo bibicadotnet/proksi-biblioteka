@@ -264,15 +264,15 @@ begin
   //MessageBox(0, pchar(PARAMS), 'Параметры перед запуском', MB_OK); // Вывод окна перед запуском. Для отладки
   if STARTM = false then
   begin
-  FillChar(ShellExecuteInfo, SizeOf(TShellExecuteInfo), 0) ;                // Очистить структуру от случайных данных
-  ShellExecuteInfo.cbSize := sizeof(TShellExecuteInfo);                     // Размер структуры в байтах
-  ShellExecuteInfo.fMask := SEE_MASK_NOCLOSEPROCESS or SEE_MASK_FLAG_NO_UI; // Комбинация флагов, определяющих используемую часть структуры
-  ShellExecuteInfo.lpVerb := 'open';                                        // Строка, определяющее действие с файлом. 'open' запускает исполняемый файл
-  ShellExecuteInfo.lpFile := pchar(FileName);                               // Имя файла (полный путь к файлу)
-  ShellExecuteInfo.lpDirectory := pchar(APPDIR);                            // Рабочая директория программы
-  ShellExecuteInfo.nShow := SW_SHOWNORMAL;                                  // Способ отображения окна
-  ShellExecuteInfo.lpParameters := pchar(PARAMS);                           // Параметры
-  if ShellExecuteEx(ADDR(ShellExecuteInfo)) then  ExitProcess(0);           // Запустить программу
+    FillChar(ShellExecuteInfo, SizeOf(TShellExecuteInfo), 0) ;                // Очистить структуру от случайных данных
+    ShellExecuteInfo.cbSize := sizeof(TShellExecuteInfo);                     // Размер структуры в байтах
+    ShellExecuteInfo.fMask := SEE_MASK_NOCLOSEPROCESS or SEE_MASK_FLAG_NO_UI; // Комбинация флагов, определяющих используемую часть структуры
+    ShellExecuteInfo.lpVerb := 'open';                                        // Строка, определяющее действие с файлом. 'open' запускает исполняемый файл
+    ShellExecuteInfo.lpFile := pchar(FileName);                               // Имя файла (полный путь к файлу)
+    ShellExecuteInfo.lpDirectory := pchar(APPDIR);                            // Рабочая директория программы
+    ShellExecuteInfo.nShow := SW_SHOWNORMAL;                                  // Способ отображения окна
+    ShellExecuteInfo.lpParameters := pchar(PARAMS);                           // Параметры
+    if ShellExecuteEx(ADDR(ShellExecuteInfo)) then  ExitProcess(0);           // Запустить программу
   end
   else begin
     FillChar(StartupInfo, SizeOf(StartupInfo), 0);
