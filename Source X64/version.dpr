@@ -160,7 +160,7 @@ begin
   while (not EOF(IniFile)) do begin             // Пока не достигнут конец файла
     Readln(IniFile, IniLine);                   // Прочитат строку в переменную IniLine
     if POS(';', IniLine) = 0 then               // Если строка не комментарий
-      begin
+    begin
       IniParam := GetParam(IniLine);            // Извлечь из строки значение параметра
       if POS('REGOFF=', IniLine) <> 0 then if IniParam = '1' then REGOFF := True else if IniParam = '0' then REGOFF := False;
       if POS('AIDOFF=', IniLine) <> 0 then if IniParam = '1' then AIDOFF := True else if IniParam = '0' then AIDOFF := False;
@@ -177,16 +177,16 @@ begin
       if POS('SPECFOLDER=', IniLine) <> 0 then if IniParam <> '' then SPECFOLDER := IniParam;
       if POS('RUNPARAM=', IniLine) <> 0 then if IniParam <> '' then RUNPARAM := IniParam;
 
-      // Заполнение массивов из списка удаления директорий
+        // Заполнение массивов из списка удаления директорий
       if POS('DeleteDir', IniLine) <> 0 then if IniParam <> '' then
-        begin
+      begin
         if DATADIR <> '' then REPLACE(IniParam, DATADIR);
         DIRLISTNUM := DIRLISTNUM + 1;
         SetLength(DELDIRLIST,DIRLISTNUM);
         SetLength(BLOCKDIRLIST,DIRLISTNUM);
         DELDIRLIST[DIRLISTNUM-1] := IniParam;
         BLOCKDIRLIST[DIRLISTNUM-1] := DirNameDistil(IniParam);
-        end;
+      end;
 
       // Заполнение массива из списка удаления файлов
       if POS('DeleteFile', IniLine) <> 0 then if IniParam <> '' then
