@@ -51,13 +51,8 @@ var
 begin
   OSINFO.dwOSVersionInfoSize := SizeOf(OSINFO);
   GetVersionEx(OSINFO);
-  if (OSINFO.dwMajorVersion = 5) and (OSINFO.dwMinorVersion = 1) then OS := 1; // Windows XP 32
-  if (OSINFO.dwMajorVersion = 5) and (OSINFO.dwMinorVersion = 2) then OS := 1; // Windows XP 64
-  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 1) then OS := 2; // Windows 7
-  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 2) then OS := 2; // Windows 8
-  if (OSINFO.dwMajorVersion = 6) and (OSINFO.dwMinorVersion = 3) then OS := 2; // Windows 8.1
-  if (OSINFO.dwMajorVersion = 10) and (OSINFO.dwMinorVersion = 0) and (OSINFO.dwBuildNumber < 22600) then OS := 2; // Windows 10, первая версия Windows 11
-  if (OSINFO.dwMajorVersion = 10) and (OSINFO.dwMinorVersion = 0) and (OSINFO.dwBuildNumber > 22600) then OS := 3; // Windows 11
+  OS := 2;
+  if OSINFO.dwMajorVersion = 5 then OS := 1; // Windows XP
 end;
 
 // Удалить из имени директории последовательно все '..\' и '.'
