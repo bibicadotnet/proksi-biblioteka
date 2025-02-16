@@ -61,7 +61,7 @@ var DirName : String;
 begin
   DirName := Dir;
   while (XPOS('..\', DirName) <> 0) do DELETE(DirName, XPOS('..\', DirName), 3);
-  if XPOS('.\', DirName) <> 0 then DELETE(DirName, XPOS('.\', DirName), 1);
+  while (XPOS('.\', DirName) <> 0) do DELETE(DirName, XPOS('.\', DirName), 1);
   Result := DirName;
 end;
 
