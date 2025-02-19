@@ -10,11 +10,11 @@ uses
 
 TYPE
   TSearchRec = record
-    Time: Integer;
+    Time: integer;
     Size: Int64;
-    Attr: Integer;
-    Name: String;
-    ExcludeAttr: Integer;
+    Attr: integer;
+    Name: string;
+    ExcludeAttr: integer;
     FindHandle: THandle  platform;
     FindData: TWin32FindData  platform;
   end;
@@ -57,7 +57,7 @@ end;
 
 // Удалить из имени директории последовательно все '..\' и '.'
 function DirNameDistil(const Dir : string): string;
-var DirName : String;
+var DirName : string;
 begin
   DirName := Dir;
   while (XPOS('..\', DirName) <> 0) do DELETE(DirName, XPOS('..\', DirName), 3);
@@ -66,9 +66,9 @@ begin
 end;
 
 // Функция для формирования пути к DATADIR и CACHEDIR
-function GETDIR(const APPDIR: string; PROFDIR : string): string;
+function GetDIR(const APPDIR: string; PROFDIR : string): string;
 var
-  Len    : INTEGER;
+  Len    : integer;
 begin
   Len := Length(APPDIR);
   while (POS('..\', PROFDIR) <> 0) and (Len <> 0) do
@@ -77,13 +77,14 @@ begin
       while (Len <> 0) and (APPDIR[Len] <> '\') do Dec(Len);
       Delete(PROFDIR, POS('..\', PROFDIR), 3);
     end;
-  Result := Copy(APPDIR, 0, Len) + PROFDIR;
+  Result := Copy(APPDIR, 0, Len);
+  Result := Result + PROFDIR;
 end;
 
 // Процедура для замены подстановочных строк
 procedure REPLACE(var PSTR: string; RSTR: string);
 var
-  SETPOS : INTEGER;
+  SETPOS : integer;
 begin
   SETPOS := POS('%DATADIR%', PSTR);
   if SETPOS <> 0 then
@@ -146,8 +147,8 @@ end;
 function XPOS(Const SubStr, Str : String) : Integer;
 var
   StrLen, SubStrLen : Integer;
-  Compare : Boolean;
-  I, J : Integer;
+  Compare : boolean;
+  I, J : integer;
 begin
   StrLen := Length(Str);
   SubStrLen := Length(SubStr);
