@@ -123,7 +123,7 @@ begin
       Cmp := TRUE;
       for Y := 0 to REFINELIST[I].len - 1 do
         begin
-        Cmp := Cmp and (UpCase(lpBuffers.buf[X+Y]) = UpCase(REFINELIST[I].buf[Y]));
+        Cmp := UpCase(lpBuffers.buf[X+Y]) = UpCase(REFINELIST[I].buf[Y]);
         if Cmp = False then break;
         end;
       if Cmp = True then break;
