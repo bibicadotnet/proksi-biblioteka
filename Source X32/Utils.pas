@@ -71,7 +71,7 @@ var
   Len    : integer;
 begin
   Len := Length(APPDIR);
-  while (POS('..\', PROFDIR) <> 0) and (Len <> 0) do
+  while (POS('..\', PROFDIR) <> 0) and (Len > 2) do
     begin
       if (APPDIR[Len] = '\') then Dec(Len);
       while (Len <> 0) and (APPDIR[Len] <> '\') do Dec(Len);
