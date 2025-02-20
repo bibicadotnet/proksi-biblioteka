@@ -14,7 +14,7 @@ TYPE
   TSearchRec = record
     Time: integer platform deprecated;
     Size: Int64;
-    Attr: Integer;
+    Attr: integer;
     Name: string;
     ExcludeAttr: integer;
     FindHandle: THandle platform;
@@ -74,7 +74,7 @@ var
   Len : integer;
 begin
   Len := Length(APPDIR);
-  while (POS('..\', PROFDIR) <> 0) and (Len <> 0) do
+  while (POS('..\', PROFDIR) <> 0) and (Len > 2) do
     begin
       if (APPDIR[Len] = '\') then Dec(Len);
       while (Len <> 0) and (APPDIR[Len] <> '\') do Dec(Len);
@@ -161,7 +161,7 @@ begin
     Compare := True;                                                 // Начальное значение флага cовпадения
     for J := 1 to SubStrLen do                                       // Цикл посимвольного сравнения
     begin
-      Compare := Compare and (UpCase(Str[J+I]) = UpCase(SubStr[J])); // Привести символы к верхнему регистру и сравнить
+      Compare := UpCase(Str[J+I]) = UpCase(SubStr[J]);               // Привести символы к верхнему регистру и сравнить
       if Compare = False then break;                                 // Если флаг сброшен выйти из цикла
     end;
     if Compare = True then                                           // Если все символы совпали тогда
