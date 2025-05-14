@@ -112,14 +112,18 @@ begin
 end;
 
 // Функция для излечения значения параметра из строки
-function GetParam(Param : string): string;
+function GetParam(IniLine : string; var IniParam : string): boolean;
 var
   Len    : INTEGER;
   SETPOS : INTEGER;
 begin
-  Len := Length(Param);
-  SETPOS := POS('=', Param) + 1;
-  Result := Copy(Param, SETPOS, Len - SETPOS + 1);
+  Result := False;
+  Len := Length(IniLine);
+  if Len = 0 then exit;
+  SETPOS := POS('=', IniLine) + 1;
+  IniParam := Copy(IniLine, SETPOS, Len - SETPOS + 1);
+  if (POS(';', IniLine) = 0) or (POS(';', IniLine) > 2) then Result := True; // Если строка не комментарий
+  if IniParam = '' then Result := False;
 end;
 
 // Функция для чтения параметра из ini файла
@@ -159,9 +163,8 @@ begin
   if IOResult = 0 then begin                    // Если ошибок нет (файл отрыт) выполнить построчное чтение файла
   while (not EOF(IniFile)) do begin             // Пока не достигнут конец файла
     Readln(IniFile, IniLine);                   // Прочитат строку в переменную IniLine
-    if POS(';', IniLine) = 0 then               // Если строка не комментарий
+    if GetParam(IniLine, IniParam) = true then  // Извлечь из строки значение параметра
     begin
-      IniParam := GetParam(IniLine);            // Извлечь из строки значение параметра
       if POS('REGOFF=', IniLine) <> 0 then if IniParam = '1' then REGOFF := True else if IniParam = '0' then REGOFF := False;
       if POS('AIDOFF=', IniLine) <> 0 then if IniParam = '1' then AIDOFF := True else if IniParam = '0' then AIDOFF := False;
       if POS('DIROFF=', IniLine) <> 0 then if IniParam = '1' then DIROFF := True else if IniParam = '0' then DIROFF := False;
