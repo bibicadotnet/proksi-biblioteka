@@ -346,26 +346,23 @@ end;
 // Модифицированная функция для получения имени файла из его указателя
 function GetFinalPathNameByHandleW(hFile: THandle; lpszFilePath: PWidechar; cchFilePath: DWORD; dwFlags: DWORD): DWORD; stdcall;
 var
-  FileSizeHi, FileSizeLo : cardinal;
   hFileMap : THandle;
   FileName : array [0..MAX_PATH] of WideChar;
   pMem : pointer;
 begin
-  FileSizeHi := 0;
-  FileSizeLo := GetFileSize(hFile, ADDR(FileSizeHi));                              // Получить размер файла по указателб на него
-  hFileMap := CreateFileMapping(hFile, nil, PAGE_READONLY, 0, FileSizeLo, nil);    // Создать объект "проецируемый файл"
-  if (hFileMap <> 0) then                                                          // Если успешно, тогда
+  hFileMap := CreateFileMapping(hFile, nil, PAGE_READONLY, 0, 0, nil); // Создать объект "проецируемый в память файл"
+  if (hFileMap <> 0) then // Если объект создан, тогда
   begin
-    pMem := MapViewOfFile (hFileMap, FILE_MAP_READ, 0, 0, 1);                      // Создать проецируемый файл, чтобы получить имя файла.
-    if (pMem <> nil) then                                                          // если успешно, тогда
+    pMem := MapViewOfFile (hFileMap, FILE_MAP_READ, 0, 0, 1); // отобразить файл в адресном пространстве (чтобы получить имя файла)
+    if (pMem <> nil) then // если успешно, тогда
       begin
-      if GetMappedFileNameW(GetCurrentProcess, pMem, FileName, MAX_PATH) <> 0 then // Получить имя файла в виде пути к имени устройства, если успешно тогда
+      if GetMappedFileNameW(GetCurrentProcess, pMem, FileName, MAX_PATH) <> 0 then // получить имя файла в виде пути к имени устройства, если успешно тогда
         begin
-            CopyMemory(lpszFilePath, ADDR(FileName), Length(FileName));
+            CopyMemory(lpszFilePath, ADDR(FileName), Length(FileName)); // скопировать имя в указатель
         end;
-      UnmapViewOfFile(pMem);
+      UnmapViewOfFile(pMem); // Отключить отображение файла в адресном пространстве
       end;
-    CloseHandle(hFileMap);
+    CloseHandle(hFileMap); // Освободить идентификатор объекта
   end;
   Result := Length(FileName);
 end;
