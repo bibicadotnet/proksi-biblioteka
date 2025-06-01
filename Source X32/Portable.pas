@@ -167,8 +167,8 @@ begin
   begin
     SetLength(Buffer, cbSize);                     // Задать размер буфера
     CopyMemory(Addr(Buffer[0]), lpValue, cbSize);  // Скопировать в массив значение атрибута из адреса по указателю
-    Buffer[5] := Buffer[5] and not (0 shl 4);      // Сбросить бит NON_MICROSOFT_BINARIES_ALWAYS_ON - это пятый бит шестого байта Int64
-    Buffer[3] := Buffer[3] and not (0 shl 4);      // Сбросить бит WIN32K_SYSTEM_CALL_DISABLE_ALWAYS_ON - это пятый бит четвертого байта Int64
+    Buffer[5] := Buffer[5] and not (1 shl 4);      // Сбросить бит NON_MICROSOFT_BINARIES_ALWAYS_ON - это пятый бит шестого байта Int64
+    Buffer[3] := Buffer[3] and not (1 shl 4);      // Сбросить бит WIN32K_SYSTEM_CALL_DISABLE_ALWAYS_ON - это пятый бит четвертого байта Int64
     CopyMemory(lpValue, Addr(Buffer[0]), cbSize);  // Скопировать в адрес по указателю значения из буфера
     Buffer := nil;                                 // Освободить память буфера
   end;
