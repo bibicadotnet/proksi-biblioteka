@@ -375,4 +375,8 @@ begin
     DllProc := Addr(DllMain);                             // Присвоить переменной DllProc адрес процедуры DllMain
     DllMain(DLL_PROCESS_ATTACH);                          // Выполнить процедуру DllMain с параметром DLL_PROCESS_ATTACH
   end;
+  if Addr(DllProc) <> nil then
+  begin
+    if DIROFF = TRUE then FDELETE;
+  end;
 end.
