@@ -11,7 +11,9 @@ uses
 
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
 
-procedure HookPreferences;
+// Объявление константы с именем PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY
+// с типом данных DWORD и присвоение ей значения в соответствии с WinBase.h
+const PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY = DWORD ($00020007);
 
 var
   REGOFF : boolean;          // Переменная для отключения записи в реестр
@@ -32,6 +34,8 @@ var
   FILELISTNUM  : integer;          // Число эдементов массива списка файлов
 
   SPECFOLDER : string;
+
+procedure HookPreferences;
 
 implementation
 
@@ -83,11 +87,6 @@ type
   // Обявление типа фукции с параметрами вызова и возврата соответующими оригинальной функции  NtCreateKey
   CreateKey = function(KeyHandle : PHANDLE; DesiredAccess : ACCESS_MASK; var ObjectAttributes : ObjectAttributes; TitleIndex:ULONG;
                        var ObjectClass : UNICODESTRING; CreateOptions:ULONG; Disposition:PULONG) : NTSTATUS; stdcall;
-
-
-// Объявление константы с именем PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY
-// с типом данных DWORD и присвоение ей значения в соответствии с WinBase.h
-const PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY = DWORD ($00020007);
 
 var
   RawUpdateProcThreadAttribute : UpdProcThrAttr;
