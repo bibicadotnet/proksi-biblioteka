@@ -7,17 +7,12 @@ uses
 
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
 
-procedure CodeHook(OldProcAddress, NewProcAddress: pointer; OPT : byte = 0);
-function  CodeOffset(NEWADDR, OLDADDR: DWORD): DWORD;
-
 type
   HOOKDATA = packed record              // Структура для хранения данных перехвата
   FUNCADDRES : pointer;                 // Адрес исходной функции
   OLDDATA      : array [0..4] of byte;  // Массив для храния начального кода перехватываемой функции. 5 байт.
   NEWDATA      : array [0..4] of byte;  // Массив для храния кода прыжка в прокси функцию. 5 байт.
   end;
-
-procedure SetHook(HOOK: HOOKDATA; OPT: byte);
 
 var
   OEPCODE : HOOKDATA;                  // Для формирования перехвата точки входа
@@ -26,6 +21,10 @@ var
   CRDCODE : HOOKDATA;                  // Для формирования перехвата CreateDirectoryW
   WSACODE : HOOKDATA;                  // Для формирования перехвата WSASend
   SSOCODE : HOOKDATA;                  // Для формирования перехвата setsockopt
+
+procedure SetHook(HOOK: HOOKDATA; OPT: byte);
+procedure CodeHook(OldProcAddress, NewProcAddress: pointer; OPT : byte = 0);
+function  CodeOffset(NEWADDR, OLDADDR: DWORD): DWORD;
 
 implementation
 
@@ -44,6 +43,7 @@ var
 
 const
   HANDLE = THandle(-1);
+  
 begin
 
   if OPT = 1 then  // Это для перехвата точки входа
