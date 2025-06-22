@@ -7,8 +7,6 @@ uses
 
   {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
 
-procedure CodeHook(OldProcAddress, NewProcAddress: pointer; OPT : byte = 0);
-
 type
   HOOKDATA = packed record              // Структура для хранения данных перехвата
   FUNCADDRES : POINTER;                 // Адрес исходной функции
@@ -16,9 +14,7 @@ type
   NEWDATA    : array [0..11] of byte;   // Массив для храния кода прыжка в прокси функцию. 12 байт.
   end;
 
-procedure SetHook(HOOK: HOOKDATA; OPT: byte);
 var
-
   OEPCODE : HOOKDATA;                  // Структурная переменная для формирования перхвата точки входа
   UPTCODE : HOOKDATA;                  // Структурная переменная для формирования перхвата UpdateProcThreadAttribute
   CRDCODE : HOOKDATA;                  // Структурная переменная для формирования перхвата CreateDirectoryW
@@ -28,7 +24,10 @@ var
 
   Proc : procedure;                    // Процедурная переменная
 
-  implementation
+procedure SetHook(HOOK: HOOKDATA; OPT: byte);
+procedure CodeHook(OldProcAddress, NewProcAddress: pointer; OPT : byte = 0);
+
+implementation
 
 // Функция установливает перехват
 procedure CodeHook(OldProcAddress, NewProcAddress: pointer; OPT : byte = 0);
