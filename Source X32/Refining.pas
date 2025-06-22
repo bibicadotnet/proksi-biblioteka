@@ -79,6 +79,13 @@ TWSASend = function(
 TClosesocket = function(s: TSocket): Integer; stdcall;
 TSetsockopt = function(s: TSocket; level, optname: Integer; optval: PChar; optlen: Integer): Integer; stdcall;
 
+VAR
+  RAWWSASend : TWSASend;              // Оригинальная функция WSASend
+  RAWSetsockopt : TSetsockopt;        // Оригинальная функция Setsockopt
+  Closesocket : TClosesocket;         // Функция закрытия сокета
+  REFINELIST : array of TDomainList;  // Массив записей для обнуления запросов к гугле и его доменам
+  REFINELISTNUM : integer;            // Число эдементов массива списка обнуления
+
 function WSASend(
                  S: TSocket;	var lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
                  var lpOverlapped: WSAOverlapped;	lpCompletionRoutine: TWSAOverlappedCompletionRoutine
@@ -86,13 +93,6 @@ function WSASend(
 function Setsockopt(s: TSocket; level, optname: Integer; optval: PChar; optlen: Integer): Integer; stdcall;
 function Bind(s: TSocket; var name: TSockAddrin; namelen: Integer): Integer; stdcall;
 function Listen(s: TSocket; backlog: Integer): Integer; stdcall;                 
-
-VAR
-  RAWWSASend : TWSASend;              // Оригинальная функция WSASend
-  RAWSetsockopt : TSetsockopt;        // Оригинальная функция Setsockopt
-  Closesocket : TClosesocket;         // Функция закрытия сокета
-  REFINELIST : array of TDomainList;  // Массив записей для обнуления запросов к гугле и его доменам
-  REFINELISTNUM : integer;            // Число эдементов массива списка обнуления
 
 implementation
 
