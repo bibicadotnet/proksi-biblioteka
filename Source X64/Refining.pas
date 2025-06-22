@@ -83,6 +83,8 @@ VAR
   Closesocket : TClosesocket;         // Функция закрытия сокета
   REFINELIST : array of TDomainList;  // Массив записей для обнуления запросов к гугле и его доменам
   REFINELISTNUM : integer;            // Число эдементов массива списка обнуления
+  BCTOFF : boolean;                   // Переменная для отключения широковещательных рассылок
+  ECHOFF : boolean;                   // Переменная для отключения ECH и DoH
 
 function WSASend(
                  S: TSocket;	var lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
@@ -136,10 +138,21 @@ var
   Cmp : boolean;
 begin
   Cmp := false;
-  if (level = $FFFF) and (optname = $20) then Cmp := true; // Не настраивать сокет для отправки широковещательных данных
-  if (level = $0) and (optname = $9) then Cmp := true; // Не назначать интерфейс для многоадресной рассылки
-  if (level = $0) and (optname = $C) then Cmp := true; // Не присоединять сокет к предоставленной группе многоадресной рассылки
-  if level = $29 then Cmp := true; // Не использовать семейство адресов IP6
+
+  if ECHOFF = True then               // Отключить ECH и DoH
+  begin
+    if (level = $FFFF) and (optname = $3005) then Cmp := true; // При игнорировании свойства SO_RANDOMIZE_PORT отключается ECH и DoH
+    if level = $29 then Cmp := true;                           // Не использовать семейство адресов IP6
+  end;
+
+  if BCTOFF = True then               // Отключить широковещательную рассылку
+  begin
+    if (level = $FFFF) and (optname = $20) then Cmp := true;   // Не настраивать сокет для отправки широковещательных данных
+    if (level = $0) and (optname = $9) then Cmp := true;       // Не назначать интерфейс для многоадресной рассылки
+    if (level = $0) and (optname = $C) then Cmp := true;       // Не присоединять сокет к предоставленной группе многоадресной рассылки
+    if level = $29 then Cmp := true;                           // Не использовать семейство адресов IP6
+  end;
+
   SetHook(SSOCODE, 0);
   if Cmp = true then Closesocket(s);
   if Cmp = true then Result := 10050 else Result := RAWSetsockopt (s, level, optname, optval, optlen);
