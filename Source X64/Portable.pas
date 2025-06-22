@@ -11,7 +11,6 @@ Refining;
 
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
 
-procedure HookPreferences;
 var
   REGOFF : boolean;          // Переменная для отключения записи в реестр
   AIDOFF : boolean;          // Переменная для отключения идентификации приложения
@@ -29,6 +28,8 @@ var
   FILELISTNUM  : integer;          // Число эдементов массива списка файлов
 
   SPECFOLDER : string;
+
+procedure HookPreferences;
 
 implementation
 
