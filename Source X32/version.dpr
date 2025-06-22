@@ -142,7 +142,8 @@ begin
   REFINE := True;                               // Значение параметра по умолчанию
   SPFOLD := False;                              // Значение параметра по умолчанию
   BCTOFF := True;                               // Значение параметра по умолчанию
-  STARTM := false;                              // Значение параметра по умолчанию 
+  STARTM := False;                              // Значение параметра по умолчанию
+  ECHOFF := False;                               // Значение параметра по умолчанию 
   FULLPATCH := True;                            // Значение параметра по умолчанию
 
   DATADIR   := '';
@@ -175,6 +176,7 @@ begin
       if POS('SPFOLD=', IniLine) <> 0 then if IniParam = '1' then SPFOLD := True else if IniParam = '0' then SPFOLD := False;
       if POS('BCTOFF=', IniLine) <> 0 then if IniParam = '1' then BCTOFF := True else if IniParam = '0' then BCTOFF := False;
       if POS('STARTM=', IniLine) <> 0 then if IniParam = '1' then STARTM := True else if IniParam = '0' then STARTM := False;
+      if POS('ECHOFF=', IniLine) <> 0 then if IniParam = '1' then ECHOFF := True else if IniParam = '0' then ECHOFF := False;
 
       if POS('APPDIR=', IniLine) <> 0 then if IniParam = '0' then FULLPATCH := False else if IniParam = '1' then FULLPATCH := True;
       if POS('DATADIR=', IniLine) <> 0 then if IniParam <> '' then DATADIR := IniParam;
