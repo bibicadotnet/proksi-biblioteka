@@ -9,8 +9,17 @@ uses
 {$WARN SYMBOL_PLATFORM OFF}
 {$WARN SYMBOL_DEPRECATED OFF}
 
-TYPE
+CONST
+  faReadOnly  = $00000001 platform;
+  faHidden    = $00000002 platform;
+  faSysFile   = $00000004 platform;
+  faVolumeID  = $00000008 platform deprecated;
+  faDirectory = $00000010;
+  faArchive   = $00000020 platform;
+  faSymLink   = $00000040 platform;
+  faAnyFile   = $0000003F;
 
+TYPE
   TSearchRec = record
     Time: integer platform deprecated;
     Size: Int64;
@@ -20,17 +29,6 @@ TYPE
     FindHandle: THandle platform;
     FindData: TWin32FindData platform;
   end;
-
-CONST
-
-  faReadOnly  = $00000001 platform;
-  faHidden    = $00000002 platform;
-  faSysFile   = $00000004 platform;
-  faVolumeID  = $00000008 platform deprecated;
-  faDirectory = $00000010;
-  faArchive   = $00000020 platform;
-  faSymLink   = $00000040 platform;
-  faAnyFile   = $0000003F;
 
 var
   OS : byte; // Переменная условного номера версии ОС  
