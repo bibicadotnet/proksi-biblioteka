@@ -8,6 +8,16 @@ uses
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
 {$WARN SYMBOL_PLATFORM OFF}
 
+CONST
+  faReadOnly  = $00000001 platform;
+  faHidden    = $00000002 platform;
+  faSysFile   = $00000004 platform;
+  faVolumeID  = $00000008 platform deprecated;
+  faDirectory = $00000010;
+  faArchive   = $00000020 platform;
+  faSymLink   = $00000040 platform;
+  faAnyFile   = $0000003F;
+
 TYPE
   TSearchRec = record
     Time: integer;
@@ -18,16 +28,6 @@ TYPE
     FindHandle: THandle  platform;
     FindData: TWin32FindData  platform;
   end;
-
-CONST
-  faReadOnly  = $00000001 platform;
-  faHidden    = $00000002 platform;
-  faSysFile   = $00000004 platform;
-  faVolumeID  = $00000008 platform deprecated;
-  faDirectory = $00000010;
-  faArchive   = $00000020 platform;
-  faSymLink   = $00000040 platform;
-  faAnyFile   = $0000003F;
 
 var
   OS : Byte; // Переменная условного номера версии ОС  
