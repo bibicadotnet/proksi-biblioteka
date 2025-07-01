@@ -300,10 +300,10 @@ begin
   ARG := '';
   // Перевести все параметры в одну строку
   for i := 1 to ParamCount do ARG := ARG + ParamStr(i) + ' ';
-  SetHook(OEPCODE, 0);
   // Если в командной строке нет параметров -type= и --portable тогда выполнить процедуру STARTPORTABLE
   if (POS('-type=', ARG) = 0) and (POS('--portable', ARG) = 0) then STARTPORTABLE(ARG);
-  ExeMain;
+  SetHook(OEPCODE, 0); // Отключить перехват точки входа
+  ExeMain;             // Выполнить процедуру ExeMain
 end;
 
 // Определение и подмена адреса точки входа
@@ -314,8 +314,8 @@ var
 begin
   GetModuleInformation(GetCurrentProcess, GetModuleHandle(NIL), Addr(MI), sizeof(MODULEINFO)); // Считать информацию о процессе
   EntryADDR := MI.EntryPoint;               // Считать в переменную адрес точки входа из поля EntryPoint структуры MI
-  CodeHook(EntryADDR, ADDR(REDIRECT), 1);   // Подмена адреса точки входа в процессе на адрес функции из DLL.
-  ADDR(ExeMain) := EntryADDR;               // Назначить адрес процедуре ExeMain
+  CodeHook(EntryADDR, ADDR(REDIRECT), 1);   // Подмена адреса точки входа в процессе на адрес функции из DLL
+  ADDR(ExeMain) := EntryADDR;               // Назначить адрес процедуру ExeMain равным адресу точки входа
   HookPreferences;
 end;
 
