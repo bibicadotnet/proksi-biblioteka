@@ -316,10 +316,10 @@ begin
   ARG := '';
   // Перевести все параметры в одну строку
   for i := 1 to ParamCount do ARG := ARG + ParamStr(i) + ' ';
-  SetHook(OEPCODE, 0);
   // Если в командной строке нет параметров -type= и --portable тогда выполнить процедуру STARTPORTABLE
   if (POS('-type=', ARG) = 0) and (POS('--portable', ARG) = 0) then STARTPORTABLE(ARG);
-  ExeMain;
+  SetHook(OEPCODE, 0); // Отключить перехват точки входа
+  ExeMain;             // Выполнить процедуру ExeMain
 end;
 
 // Определение и подмена адреса точки входа
