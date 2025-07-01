@@ -330,8 +330,8 @@ var
 begin
   GetModuleInformation(GetCurrentProcess, GetModuleHandle(NIL), Addr(MI), sizeof(MODULEINFO)); // Считать информацию о процессе
   EntryADDR := MI.EntryPoint;               // Считать в переменную адрес точки входа из поля EntryPoint структуры MI
-  CodeHook(EntryADDR, ADDR(REDIRECT), 1);   // Подмена адреса точки входа на адрес функции из прокси библиотеки.
-  ADDR(ExeMain) := EntryADDR;               // Назначить адрес процедуры ExeMain равным адресу структуры EPCODE
+  CodeHook(EntryADDR, ADDR(REDIRECT), 1);   // Подмена адреса точки входа на адрес функции из прокси библиотеки
+  ADDR(ExeMain) := EntryADDR;               // Назначить адрес процедуры ExeMain равным адресу точки входа
   HookPreferences;
 end;
 
