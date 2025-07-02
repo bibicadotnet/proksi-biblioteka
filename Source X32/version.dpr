@@ -328,11 +328,11 @@ var
   MI   : MODULEINFO;    // Переменная типа MODULEINFO, MODULEINFO - это структура, которая содержит поле EntryPoint
   EntryADDR : PBYTE;    // Переменная указатель на адреса точки входа
 begin
+  HookPreferences;
   GetModuleInformation(GetCurrentProcess, GetModuleHandle(NIL), Addr(MI), sizeof(MODULEINFO)); // Считать информацию о процессе
   EntryADDR := MI.EntryPoint;               // Считать в переменную адрес точки входа из поля EntryPoint структуры MI
   CodeHook(EntryADDR, ADDR(REDIRECT), 1);   // Подмена адреса точки входа на адрес функции из прокси библиотеки
   ADDR(ExeMain) := EntryADDR;               // Назначить адрес процедуры ExeMain равным адресу точки входа
-  HookPreferences;
 end;
 
 // Обертка для переадресации экспортируемых функций
