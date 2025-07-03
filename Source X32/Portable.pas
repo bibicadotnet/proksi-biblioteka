@@ -382,7 +382,7 @@ begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'CreateDirectoryW');          // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(CreateDirectory), 4);                       // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
-  if (OS > 1) and (RMDISK = TRUE) then begin
+  if ((OS > 1) and (RMDISK = TRUE)) then begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetFinalPathNameByHandleW'); // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(GetFinalPathNameByHandleW));                // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
