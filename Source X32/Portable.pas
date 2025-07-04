@@ -382,7 +382,7 @@ begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'CreateDirectoryW');          // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(CreateDirectory), 4);                       // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
-  if ((OS > 1) and (RMDISK = TRUE)) then begin
+  if (OS > 1) and (RMDISK = TRUE) then begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetFinalPathNameByHandleW'); // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(GetFinalPathNameByHandleW));                // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
@@ -452,7 +452,7 @@ begin
   CodeHook(Addr(Proc), ADDR(PSStringFromPropertyKey));                  // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
 
-  if ((REFINE = TRUE) or (BCTOFF = TRUE) or (ECHOFF = TRUE)) then begin
+  if (REFINE = TRUE) or (BCTOFF = TRUE) or (ECHOFF = TRUE) then begin
   //Подключение библиотеки WS2_32.dll
   FileName :=  SysPatch + '\WS2_32.dll';                                // Получить полное имя файла
   DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
@@ -466,7 +466,7 @@ begin
   ADDR(RAWWSASend) := ADDR(Proc);
   end;
 
-  if ((BCTOFF = TRUE) or (ECHOFF = TRUE)) then begin
+  if (BCTOFF = TRUE) or (ECHOFF = TRUE) then begin
   // Перехват функции setsockopt
   Addr(Proc) := GetProcAddress(DLLHandle, 'setsockopt');              // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(Setsockopt), 6);
