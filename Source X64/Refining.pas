@@ -105,25 +105,30 @@ Var
   I: integer;
   Cmp : boolean;
   X, Y: integer;
+  Buf : array of AnsiChar;
+  Len: Integer;
 begin
   Cmp := false;
   lpCompletionRoutine := nil;
-
+  Len := lpBuffers.len;
+  SetLength(Buf, Len);
+  CopyMemory(Addr(Buf[0]), lpBuffers.buf, Len);
   // Цикл сравнения содержимого буффера со списком
   for I := 0 to REFINELISTNUM - 1 do
   begin
-    for X := 0 to lpBuffers.len - REFINELIST[I].len do
+    for X := 0 to Len - REFINELIST[I].len do
       begin
       Cmp := TRUE;
       for Y := 0 to REFINELIST[I].len - 1 do
         begin
-        Cmp := UpCase(lpBuffers.buf[X+Y]) = UpCase(REFINELIST[I].buf[Y]);
+        Cmp := Upper(Buf[X+Y]) = Upper(REFINELIST[I].buf[Y]);
         if Cmp = False then break;
         end;
       if Cmp = True then break;
       end;
   if Cmp = True then break;
   end;
+  Buf := nil;
   SetHook(WSACODE, 0);
   if Cmp = true then Closesocket(s); // Закрыть сокет.
   // Врианты результата выполнения функции WSASend
