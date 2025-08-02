@@ -147,13 +147,13 @@ end;
 // Перевод символов в верхний регистр
 function Upper(ch: AnsiChar): AnsiChar;
 begin
-  if (ch in ['a'..'z', 'а'..'я']) then result := chr(ord(ch) - 32) else result := ch;
+  if (ch in ['a'..'z']) then result := chr(ord(ch) - 32) else result := ch;
 end;
 
 // // Перевод символов в нижний регистр
 function Lower(ch: AnsiChar): AnsiChar;
 begin
-  if (ch in ['A'..'Z', 'А'..'Я']) then result := chr(ord(ch) + 32) else result := ch;
+  if (ch in ['A'..'Z']) then result := chr(ord(ch) + 32) else result := ch;
 end;
 
 // Поиск позиции подстроки в строке не зависимо от регистра символов
