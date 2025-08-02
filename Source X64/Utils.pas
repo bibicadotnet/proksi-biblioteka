@@ -42,6 +42,8 @@ function XPOS(Const SubStr, Str : String) : Integer;
 function FindMatchingFile(var F: TSearchRec): Integer;
 function GetDir(const APPDIR: string; PROFDIR : string): string;
 function DirNameDistil(const Dir : string): string;
+function Upper(ch: AnsiChar): AnsiChar;
+function Lower(ch: AnsiChar): AnsiChar;
 
 implementation
 
@@ -140,6 +142,18 @@ end;
 function FindNext(var F: TSearchRec): Integer;
 begin
   if FindNextFile(F.FindHandle, F.FindData) then Result := FindMatchingFile(F) else Result := GetLastError;
+end;
+
+// Перевод символов в верхний регистр
+function Upper(ch: AnsiChar): AnsiChar;
+begin
+  if (ch in ['a'..'z', 'а'..'я']) then result := chr(ord(ch) - 32) else result := ch;
+end;
+
+// // Перевод символов в нижний регистр
+function Lower(ch: AnsiChar): AnsiChar;
+begin
+  if (ch in ['A'..'Z', 'А'..'Я']) then result := chr(ord(ch) + 32) else result := ch;
 end;
 
 // Поиск позиции подстроки в строке не зависимо от регистра символов
