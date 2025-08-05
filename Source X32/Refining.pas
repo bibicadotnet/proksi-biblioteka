@@ -119,7 +119,7 @@ begin
   Cmp := false;
   lpCompletionRoutine := nil;
   Len := lpBuffers.len;
-  SetLength(Buf, lpBuffers.len);
+  SetLength(Buf, Len);
   CopyMemory(Addr(Buf[0]), lpBuffers.buf, Len);
   // Цикл сравнения содержимого буффера со списком
   for I := 0 to REFINELISTNUM - 1 do
