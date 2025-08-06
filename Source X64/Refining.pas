@@ -121,7 +121,7 @@ begin
       Cmp := TRUE;
       for Y := 0 to REFINELIST[I].len - 1 do
         begin
-        Cmp := Upper(Buf[X+Y]) = Upper(REFINELIST[I].buf[Y]);
+        Cmp := UpCase(Buf[X+Y]) = UpCase(REFINELIST[I].buf[Y]);
         if Cmp = False then break;
         end;
       if Cmp = True then break;
