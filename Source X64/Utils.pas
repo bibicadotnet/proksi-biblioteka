@@ -173,7 +173,7 @@ begin
     Compare := True;                                                 // Начальное значение флага cовпадения
     for J := 1 to SubStrLen do                                       // Цикл посимвольного сравнения
     begin
-      Compare := Upper(Str[J+I]) = Upper(SubStr[J]);               // Привести символы к верхнему регистру и сравнить
+      Compare := UpCase(Str[J+I]) = UpCase(SubStr[J]);               // Привести символы к верхнему регистру и сравнить
       if Compare = False then break;                                 // Если флаг сброшен выйти из цикла
     end;
     if Compare = True then                                           // Если все символы совпали тогда
