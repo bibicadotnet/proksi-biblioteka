@@ -157,7 +157,7 @@ begin
   if Cmp = True then Result := True else Result := False;
 end;
 
-// Функция отправляет данные в подключенный сокет.
+// Модифицированная функция WSASend. Проверят содержимое буфера, закрывает сокет или отправляет данные в подключенный сокет.
 function WSASend(
                  S: TSocket;	var lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
                  var lpOverlapped: WSAOverlapped;	lpCompletionRoutine: TWSAOverlappedCompletionRoutine
@@ -181,7 +181,7 @@ begin
     Len := lpBuffers.len;
     SetLength(Buf, Len);
     CopyMemory(Addr(Buf[0]), lpBuffers.buf, Len);
-    // Цикл сравнения содержимого буффера со списком
+    // Цикл сравнения содержимого буфера со списком
     for I := 0 to REFINELISTNUM - 1 do
     begin
       for X := AddrPos to Len - REFINELIST[I].len do
