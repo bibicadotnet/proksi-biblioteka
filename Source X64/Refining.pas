@@ -96,7 +96,66 @@ function Listen(s: TSocket; backlog: Integer): Integer; stdcall;
 
 implementation
 
-// Модифицированная функция WSASend. Проверяется содержимое буффера перед отправкой данных.
+// *******************************************
+// Реализация функций доступа к интернет
+// *******************************************
+
+// Функция поиска положения адреса в HTTP запросах
+function Host(var lpBuffers: WSABuf; var AddrPos: integer): boolean;
+const
+  SEARSH : array [0..15] of Byte = ($48,$54,$54,$50,$2F,$31,$2E,$31,$0D,$0A,$48,$6F,$73,$74,$3A,$20); // HTTP/1.1 + перевод строки + Host: + пробел
+  SEARCHM : array [0..15] of Byte = ($00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$01,$00,$00,$00,$00,$00); // Маска поиска
+var
+  Buf : array of Byte;
+  Cmp : boolean;
+  Len: integer;
+  i : integer;
+  X : integer;
+begin
+  AddrPos := 0;
+  Cmp := False;
+  Len := lpBuffers.Len;
+  if Len > 15 then
+  begin
+    SetLength(Buf, Len);
+    CopyMemory(Addr(buf[0]), lpBuffers.buf, Len);
+    for X := 0 to Len - 15 do // Цикл проверки буфера от начала
+    begin
+      for i := 0 to 15 do // Цикл проверки последовательности
+      begin
+        Cmp := Buf[X + i] = SEARSH[i];
+        if SEARCHM[i] = $01 then Cmp := True;
+        if Cmp = False then break;
+      end;
+      if Cmp = True then AddrPos := X + 16; // Положение адреса в данных
+      if Cmp = True then break;
+    end;
+  end;
+  Buf := nil;
+  if Cmp = True then Result := True else Result := False;
+end;
+
+// Функция поиска идентификатора сообщения ClientHello в TLS запросах
+function ClientHello(var lpBuffers: WSABuf): boolean;
+const
+  SEARSH : array [0..5] of Byte = ($16,$03,$01,$FF,$FF,$01); // Тип + Версия + Размер + Тип сообщения
+  SEARCHM : array [0..5] of Byte = ($00,$00,$01,$01,$01,$00); // Маска поиска
+var
+  Buf : array [0..5] of Byte;
+  Cmp : boolean;
+  i : integer;
+begin
+  CopyMemory(Addr(buf), lpBuffers.buf, 6);
+  for i := 0 to 5 do
+  begin
+    Cmp := Buf[i] = SEARSH[i];
+    if SEARCHM[i] = $01 then Cmp := True;
+    if Cmp = False then break;
+  end;
+  if Cmp = True then Result := True else Result := False;
+end;
+
+// Модифицированная функция WSASend. Проверяется содержимое буффера и выполняется отправка данных в подключенный сокет.
 function WSASend(
                  S: TSocket;	var lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
                  var lpOverlapped: WSAOverlapped;	lpCompletionRoutine: TWSAOverlappedCompletionRoutine
@@ -107,28 +166,35 @@ Var
   X, Y: integer;
   Buf : array of AnsiChar;
   Len: Integer;
+  AddrPos : Integer;
 begin
   Cmp := false;
   lpCompletionRoutine := nil;
-  Len := lpBuffers.len;
-  SetLength(Buf, Len);
-  CopyMemory(Addr(Buf[0]), lpBuffers.buf, Len);
-  // Цикл сравнения содержимого буффера со списком
-  for I := 0 to REFINELISTNUM - 1 do
+  AddrPos := 0;
+
+  if ClientHello(lpBuffers) or Host(lpBuffers, AddrPos) then
   begin
-    for X := 0 to Len - REFINELIST[I].len do
-      begin
-      Cmp := TRUE;
-      for Y := 0 to REFINELIST[I].len - 1 do
+    Len := lpBuffers.len;
+    SetLength(Buf, Len);
+    CopyMemory(Addr(Buf[0]), lpBuffers.buf, Len);
+    // Цикл сравнения содержимого буффера со списком
+    for I := 0 to REFINELISTNUM - 1 do
+    begin
+      for X := AddrPos to Len - REFINELIST[I].len do
         begin
-        Cmp := UpCase(Buf[X+Y]) = UpCase(REFINELIST[I].buf[Y]);
-        if Cmp = False then break;
+        Cmp := TRUE;
+        for Y := 0 to REFINELIST[I].len - 1 do
+          begin
+          Cmp := UpCase(Buf[X+Y]) = UpCase(REFINELIST[I].buf[Y]);
+          if Cmp = False then break;
+          end;
+        if Cmp = True then break;
         end;
-      if Cmp = True then break;
-      end;
-  if Cmp = True then break;
+    if Cmp = True then break;
+    end;
+    Buf := nil;
   end;
-  Buf := nil;
+
   SetHook(WSACODE, 0);
   if Cmp = true then Closesocket(s); // Закрыть сокет.
   // Врианты результата выполнения функции WSASend
