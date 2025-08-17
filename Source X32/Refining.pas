@@ -137,7 +137,7 @@ begin
   if Cmp = True then Result := True else Result := False;
 end;
 
-// Функция поиска идентификатора сообщения ClientHello в TLS запросах
+// Функция поиска идентификатора сообщения ClientHello в HTTPS запросах
 function ClientHello(var lpBuffers: WSABuf): boolean;
 const
   SEARSH   : array [0..5] of Byte = ($16,$03,$01,$FF,$FF,$01); // Тип + Версия + Размер + Тип сообщения
