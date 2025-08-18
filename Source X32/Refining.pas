@@ -184,7 +184,7 @@ begin
     // Цикл сравнения содержимого буфера со списком
     for I := 0 to REFINELISTNUM - 1 do
     begin
-      for X := AddrPos to Len - REFINELIST[I].len do
+      for X := AddrPos to Len - REFINELIST[I].len - AddrPos do
       begin
         Cmp := TRUE;
         for Y := 0 to REFINELIST[I].len - 1 do
