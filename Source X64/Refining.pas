@@ -145,14 +145,18 @@ var
   Cmp : boolean;
   i : integer;
 begin
-  CopyMemory(Addr(buf), lpBuffers.buf, 6);
-  for i := 0 to 5 do
+  Result := False;
+  if lpBuffers.Len > 5 then
   begin
-    Cmp := Buf[i] = SEARSH[i];
-    if SEARCHM[i] = $01 then Cmp := True;
-    if Cmp = False then break;
-  end;
-  if Cmp = True then Result := True else Result := False;
+    CopyMemory(Addr(buf), lpBuffers.buf, 6);
+    for i := 0 to 5 do
+    begin
+      Cmp := Buf[i] = SEARSH[i];
+      if SEARCHM[i] = $01 then Cmp := True;
+      if Cmp = False then break;
+    end;
+    if Cmp = True then Result := True else Result := False;
+  end;  
 end;
 
 // Модифицированная функция WSASend. Проверят содержимое буфера, закрывает сокет или отправляет данные в подключенный сокет.
