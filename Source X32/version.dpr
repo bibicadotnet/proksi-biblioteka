@@ -370,15 +370,11 @@ begin
   if DIROFF = TRUE then FDELETE;                              // Удалить файлы если параметр включен
 end;
 
-// Этот код выполняется каждый раз при загрузке библиотеки
+// Этот код выполняется каждый раз при обращении к точке входа библиотеки
 begin
   if Addr(DllProc) = nil then                             // Если переменной DllProc не присвоено никакого значения тогда
   begin
     DllProc := Addr(DllMain);                             // Присвоить переменной DllProc адрес процедуры DllMain
-    DllMain(DLL_PROCESS_ATTACH);                          // Выполнить процедуру DllMain с параметром DLL_PROCESS_ATTACH
-  end;
-  if Addr(DllProc) <> nil then
-  begin
-    if DIROFF = TRUE then FDELETE;
+    DllProc(DLL_PROCESS_ATTACH);                          // Выполнить процедуру DllMain с параметром DLL_PROCESS_ATTACH
   end;
 end.
