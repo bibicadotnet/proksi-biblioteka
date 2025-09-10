@@ -347,11 +347,14 @@ begin
   begin
     DisableThreadLibraryCalls(hInstance);                     // Отключить уведомления DLL_THREAD_ATTACH и DLL_THREAD_DETACH
     READPARAM;                                                // Прочитать параметры из INI файла 
-    GetOSVer;                                                    // Определить версию ОС
+    GetOSVer;                                                 // Определить версию ОС
     RedirectEXP;                                              // Выполнить переадресацию функций экспорта
     RedirectEP;                                               // Выполнить переадресацию точки входа
   end;
-  if DIROFF = TRUE then FDELETE;                              // Выполнить процедуру удаления файлов если параметр включен
+  if (fdwReason = DLL_PROCESS_DETACH) then
+  begin
+    if DIROFF = TRUE then FDELETE;                            // Удалить файлы если параметр включен
+  end;
 end;
 
 // Этот код выполняется каждый раз при обращении к точке входа библиотеки
