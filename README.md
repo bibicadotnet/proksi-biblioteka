@@ -67,4 +67,4 @@
 7. Запустить процесс компиляции, выполнив команду меню `Project | Compile`.
 
 [Здесь](https://disk.yandex.ru/d/JQ_PZw4jazwUoQ) можно взять компактную сборку Delphi 2007 Update 4 для которой не требуется наличие .net framework. Работает в Windows XP, 7, 8, 10, 11.  
-[Здесь](https://disk.yandex.ru/d/T1ijVoTIRUVOgA) можно взять компактную сборку Delphi XE2 Update 4.1. Работает в Windows XP, 7, 8, 10, 11.
+[Здесь](https://disk.yandex.ru/d/kMzPdNpgVfp5tA) можно взять компактную сборку Delphi XE2 Update 4.1. Работает в Windows XP, 7, 8, 10, 11.
