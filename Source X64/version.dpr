@@ -345,7 +345,7 @@ procedure DllMain(fdwReason: DWORD);
 begin
   if (fdwReason = DLL_PROCESS_ATTACH) then
   begin
-    DisableThreadLibraryCalls(hInstance);                     // Отключить уведомления DLL_THREAD_ATTACH и DLL_THREAD_DETACH
+    // DisableThreadLibraryCalls(hInstance);                  // Отключить уведомления DLL_THREAD_ATTACH и DLL_THREAD_DETACH
     READPARAM;                                                // Прочитать параметры из INI файла 
     GetOSVer;                                                 // Определить версию ОС
     RedirectEXP;                                              // Выполнить переадресацию функций экспорта
