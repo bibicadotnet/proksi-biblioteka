@@ -387,8 +387,13 @@ begin
   CodeHook(Addr(Proc), ADDR(GetFinalPathNameByHandleW));                // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
   
-   //Перехват вызова функций из advapi32.dll
+  //Перехват вызова функций из advapi32.dll
   DLLHandle := GetModuleHandle('advapi32.dll');                         // Получить идентификатор
+  if (DLLHandle = 0) then                                               // Если идентификатор не получен
+  begin
+    FileName :=  SysPatch + '\advapi32.dll';                            // Получить полное имя файла
+    DLLHandle := LoadLibrary(pchar(FileName));                          // Загрузить библиотеку и получить её идентификатор
+  end;
   Addr(Proc) := GetProcAddress(DLLHandle, 'LogonUserA');                // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(LogonUserW));                               // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'LogonUserW');                // Определить адрес функции
