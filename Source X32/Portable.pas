@@ -282,6 +282,28 @@ begin
   Result := 0;
 end;
 
+function ReportEventA(hEventLog: THandle; wType, wCategory: Word; dwEventID: DWORD; lpUserSid: Pointer;
+                      wNumStrings: Word; dwDataSize: DWORD; lpStrings, lpRawData: Pointer): BOOL; stdcall;
+begin
+  Result := True;;
+end;
+
+function ReportEventW(hEventLog: THandle; wType, wCategory: Word; dwEventID: DWORD; lpUserSid: Pointer;
+                      wNumStrings: Word; dwDataSize: DWORD; lpStrings, lpRawData: Pointer): BOOL; stdcall;
+begin
+  Result := True;
+end;
+
+function RegisterEventSourceA(lpUNCServerName, lpSourceName: PAnsiChar): THandle; stdcall;
+begin
+  Result := 0;
+end;
+
+function RegisterEventSourceW(lpUNCServerName, lpSourceName: PWideChar): THandle; stdcall;
+begin
+  Result := 0;
+end;
+
 // Модифицированная функция NtCreateKey для блокировки записи в реестр
 function NtCreateKey(
                      KeyHandle : PHANDLE;                    // Указатель на переменную-дескриптор, которая получает дескриптор ключа.
@@ -425,6 +447,16 @@ begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'RegNotifyChangeKeyValue');   // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(RegNotifyChangeKeyValue));                  // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
+
+  // Перехват вызова функций записи событий в системный журнал
+  ADDR(Proc) := GetProcAddress(DLLHandle, 'ReportEventA');              // Определить адрес функции
+  CodeHook(ADDR(Proc), ADDR(ReportEventA));                             // Подмена адреса функции в процессе на адрес функции из DLL
+  ADDR(Proc) := GetProcAddress(DLLHandle, 'ReportEventW');              // Определить адрес функции
+  CodeHook(ADDR(Proc), ADDR(ReportEventW));                             // Подмена адреса функции в процессе на адрес функции из DLL
+  ADDR(Proc) := GetProcAddress(DLLHandle, 'RegisterEventSourceA');      // Определить адрес функции
+  CodeHook(ADDR(Proc), ADDR(RegisterEventSourceA));                     // Подмена адреса функции в процессе на адрес функции из DLL
+  ADDR(Proc) := GetProcAddress(DLLHandle, 'RegisterEventSourceW');      // Определить адрес функции
+  CodeHook(ADDR(Proc), ADDR(RegisterEventSourceW));                     // Подмена адреса функции в процессе на адрес функции из DLL
 
   // Перехват вызова функций из Crypt32.dll
   FileName :=  SysPatch + '\Crypt32.dll';                               // Получить полное имя файла
