@@ -164,7 +164,7 @@ begin
   FILELISTNUM := 0;
   REFINELISTNUM := 0;
 
-  GetModuleFileName(HInstance, AppPatch, SizeOF(AppPatch));  // Определить пкть к dll 
+  GetModuleFileName(HInstance, AppPatch, SizeOF(AppPatch));  // Определить путь к dll 
   IniName := GetIniName(AppPatch);                           // Получить путь к ini файлу 
 
   // Чтение параметров из ини файла
