@@ -112,6 +112,15 @@ begin
   Result := Copy(DIR, 0, Len);
 end;
 
+function GetIniName(DIR : string): string;
+var
+  Len: INTEGER;
+begin
+  Len := Length(DIR);
+  while (Len <> 0) and (DIR[Len] <> '.') do Dec(Len);
+  Result := Copy(DIR, 0, Len) + 'ini';
+end;
+
 // Функция для излечения значения параметра из строки
 function GetParam(IniLine : string; var IniParam : string): boolean;
 var
@@ -130,6 +139,7 @@ end;
 // Функция для чтения параметра из ini файла
 procedure READPARAM;
 var
+  IniName : String;
   IniLine : String;
   IniParam : String;
   I : integer;
@@ -143,7 +153,7 @@ begin
   SPFOLD := False;                              // Значение параметра по умолчанию
   BCTOFF := True;                               // Значение параметра по умолчанию
   STARTM := False;                              // Значение параметра по умолчанию
-  ECHOFF := False;                               // Значение параметра по умолчанию 
+  ECHOFF := False;                              // Значение параметра по умолчанию 
   FULLPATCH := True;                            // Значение параметра по умолчанию
 
   DATADIR   := '';
@@ -155,11 +165,11 @@ begin
   FILELISTNUM := 0;
   REFINELISTNUM := 0;
 
-  GetModuleFileName(0, AppPatch, SizeOF(AppPatch));
-  APPDIR := GetAPPDir(AppPatch);
+  GetModuleFileName(HInstance, AppPatch, SizeOF(AppPatch));  // Полный путь к dll
+  IniName := GetIniName(AppPatch);
 
   // Чтение параметров из ини файла
-  AssignFile(IniFile, APPDIR + 'Version.ini');  // Связать переменную IniFile с файлом Version.ini
+  AssignFile(IniFile, IniName);                 // Связать переменную IniFile с файлом ini
   {$I-}                                         // Выключить контроль ошибок ввода-вывода
   Reset(IniFile);                               // Открыть файл для чтения
   {$I+}                                         // Включить контроль ошибок ввода-вывода
