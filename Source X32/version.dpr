@@ -161,6 +161,7 @@ begin
   CACHEDIR  := '';
   RUNPARAM  := '';
   SPECFOLDER := '';
+  COMPNAME   := '';
 
   DIRLISTNUM := 0;
   FILELISTNUM := 0;
@@ -194,6 +195,7 @@ begin
       if POS('CACHEDIR=', IniLine) <> 0 then if IniParam <> '' then CACHEDIR := IniParam;
       if POS('RUNPARAM=', IniLine) <> 0 then if IniParam <> '' then RUNPARAM := IniParam;
       if POS('SPECFOLDER=', IniLine) <> 0 then if IniParam <> '' then SPECFOLDER := IniParam;
+      if POS('COMPNAME=', IniLine) <> 0 then if IniParam <> '' then COMPNAME := IniParam;
 
       // Заполнение массивов из списка удаления директорий
       if POS('DeleteDir', IniLine) <> 0 then if IniParam <> '' then
