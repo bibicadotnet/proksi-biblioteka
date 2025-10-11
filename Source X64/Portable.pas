@@ -27,6 +27,7 @@ var
   FILELISTNUM  : integer;          // Число эдементов массива списка файлов
 
   SPECFOLDER : string;
+  COMPNAME   : string;
 
 procedure HookPreferences;
 
@@ -115,8 +116,23 @@ begin
 end;
 
 function GetComputerNameW(lpBuffer: PWideChar; var nSize: DWORD): BOOL; stdcall;
+var
+  NameSize, RequiredSize: DWORD;
 begin
-  result := False;
+  if COMPNAME = '' then Result := False else
+  begin
+    NameSize := Length(COMPNAME) * SizeOf(WideChar);
+    RequiredSize := NameSize + 1;
+    if nSize < RequiredSize then
+    begin
+      nSize := RequiredSize;
+      Result := False;
+      Exit;
+    end;
+    CopyMemory(lpBuffer, PWideChar(COMPNAME + #0), NameSize);
+    nSize := NameSize;
+    Result := True;
+  end;
 end;
 
 function GetVolumeInformationA
