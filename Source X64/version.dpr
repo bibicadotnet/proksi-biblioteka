@@ -79,7 +79,7 @@ begin
       // Извлечь путь к файлу
       Len := Length(FILELIST[i]);
       while (Len <> 0) and (FILELIST[i][Len] <> '\') do Dec(Len);
-      DirName := Copy(FILELIST[i], 0, Len);
+      SetString(DirName, PChar(FILELIST[i]), Len);
       // Найти и удалить файлы по шаблону
       if FindFirst(FILELIST[i], faAnyFile, SearchResult) = 0 then
         begin
