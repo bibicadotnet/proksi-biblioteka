@@ -221,7 +221,7 @@ begin
         REFINELISTNUM := REFINELISTNUM + 1;
         SetLength(REFINELIST, REFINELISTNUM);
         REFINELIST[REFINELISTNUM-1].len := Length(IniParam);
-        SetLength(REFINELIST[REFINELISTNUM-1].buf, REFINELIST[REFINELISTNUM-1].len);
+        SetLength(REFINELIST[REFINELISTNUM-1].buf, REFINELIST[REFINELISTNUM-1].len + 1);  // + 1 к размеру для добавления элемента с #0
         for I := 0 to REFINELIST[REFINELISTNUM-1].len - 1 do REFINELIST[REFINELISTNUM-1].buf[I] := AnsiChar(IniParam[I + 1]);
       end;
 
