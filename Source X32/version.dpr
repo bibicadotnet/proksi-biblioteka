@@ -14,6 +14,9 @@ uses
 
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
 
+var
+  Proc      : array [1..8] of Procedure;   // массив типа Procedure
+  
 // Описание функций для метода dll wraper
 // Функции представляют собой джампы на адреса функций системного файла version.dll.
 // Адреса функций определяются динамически.
