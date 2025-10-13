@@ -6,28 +6,11 @@ uses
 Windows,
 PsApi,
 Utils,
+Parametrs,
 Hook,
 Refining;
 
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
-
-var
-  REGOFF : boolean;          // Переменная для отключения записи в реестр
-  AIDOFF : boolean;          // Переменная для отключения идентификации приложения
-  DIROFF : boolean;          // Переменная для отключения создания папок
-  RMDISK : boolean;          // Переменная для включения определения пути к TEMP на рамдиске
-  REFINE : boolean;          // Переменная для включения обнуления запросов к серверам
-  SPFOLD : boolean;          // Переменная для включения подмены пути к спецпапкам
-  STARTM : boolean;          // Переменная для выбора метода запуска
-
-  FILELIST     : array of String;  // Массив списка файлов
-  DELDIRLIST   : array of String;  // Массив списка директорий для удаления
-  BLOCKDIRLIST : array of String;  // Массив списка директорий для блокировки
-  DIRLISTNUM   : integer;          // Число эдементов массива списка директорий
-  FILELISTNUM  : integer;          // Число эдементов массива списка файлов
-
-  SPECFOLDER : string;
-  COMPNAME   : string;
 
 procedure HookPreferences;
 
