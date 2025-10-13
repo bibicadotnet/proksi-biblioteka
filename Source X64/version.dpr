@@ -68,12 +68,11 @@ begin
       while (Len <> 0) and (FILELIST[i][Len] <> '\') do Dec(Len);
       SetString(DirName, PChar(FILELIST[i]), Len);
       // Найти и удалить файлы по шаблону
-      if FindFirst(FILELIST[i], faAnyFile, SearchResult) = 0 then
+      if FindFirst(FILELIST[i], faAnyFile, SearchResult) = 0 then  // Найти файлы по шаблону из FILELIST[i]
         begin
-          repeat
-            DeleteFile(PChar(DirName + SearchResult.Name));
-          until FindNext(SearchResult) <> 0;
-          FindClose(SearchResult);
+          repeat DeleteFile(PChar(DirName + SearchResult.Name));   // Удалять найденные файлы  
+          until FindNext(SearchResult) <> 0;                       // до тех пор пока еще есть соответствующие шаблону файлы 
+          FindClose(SearchResult);                                 // Освободить ресурсы используемые процессом поиска
         end;
     end;
   end;
