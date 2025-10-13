@@ -38,6 +38,8 @@ VAR
   REFINE : boolean;          // Переменная для включения обнуления запросов по протоколу TCP  
   SPFOLD : boolean;          // Переменная для включения указания пути к спецпапкам
   STARTM : boolean;          // Переменная для выбора метода запуска
+  BCTOFF : boolean;          // Переменная для отключения широковещательных рассылок
+  ECHOFF : boolean;          // Переменная для отключения Encrypted Client Hello
 
   FILELIST     : array of String;  // Массив списка файлов для удаления
   DELDIRLIST   : array of String;  // Массив списка директорий для удаления
@@ -50,8 +52,6 @@ VAR
 
   REFINELIST : array of TDomainList;  // Массив записей для обнуления запросов к гугле и его доменам
   REFINELISTNUM : integer;            // Число эдементов массива списка обнуления
-  BCTOFF : boolean;                   // Переменная для отключения широковещательных рассылок
-  ECHOFF : boolean;                   // Переменная для отключения Encrypted Client Hello
 
 procedure READPARAM;
 function ADDParam(ARGS : string) : string;
