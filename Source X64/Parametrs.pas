@@ -1,4 +1,4 @@
-﻿unit Parametrs;
+unit Parametrs;
 
 interface
 
@@ -37,6 +37,8 @@ var
   REFINE : boolean;          // Переменная для включения обнуления запросов к серверам
   SPFOLD : boolean;          // Переменная для включения подмены пути к спецпапкам
   STARTM : boolean;          // Переменная для выбора метода запуска
+  BCTOFF : boolean;          // Переменная для отключения широковещательных рассылок
+  ECHOFF : boolean;          // Переменная для отключения ECH и DoH
 
   FILELIST     : array of String;  // Массив списка файлов
   DELDIRLIST   : array of String;  // Массив списка директорий для удаления
@@ -49,8 +51,6 @@ var
 
   REFINELIST : array of TDomainList;  // Массив записей для обнуления запросов к гугле и его доменам
   REFINELISTNUM : integer;            // Число эдементов массива списка обнуления
-  BCTOFF : boolean;                   // Переменная для отключения широковещательных рассылок
-  ECHOFF : boolean;                   // Переменная для отключения ECH и DoH
 
 procedure READPARAM;
 function ADDParam(ARGS : string) : string;
