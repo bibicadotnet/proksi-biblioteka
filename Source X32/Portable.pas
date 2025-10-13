@@ -111,7 +111,7 @@ begin
       Result := False;
       Exit;
     end;
-    CopyMemory(lpBuffer, PWideChar(COMPNAME + #0), NameSize);
+    CopyMemory(lpBuffer, PWideChar(COMPNAME + #0), NameSize + 1);
     nSize := NameSize;
     Result := True;
   end;
