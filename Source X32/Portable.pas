@@ -5,6 +5,7 @@ interface
 uses
   Windows,
   Utils,
+  Parametrs,
   Hook,
   PsApi,
   Refining;
@@ -16,24 +17,7 @@ uses
 const PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY = DWORD ($00020007);
 
 var
-  REGOFF : boolean;          // Переменная для отключения записи в реестр
-  AIDOFF : boolean;          // Переменная для отключения идентификации приложения
-  DIROFF : boolean;          // Переменная для отключения создания и удаления папок и файлов
-  RMDISK : boolean;          // Переменная для включения определения пути к TEMP на рамдиске
-  REFINE : boolean;          // Переменная для включения обнуления запросов по протоколу TCP  
-  SPFOLD : boolean;          // Переменная для включения указания пути к спецпапкам
-  STARTM : boolean;          // Переменная для выбора метода запуска
-
   Proc : procedure;          // Процедурная переменная
-
-  FILELIST     : array of String;  // Массив списка файлов для удаления
-  DELDIRLIST   : array of String;  // Массив списка директорий для удаления
-  BLOCKDIRLIST : array of String;  // Массив списка директорий для блокировки
-  DIRLISTNUM   : integer;          // Число эдементов массива списка директорий
-  FILELISTNUM  : integer;          // Число эдементов массива списка файлов
-
-  SPECFOLDER : string;             // Переменная для хранения пути к спецпапкам
-  COMPNAME   : Widestring;         // Переменная для хранения имени компьютера
 
 procedure HookPreferences;
 
