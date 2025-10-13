@@ -39,6 +39,7 @@ function FindFirst(const Path: string; Attr: Integer; var  F: TSearchRec): Integ
 function FindNext(var F: TSearchRec): Integer;
 function XPOS(Const SubStr, Str : String) : Integer;
 function FindMatchingFile(var F: TSearchRec): Integer;
+function GetAPPDir(DIR : string): string;
 function GetDir(const APPDIR: string; PROFDIR : string): string;
 function DirNameDistil(const Dir : string): string;
 function Upper(ch: AnsiChar): AnsiChar;
@@ -65,6 +66,16 @@ begin
   while (XPOS('..\', DirName) <> 0) do DELETE(DirName, XPOS('..\', DirName), 3);
   while (XPOS('.\', DirName) <> 0) do DELETE(DirName, XPOS('.\', DirName), 1);
   Result := DirName;
+end;
+
+// Функция для извлечения пути к программе
+function GetAPPDir(DIR : string): string;
+var
+  Len: INTEGER;
+begin
+  Len := Length(DIR);
+  while (Len <> 0) and (DIR[Len] <> '\') do Dec(Len);
+  Result := Copy(DIR, 0, Len);
 end;
 
 // Функция для формирования пути к DATADIR и CACHEDIR
