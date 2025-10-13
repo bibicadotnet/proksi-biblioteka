@@ -10,20 +10,20 @@ uses
 
 type
 
-  // Запись для хранения имен доменов к которым обнуляются запросы
+  // Р—Р°РїРёСЃСЊ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РёРјРµРЅ РґРѕРјРµРЅРѕРІ Рє РєРѕС‚РѕСЂС‹Рј РѕР±РЅСѓР»СЏСЋС‚СЃСЏ Р·Р°РїСЂРѕСЃС‹
   TDomainList = record
-    Len : Byte;                     // Длина имени домена
-    Buf : array of AnsiChar;        // Буфер для хранения имени домена
+    Len : Byte;                     // Р”Р»РёРЅР° РёРјРµРЅРё РґРѕРјРµРЅР°
+    Buf : array of AnsiChar;        // Р‘СѓС„РµСЂ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РёРјРµРЅРё РґРѕРјРµРЅР°
   end;
 
 VAR
   AppPatch  : array [0..MAX_PATH] of Char;
-  Proc      : array [1..8] of Procedure;   // массив типа Procedure
-  FileName  : string;                      // Переменная для хранения полного имени файла
-  APPDIR    : string;                      // Переменная для хранения пути к программе
-  PARAMS    : string;                      // Переменная для хранения параметров запуска
-  ExeMain   : procedure;                   // Процедурная переменная для стартовой функции
-  IniFile   : TextFile;                    // Переменная типа TextFile для файла настроек
+  Proc      : array [1..8] of Procedure;   // РјР°СЃСЃРёРІ С‚РёРїР° Procedure
+  FileName  : string;                      // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РїРѕР»РЅРѕРіРѕ РёРјРµРЅРё С„Р°Р№Р»Р°
+  APPDIR    : string;                      // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РїСѓС‚Рё Рє РїСЂРѕРіСЂР°РјРјРµ
+  PARAMS    : string;                      // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РїР°СЂР°РјРµС‚СЂРѕРІ Р·Р°РїСѓСЃРєР°
+  ExeMain   : procedure;                   // РџСЂРѕС†РµРґСѓСЂРЅР°СЏ РїРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ СЃС‚Р°СЂС‚РѕРІРѕР№ С„СѓРЅРєС†РёРё
+  IniFile   : TextFile;                    // РџРµСЂРµРјРµРЅРЅР°СЏ С‚РёРїР° TextFile РґР»СЏ С„Р°Р№Р»Р° РЅР°СЃС‚СЂРѕРµРє
 
 
   DATADIR   : string;
@@ -31,34 +31,34 @@ VAR
   RUNPARAM  : string;
   FULLPATCH : boolean;
 
-  REGOFF : boolean;          // Переменная для отключения записи в реестр
-  AIDOFF : boolean;          // Переменная для отключения идентификации приложения
-  DIROFF : boolean;          // Переменная для отключения создания и удаления папок и файлов
-  RMDISK : boolean;          // Переменная для включения определения пути к TEMP на рамдиске
-  REFINE : boolean;          // Переменная для включения обнуления запросов по протоколу TCP  
-  SPFOLD : boolean;          // Переменная для включения указания пути к спецпапкам
-  STARTM : boolean;          // Переменная для выбора метода запуска
+  REGOFF : boolean;          // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ РѕС‚РєР»СЋС‡РµРЅРёСЏ Р·Р°РїРёСЃРё РІ СЂРµРµСЃС‚СЂ
+  AIDOFF : boolean;          // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ РѕС‚РєР»СЋС‡РµРЅРёСЏ РёРґРµРЅС‚РёС„РёРєР°С†РёРё РїСЂРёР»РѕР¶РµРЅРёСЏ
+  DIROFF : boolean;          // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ РѕС‚РєР»СЋС‡РµРЅРёСЏ СЃРѕР·РґР°РЅРёСЏ Рё СѓРґР°Р»РµРЅРёСЏ РїР°РїРѕРє Рё С„Р°Р№Р»РѕРІ
+  RMDISK : boolean;          // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ РІРєР»СЋС‡РµРЅРёСЏ РѕРїСЂРµРґРµР»РµРЅРёСЏ РїСѓС‚Рё Рє TEMP РЅР° СЂР°РјРґРёСЃРєРµ
+  REFINE : boolean;          // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ РІРєР»СЋС‡РµРЅРёСЏ РѕР±РЅСѓР»РµРЅРёСЏ Р·Р°РїСЂРѕСЃРѕРІ РїРѕ РїСЂРѕС‚РѕРєРѕР»Сѓ TCP  
+  SPFOLD : boolean;          // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ РІРєР»СЋС‡РµРЅРёСЏ СѓРєР°Р·Р°РЅРёСЏ РїСѓС‚Рё Рє СЃРїРµС†РїР°РїРєР°Рј
+  STARTM : boolean;          // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ РІС‹Р±РѕСЂР° РјРµС‚РѕРґР° Р·Р°РїСѓСЃРєР°
 
-  FILELIST     : array of String;  // Массив списка файлов для удаления
-  DELDIRLIST   : array of String;  // Массив списка директорий для удаления
-  BLOCKDIRLIST : array of String;  // Массив списка директорий для блокировки
-  DIRLISTNUM   : integer;          // Число эдементов массива списка директорий
-  FILELISTNUM  : integer;          // Число эдементов массива списка файлов
+  FILELIST     : array of String;  // РњР°СЃСЃРёРІ СЃРїРёСЃРєР° С„Р°Р№Р»РѕРІ РґР»СЏ СѓРґР°Р»РµРЅРёСЏ
+  DELDIRLIST   : array of String;  // РњР°СЃСЃРёРІ СЃРїРёСЃРєР° РґРёСЂРµРєС‚РѕСЂРёР№ РґР»СЏ СѓРґР°Р»РµРЅРёСЏ
+  BLOCKDIRLIST : array of String;  // РњР°СЃСЃРёРІ СЃРїРёСЃРєР° РґРёСЂРµРєС‚РѕСЂРёР№ РґР»СЏ Р±Р»РѕРєРёСЂРѕРІРєРё
+  DIRLISTNUM   : integer;          // Р§РёСЃР»Рѕ СЌРґРµРјРµРЅС‚РѕРІ РјР°СЃСЃРёРІР° СЃРїРёСЃРєР° РґРёСЂРµРєС‚РѕСЂРёР№
+  FILELISTNUM  : integer;          // Р§РёСЃР»Рѕ СЌРґРµРјРµРЅС‚РѕРІ РјР°СЃСЃРёРІР° СЃРїРёСЃРєР° С„Р°Р№Р»РѕРІ
 
-  SPECFOLDER : string;             // Переменная для хранения пути к спецпапкам
-  COMPNAME   : Widestring;         // Переменная для хранения имени компьютера
+  SPECFOLDER : string;             // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РїСѓС‚Рё Рє СЃРїРµС†РїР°РїРєР°Рј
+  COMPNAME   : Widestring;         // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РёРјРµРЅРё РєРѕРјРїСЊСЋС‚РµСЂР°
 
-  REFINELIST : array of TDomainList;  // Массив записей для обнуления запросов к гугле и его доменам
-  REFINELISTNUM : integer;            // Число эдементов массива списка обнуления
-  BCTOFF : boolean;                   // Переменная для отключения широковещательных рассылок
-  ECHOFF : boolean;                   // Переменная для отключения Encrypted Client Hello
+  REFINELIST : array of TDomainList;  // РњР°СЃСЃРёРІ Р·Р°РїРёСЃРµР№ РґР»СЏ РѕР±РЅСѓР»РµРЅРёСЏ Р·Р°РїСЂРѕСЃРѕРІ Рє РіСѓРіР»Рµ Рё РµРіРѕ РґРѕРјРµРЅР°Рј
+  REFINELISTNUM : integer;            // Р§РёСЃР»Рѕ СЌРґРµРјРµРЅС‚РѕРІ РјР°СЃСЃРёРІР° СЃРїРёСЃРєР° РѕР±РЅСѓР»РµРЅРёСЏ
+  BCTOFF : boolean;                   // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ РѕС‚РєР»СЋС‡РµРЅРёСЏ С€РёСЂРѕРєРѕРІРµС‰Р°С‚РµР»СЊРЅС‹С… СЂР°СЃСЃС‹Р»РѕРє
+  ECHOFF : boolean;                   // РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ РѕС‚РєР»СЋС‡РµРЅРёСЏ Encrypted Client Hello
 
 procedure READPARAM;
 function ADDParam(ARGS : string) : string;
 
 implementation
 
-// Функция для замены расширения файла в полном пути
+// Р¤СѓРЅРєС†РёСЏ РґР»СЏ Р·Р°РјРµРЅС‹ СЂР°СЃС€РёСЂРµРЅРёСЏ С„Р°Р№Р»Р° РІ РїРѕР»РЅРѕРј РїСѓС‚Рё
 function GetIniName(DIR : string): string;
 var
   Len: INTEGER;
@@ -68,7 +68,7 @@ begin
   Result := Copy(DIR, 0, Len) + 'ini';
 end;
 
-// Функция для излечения значения параметра из строки
+// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РёР·Р»РµС‡РµРЅРёСЏ Р·РЅР°С‡РµРЅРёСЏ РїР°СЂР°РјРµС‚СЂР° РёР· СЃС‚СЂРѕРєРё
 function GetParam(IniLine : string; var IniParam : string): boolean;
 var
   Len    : INTEGER;
@@ -79,11 +79,11 @@ begin
   if Len = 0 then exit;
   SETPOS := POS('=', IniLine) + 1;
   IniParam := Copy(IniLine, SETPOS, Len - SETPOS + 1);
-  if (POS(';', IniLine) = 0) or (POS(';', IniLine) > 2) then Result := True; // Если строка не комментарий
+  if (POS(';', IniLine) = 0) or (POS(';', IniLine) > 2) then Result := True; // Р•СЃР»Рё СЃС‚СЂРѕРєР° РЅРµ РєРѕРјРјРµРЅС‚Р°СЂРёР№
   if IniParam = '' then Result := False;
 end;
 
-// Функция для добавления параметров запуска
+// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РґРѕР±Р°РІР»РµРЅРёСЏ РїР°СЂР°РјРµС‚СЂРѕРІ Р·Р°РїСѓСЃРєР°
 function ADDParam(ARGS : string) : string;
 var
   APP : String;
@@ -95,7 +95,7 @@ var
 begin
   APP := APPDIR;
   ARGSSTART := '';
-  // Проверка наличия параметра '--single-argument'
+  // РџСЂРѕРІРµСЂРєР° РЅР°Р»РёС‡РёСЏ РїР°СЂР°РјРµС‚СЂР° '--single-argument'
   if POS('--single-argument', ARGS) <> 0 then
   begin
     ARGSSTART := ARGS;
@@ -123,13 +123,13 @@ begin
   if CACHEDIR <> '' then ARGS := ARGS + '--disk-cache-dir=' + '"' + DISKCACHEDIR + '"' + ' ';
   if RUNPARAM <> '' then ARGS := ARGS + RUNPARAM + ' ';
 
-  // Если параметры не заданы
+  // Р•СЃР»Рё РїР°СЂР°РјРµС‚СЂС‹ РЅРµ Р·Р°РґР°РЅС‹
   if POS('--user-data-dir=', ARGS) = 0 then ARGS := ARGS + '--user-data-dir=' + '"' + APPDIR + 'User Data' + '"' + ' ';
   if POS('--disk-cache-dir=', ARGS) = 0 then ARGS := ARGS + '--disk-cache-dir=' + '"' + APPDIR + 'Cache' + '"' + ' ';
   RESULT := ARGS + ARGSSTART;
 end;
 
-// Функция для чтения параметра из ini файла
+// Р¤СѓРЅРєС†РёСЏ РґР»СЏ С‡С‚РµРЅРёСЏ РїР°СЂР°РјРµС‚СЂР° РёР· ini С„Р°Р№Р»Р°
 procedure READPARAM;
 var
   IniName : String;
@@ -138,16 +138,16 @@ var
   I : integer;
 
 begin
-  REGOFF := True;                               // Значение параметра по умолчанию
-  AIDOFF := True;                               // Значение параметра по умолчанию
-  DIROFF := False;                              // Значение параметра по умолчанию
-  RMDISK := False;                              // Значение параметра по умолчанию
-  REFINE := True;                               // Значение параметра по умолчанию
-  SPFOLD := False;                              // Значение параметра по умолчанию
-  BCTOFF := True;                               // Значение параметра по умолчанию
-  STARTM := False;                              // Значение параметра по умолчанию
-  ECHOFF := False;                              // Значение параметра по умолчанию 
-  FULLPATCH := True;                            // Значение параметра по умолчанию
+  REGOFF := True;                               // Р—РЅР°С‡РµРЅРёРµ РїР°СЂР°РјРµС‚СЂР° РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
+  AIDOFF := True;                               // Р—РЅР°С‡РµРЅРёРµ РїР°СЂР°РјРµС‚СЂР° РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
+  DIROFF := False;                              // Р—РЅР°С‡РµРЅРёРµ РїР°СЂР°РјРµС‚СЂР° РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
+  RMDISK := False;                              // Р—РЅР°С‡РµРЅРёРµ РїР°СЂР°РјРµС‚СЂР° РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
+  REFINE := True;                               // Р—РЅР°С‡РµРЅРёРµ РїР°СЂР°РјРµС‚СЂР° РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
+  SPFOLD := False;                              // Р—РЅР°С‡РµРЅРёРµ РїР°СЂР°РјРµС‚СЂР° РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
+  BCTOFF := True;                               // Р—РЅР°С‡РµРЅРёРµ РїР°СЂР°РјРµС‚СЂР° РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
+  STARTM := False;                              // Р—РЅР°С‡РµРЅРёРµ РїР°СЂР°РјРµС‚СЂР° РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
+  ECHOFF := False;                              // Р—РЅР°С‡РµРЅРёРµ РїР°СЂР°РјРµС‚СЂР° РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ 
+  FULLPATCH := True;                            // Р—РЅР°С‡РµРЅРёРµ РїР°СЂР°РјРµС‚СЂР° РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
 
   DATADIR   := '';
   CACHEDIR  := '';
@@ -159,18 +159,18 @@ begin
   FILELISTNUM := 0;
   REFINELISTNUM := 0;
 
-  GetModuleFileName(HInstance, AppPatch, SizeOF(AppPatch));  // Определить путь к dll
-  IniName := GetIniName(AppPatch);                           // Получить путь к ini файлу 
+  GetModuleFileName(HInstance, AppPatch, SizeOF(AppPatch));  // РћРїСЂРµРґРµР»РёС‚СЊ РїСѓС‚СЊ Рє dll
+  IniName := GetIniName(AppPatch);                           // РџРѕР»СѓС‡РёС‚СЊ РїСѓС‚СЊ Рє ini С„Р°Р№Р»Сѓ 
 
-  // Чтение параметров из ини файла
-  AssignFile(IniFile, IniName);                 // Связать переменную IniFile с файлом ini
-  {$I-}                                         // Выключить контроль ошибок ввода-вывода
-  Reset(IniFile);                               // Открыть файл для чтения
-  {$I+}                                         // Включить контроль ошибок ввода-вывода
-  if IOResult = 0 then begin                    // Если ошибок нет (файл отрыт) выполнить построчное чтение файла
-  while (not EOF(IniFile)) do begin             // Пока не достигнут конец файла
-    Readln(IniFile, IniLine);                   // Прочитат строку в переменную IniLine
-    if GetParam(IniLine, IniParam) = true then  // Извлечь из строки значение параметра
+  // Р§С‚РµРЅРёРµ РїР°СЂР°РјРµС‚СЂРѕРІ РёР· РёРЅРё С„Р°Р№Р»Р°
+  AssignFile(IniFile, IniName);                 // РЎРІСЏР·Р°С‚СЊ РїРµСЂРµРјРµРЅРЅСѓСЋ IniFile СЃ С„Р°Р№Р»РѕРј ini
+  {$I-}                                         // Р’С‹РєР»СЋС‡РёС‚СЊ РєРѕРЅС‚СЂРѕР»СЊ РѕС€РёР±РѕРє РІРІРѕРґР°-РІС‹РІРѕРґР°
+  Reset(IniFile);                               // РћС‚РєСЂС‹С‚СЊ С„Р°Р№Р» РґР»СЏ С‡С‚РµРЅРёСЏ
+  {$I+}                                         // Р’РєР»СЋС‡РёС‚СЊ РєРѕРЅС‚СЂРѕР»СЊ РѕС€РёР±РѕРє РІРІРѕРґР°-РІС‹РІРѕРґР°
+  if IOResult = 0 then begin                    // Р•СЃР»Рё РѕС€РёР±РѕРє РЅРµС‚ (С„Р°Р№Р» РѕС‚СЂС‹С‚) РІС‹РїРѕР»РЅРёС‚СЊ РїРѕСЃС‚СЂРѕС‡РЅРѕРµ С‡С‚РµРЅРёРµ С„Р°Р№Р»Р°
+  while (not EOF(IniFile)) do begin             // РџРѕРєР° РЅРµ РґРѕСЃС‚РёРіРЅСѓС‚ РєРѕРЅРµС† С„Р°Р№Р»Р°
+    Readln(IniFile, IniLine);                   // РџСЂРѕС‡РёС‚Р°С‚ СЃС‚СЂРѕРєСѓ РІ РїРµСЂРµРјРµРЅРЅСѓСЋ IniLine
+    if GetParam(IniLine, IniParam) = true then  // РР·РІР»РµС‡СЊ РёР· СЃС‚СЂРѕРєРё Р·РЅР°С‡РµРЅРёРµ РїР°СЂР°РјРµС‚СЂР°
       begin
       if POS('REGOFF=', IniLine) <> 0 then if IniParam = '1' then REGOFF := True else if IniParam = '0' then REGOFF := False;
       if POS('AIDOFF=', IniLine) <> 0 then if IniParam = '1' then AIDOFF := True else if IniParam = '0' then AIDOFF := False;
@@ -189,7 +189,7 @@ begin
       if POS('SPECFOLDER=', IniLine) <> 0 then if IniParam <> '' then SPECFOLDER := IniParam;
       if POS('COMPNAME=', IniLine) <> 0 then if IniParam <> '' then COMPNAME := IniParam;
 
-      // Заполнение массивов из списка удаления директорий
+      // Р—Р°РїРѕР»РЅРµРЅРёРµ РјР°СЃСЃРёРІРѕРІ РёР· СЃРїРёСЃРєР° СѓРґР°Р»РµРЅРёСЏ РґРёСЂРµРєС‚РѕСЂРёР№
       if POS('DeleteDir', IniLine) <> 0 then if IniParam <> '' then
         begin
         if DATADIR <> '' then REPLACE(IniParam, DATADIR);
@@ -200,22 +200,22 @@ begin
         BLOCKDIRLIST[DIRLISTNUM-1] := DirNameDistil(IniParam);
         end;
 
-      // Заполнение массива из списка удаления файлов
+      // Р—Р°РїРѕР»РЅРµРЅРёРµ РјР°СЃСЃРёРІР° РёР· СЃРїРёСЃРєР° СѓРґР°Р»РµРЅРёСЏ С„Р°Р№Р»РѕРІ
       if POS('DeleteFile', IniLine) <> 0 then if IniParam <> '' then
         begin
-        if DATADIR <> '' then REPLACE(IniParam, DATADIR);  // Заменить %DATADIR% на значение из параметра DATADIR
+        if DATADIR <> '' then REPLACE(IniParam, DATADIR);  // Р—Р°РјРµРЅРёС‚СЊ %DATADIR% РЅР° Р·РЅР°С‡РµРЅРёРµ РёР· РїР°СЂР°РјРµС‚СЂР° DATADIR
         FILELISTNUM := FILELISTNUM + 1;
         SetLength(FILELIST,FILELISTNUM);
         FILELIST[FILELISTNUM-1] := IniParam;
         end;
 
-      // Заполнить массив записей из списка обнуления запросов к гугло и его доменам
+      // Р—Р°РїРѕР»РЅРёС‚СЊ РјР°СЃСЃРёРІ Р·Р°РїРёСЃРµР№ РёР· СЃРїРёСЃРєР° РѕР±РЅСѓР»РµРЅРёСЏ Р·Р°РїСЂРѕСЃРѕРІ Рє РіСѓРіР»Рѕ Рё РµРіРѕ РґРѕРјРµРЅР°Рј
       if POS('NullDomain', IniLine) <> 0 then if IniParam <> '' then
         begin
         REFINELISTNUM := REFINELISTNUM + 1;
         SetLength(REFINELIST, REFINELISTNUM);
         REFINELIST[REFINELISTNUM-1].len := Length(IniParam);
-        SetLength(REFINELIST[REFINELISTNUM-1].buf, REFINELIST[REFINELISTNUM-1].len + 1);  // + 1 к размеру для добавления элемента с #0
+        SetLength(REFINELIST[REFINELISTNUM-1].buf, REFINELIST[REFINELISTNUM-1].len + 1);  // + 1 Рє СЂР°Р·РјРµСЂСѓ РґР»СЏ РґРѕР±Р°РІР»РµРЅРёСЏ СЌР»РµРјРµРЅС‚Р° СЃ #0
         for I := 0 to REFINELIST[REFINELISTNUM-1].len - 1 do REFINELIST[REFINELISTNUM-1].buf[I] := IniParam[I + 1];
         end;
       end;
@@ -226,3 +226,4 @@ begin
 end;
 
 end.
+
