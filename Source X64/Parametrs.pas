@@ -18,7 +18,6 @@ type
 
 var
   AppPatch  : array [0..MAX_PATH] of Char;
-  Proc : array [1..8] of Procedure;        // массив типа Procedure
   FileName  : string;                      // Переменная для хранения полного имени файла
   APPDIR    : string;                      // Переменная для хранения пути к программе
   PARAMS    : string;                      // Переменная для хранения параметров запуска
