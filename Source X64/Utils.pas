@@ -41,6 +41,7 @@ function FindNext(var F: TSearchRec): Integer;
 function XPOS(Const SubStr, Str : String) : Integer;
 function FindMatchingFile(var F: TSearchRec): Integer;
 function GetDir(const APPDIR: string; PROFDIR : string): string;
+function GetAPPDir(DIR : string): string;
 function DirNameDistil(const Dir : string): string;
 
 implementation
@@ -80,6 +81,16 @@ begin
     end;
   Result := Copy(APPDIR, 0, Len);
   Result := Result +  PROFDIR;
+end;
+
+// Функция для определения пути к программе
+function GetAPPDir(DIR : string): string;
+var
+  Len: INTEGER;
+begin
+  Len := Length(DIR);
+  while (Len <> 0) and (DIR[Len] <> '\') do Dec(Len);
+  Result := Copy(DIR, 0, Len);
 end;
 
 // Процедура для замены подстановочных строк
