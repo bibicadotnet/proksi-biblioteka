@@ -79,7 +79,6 @@ VAR
   RAWSetsockopt : TSetsockopt;        // Оригинальная функция Setsockopt
   Closesocket : TClosesocket;         // Функция закрытия сокета
 
-
 function WSASend(
                  S: TSocket;	var lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
                  var lpOverlapped: WSAOverlapped;	lpCompletionRoutine: TWSAOverlappedCompletionRoutine
