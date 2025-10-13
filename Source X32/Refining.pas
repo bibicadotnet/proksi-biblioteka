@@ -4,18 +4,13 @@ interface
 
 uses
   Windows,
+  Parametrs,
   Hook,
   Utils;
 
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
 
 type
-
-  // Запись для хранения имен доменов к которым обнуляются запросы
-  TDomainList = record
-    len : byte;
-    buf : array of AnsiChar;
-  end;
 
   // Запись для функции WSASend
   WSABUF = record
@@ -83,10 +78,7 @@ VAR
   RAWWSASend : TWSASend;              // Оригинальная функция WSASend
   RAWSetsockopt : TSetsockopt;        // Оригинальная функция Setsockopt
   Closesocket : TClosesocket;         // Функция закрытия сокета
-  REFINELIST : array of TDomainList;  // Массив записей для обнуления запросов к гугле и его доменам
-  REFINELISTNUM : integer;            // Число эдементов массива списка обнуления
-  BCTOFF : boolean;                   // Переменная для отключения широковещательных рассылок
-  ECHOFF : boolean;                   // Переменная для отключения Encrypted Client Hello
+
 
 function WSASend(
                  S: TSocket;	var lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
