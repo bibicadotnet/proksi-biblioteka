@@ -379,10 +379,10 @@ begin
     pMem := MapViewOfFile (hFileMap, FILE_MAP_READ, 0, 0, 1); // отобразить файл в адресном пространстве (чтобы получить имя файла)
     if (pMem <> nil) then // если успешно, тогда
       begin
-        NameLen := GetMappedFileNameW(GetCurrentProcess, pMem, lpFilename, MAX_PATH);     // получить имя файла в виде пути к имени устройства
-        if (NameLen <> 0) and (NameLen < cchFilePath) then                                // если имя успешно получено и его длина меньше cchFilePath тогда
+        NameLen := GetMappedFileNameW(GetCurrentProcess, pMem, lpFilename, MAX_PATH + 29); // получить имя файла в виде пути к имени устройства
+        if (NameLen <> 0) and (NameLen < cchFilePath) then                                 // если имя успешно получено и его длина меньше cchFilePath тогда
         begin
-            CopyMemory(lpszFilePath, ADDR(lpFilename), (NameLen + 1) * SizeOf(WideChar)); // скопировать имя включая завершающий символ в указатель
+            CopyMemory(lpszFilePath, ADDR(lpFilename), (NameLen + 1) * SizeOf(WideChar));  // скопировать имя включая завершающий символ в указатель
         end;
       UnmapViewOfFile(pMem); // Отключить отображение файла в адресном пространстве
       end;
