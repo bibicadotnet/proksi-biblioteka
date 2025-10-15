@@ -368,7 +368,7 @@ end;
 function GetFinalPathNameByHandleW(hFile: THandle; lpszFilePath: PWidechar; cchFilePath: DWORD; dwFlags: DWORD): DWORD; stdcall;
 var
   hFileMap : THandle;
-  lpFilename : array [0..MAX_PATH] of WideChar;
+  lpFilename : array [0..MAX_PATH+29] of WideChar;
   pMem : pointer;
   NameLen : DWORD;
 begin
