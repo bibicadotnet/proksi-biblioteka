@@ -349,24 +349,27 @@ end;
 function GetFinalPathNameByHandleW(hFile: THandle; lpszFilePath: PWidechar; cchFilePath: DWORD; dwFlags: DWORD): DWORD; stdcall;
 var
   hFileMap : THandle;
-  FileName : array [0..MAX_PATH] of WideChar;
+  lpFilename : array [0..MAX_PATH] of WideChar;
   pMem : pointer;
+  NameLen : DWORD;
 begin
-  hFileMap := CreateFileMapping(hFile, nil, PAGE_READONLY, 0, 0, nil);             // Создать объект "проецируемый в память файл"
-  if (hFileMap <> 0) then                                                          // Если объект создан, тогда
+  NameLen := 0;
+  hFileMap := CreateFileMapping(hFile, nil, PAGE_READONLY, 0, 0, nil);                  // Создать объект "проецируемый в память файл"
+  if (hFileMap <> 0) then                                                               // Если объект создан, тогда
   begin
-    pMem := MapViewOfFile (hFileMap, FILE_MAP_READ, 0, 0, 1);                      // отобразить файл в адресном пространстве (чтобы получить имя файла)
-    if (pMem <> nil) then                                                          // если успешно, тогда
+    pMem := MapViewOfFile (hFileMap, FILE_MAP_READ, 0, 0, 1);                           // отобразить файл в адресном пространстве (чтобы получить имя файла)
+    if (pMem <> nil) then                                                               // если успешно, тогда
       begin
-      if GetMappedFileNameW(GetCurrentProcess, pMem, FileName, MAX_PATH) <> 0 then // получить имя файла в виде пути к имени устройства, если успешно тогда
+        NameLen := GetMappedFileNameW(GetCurrentProcess, pMem, lpFilename, MAX_PATH);   // получить имя файла в виде пути к имени устройства
+        if (NameLen <> 0) and (NameLen < cchFilePath) then                              // если имя получено и его длина меньше cchFilePath
         begin
-            CopyMemory(lpszFilePath, ADDR(FileName), Length(FileName));            // скопировать имя в указатель
+          CopyMemory(lpszFilePath, ADDR(lpFilename), (NameLen + 1) * SizeOf(WideChar)); // скопировать имя и завершающий символ в указатель
         end;
-      UnmapViewOfFile(pMem);                                                       // Отключить отображение файла в адресном пространстве
+      UnmapViewOfFile(pMem);                                                            // Отключить отображение файла в адресном пространстве
       end;
-    CloseHandle(hFileMap);                                                         // Освободить идентификатор объекта
+    CloseHandle(hFileMap);                                                              // Освободить идентификатор объекта
   end;
-  Result := Length(FileName);
+  Result := NameLen;
 end;
 
 // Модифицированная функция SHGetFolderPathW для указания своего пути к спецпапкам
