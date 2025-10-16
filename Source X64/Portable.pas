@@ -377,7 +377,7 @@ begin
   hFileMap := CreateFileMapping(hFile, nil, PAGE_READONLY, 0, 0, nil); // Создать объект "проецируемый в память файл"
   if (hFileMap <> 0) then // Если объект создан, тогда
   begin
-    pMem := MapViewOfFile (hFileMap, FILE_MAP_READ, 0, 0, 1); // отобразить файл в адресном пространстве (чтобы получить имя файла)
+    pMem := MapViewOfFile(hFileMap, FILE_MAP_READ, 0, 0, 1); // отобразить файл в адресном пространстве (чтобы получить имя файла)
     if (pMem <> nil) then // если успешно, тогда
       begin
         NameLen := GetMappedFileNameW(GetCurrentProcess, pMem, ADDR(lpFilename[0]), cchFilePath); // получить имя файла в виде пути к имени устройства
@@ -385,7 +385,7 @@ begin
         begin
             CopyMemory(lpszFilePath, ADDR(lpFilename[0]), (NameLen + 1) * 2);                     // скопировать имя включая завершающий символ в указатель
         end;
-      UnmapViewOfFile(pMem); // Отключить отображение файла в адресном пространстве
+        UnmapViewOfFile(pMem); // Отключить отображение файла в адресном пространстве
       end;
     CloseHandle(hFileMap); // Освободить идентификатор объекта
   end;
