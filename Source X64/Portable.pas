@@ -98,23 +98,24 @@ begin
   result := False;
 end;
 
+// Модифицированная функция GetComputerNameW
 function GetComputerNameW(lpBuffer: PWideChar; var nSize: DWORD): BOOL; stdcall;
 var
-  NameLen, RequiredSize: DWORD;
+  RequiredSize: DWORD;
+  NameLen: DWORD;
 begin
-  if COMPNAME = '' then Result := False else
+  Result := False;
+  if COMPNAME <> '' then
   begin
     NameLen := Length(COMPNAME);
     RequiredSize := NameLen + 1;
-    if nSize < RequiredSize then
+    if nSize > RequiredSize then
     begin
-      nSize := RequiredSize;
-      Result := False;
-      Exit;
+      CopyMemory(lpBuffer, PWideChar(COMPNAME + #0), (NameLen + 1) * 2);
+      nSize := NameLen;
+      Result := True;
     end;
-    CopyMemory(lpBuffer, PWideChar(COMPNAME + #0), (NameLen + 1) * 2);
-    nSize := NameLen;
-    Result := True;
+    if nSize < RequiredSize then nSize := RequiredSize;
   end;
 end;
 
@@ -381,10 +382,7 @@ begin
     if (pMem <> nil) then // если успешно, тогда
       begin
         NameLen := GetMappedFileNameW(GetCurrentProcess, pMem, ADDR(lpFilename[0]), cchFilePath); // получить имя файла в виде пути к имени устройства
-        if (NameLen <> 0) then                                                                    // если имя успешно получено и его длина меньше cchFilePath тогда
-        begin
-            CopyMemory(lpszFilePath, ADDR(lpFilename[0]), (NameLen + 1) * 2);                     // скопировать имя включая завершающий символ в указатель
-        end;
+        if (NameLen <> 0) then CopyMemory(lpszFilePath, ADDR(lpFilename[0]), (NameLen + 1) * 2);  // если имя получено скопировать его и завершающий символ в указатель
         UnmapViewOfFile(pMem); // Отключить отображение файла в адресном пространстве
       end;
     CloseHandle(hFileMap); // Освободить идентификатор объекта
