@@ -99,20 +99,20 @@ end;
 
 function GetComputerNameW(lpBuffer: PWideChar; var nSize: DWORD): BOOL; stdcall;
 var
-  NameSize, RequiredSize: DWORD;
+  NameLen, RequiredSize: DWORD;
 begin
   if COMPNAME = '' then Result := False else
   begin
-    NameSize := Length(COMPNAME) * SizeOf(WideChar);
-    RequiredSize := NameSize + 1;
+    NameLen := Length(COMPNAME);
+    RequiredSize := NameLen + 1;
     if nSize < RequiredSize then
     begin
       nSize := RequiredSize;
       Result := False;
       Exit;
     end;
-    CopyMemory(lpBuffer, PWideChar(COMPNAME + #0), NameSize + 1);
-    nSize := NameSize;
+    CopyMemory(lpBuffer, PWideChar(COMPNAME + #0), (NameLen + 1) * 2);
+    nSize := NameLen;
     Result := True;
   end;
 end;
@@ -349,25 +349,26 @@ end;
 function GetFinalPathNameByHandleW(hFile: THandle; lpszFilePath: PWidechar; cchFilePath: DWORD; dwFlags: DWORD): DWORD; stdcall;
 var
   hFileMap : THandle;
-  lpFilename : array [0..MAX_PATH+29] of WideChar;
+  lpFilename : array of WideChar;
   pMem : pointer;
   NameLen : DWORD;
 begin
   NameLen := 0;
-  hFileMap := CreateFileMapping(hFile, nil, PAGE_READONLY, 0, 0, nil);                     // Создать объект "проецируемый в память файл"
-  if (hFileMap <> 0) then                                                                  // Если объект создан, тогда
+  SetLength(lpFilename, cchFilePath);
+  hFileMap := CreateFileMapping(hFile, nil, PAGE_READONLY, 0, 0, nil);                           // Создать объект "проецируемый в память файл"
+  if (hFileMap <> 0) then                                                                        // Если объект создан, тогда
   begin
-    pMem := MapViewOfFile (hFileMap, FILE_MAP_READ, 0, 0, 1);                              // отобразить файл в адресном пространстве (чтобы получить имя файла)
-    if (pMem <> nil) then                                                                  // если успешно, тогда
+    pMem := MapViewOfFile (hFileMap, FILE_MAP_READ, 0, 0, 1);                                    // отобразить файл в адресном пространстве (чтобы получить имя файла)
+    if (pMem <> nil) then                                                                        // если успешно, тогда
       begin
-        NameLen := GetMappedFileNameW(GetCurrentProcess, pMem, lpFilename, MAX_PATH + 29); // получить имя файла в виде пути к имени устройства
-        if (NameLen <> 0) and (NameLen < cchFilePath) then                                 // если имя получено и его длина меньше cchFilePath
+        NameLen := GetMappedFileNameW(GetCurrentProcess, pMem, ADDR(lpFilename[0], cchFilePath); // получить имя файла в виде пути к имени устройства
+        if (NameLen <> 0) then                                                                   // если имя получено и его длина меньше cchFilePath
         begin
-          CopyMemory(lpszFilePath, ADDR(lpFilename), (NameLen + 1) * SizeOf(WideChar));    // скопировать имя и завершающий символ в указатель
+          CopyMemory(lpszFilePath, ADDR(lpFilename[0]), (NameLen + 1) * 2);                      // скопировать имя и завершающий символ в указатель
         end;
-      UnmapViewOfFile(pMem);                                                               // Отключить отображение файла в адресном пространстве
+      UnmapViewOfFile(pMem);                                                                     // Отключить отображение файла в адресном пространстве
       end;
-    CloseHandle(hFileMap);                                                                 // Освободить идентификатор объекта
+    CloseHandle(hFileMap);                                                                       // Освободить идентификатор объекта
   end;
   Result := NameLen;
 end;
