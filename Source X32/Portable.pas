@@ -361,7 +361,7 @@ begin
     pMem := MapViewOfFile (hFileMap, FILE_MAP_READ, 0, 0, 1);                                    // отобразить файл в адресном пространстве (чтобы получить имя файла)
     if (pMem <> nil) then                                                                        // если успешно, тогда
       begin
-        NameLen := GetMappedFileNameW(GetCurrentProcess, pMem, ADDR(lpFilename[0], cchFilePath); // получить имя файла в виде пути к имени устройства
+        NameLen := GetMappedFileNameW(GetCurrentProcess, pMem, ADDR(lpFilename[0]), cchFilePath); // получить имя файла в виде пути к имени устройства
         if (NameLen <> 0) then                                                                   // если имя получено и его длина меньше cchFilePath
         begin
           CopyMemory(lpszFilePath, ADDR(lpFilename[0]), (NameLen + 1) * 2);                      // скопировать имя и завершающий символ в указатель
