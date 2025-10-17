@@ -48,6 +48,7 @@ var
   i : Integer;
   DirName : String;
   FileOp: TSHFileOpStruct;
+  Attribut: DWORD;
 begin
   FillChar(FileOp, SizeOf(FileOp), 0);                 // Очистить структуру от случайных данных
   FileOp.wFunc  := FO_DELETE;                          // Тип операции - удаление
@@ -55,8 +56,9 @@ begin
   for i := 0 to DIRLISTNUM - 1 do
   begin
     DirName := DELDIRLIST[i];
-    FileOp.pFrom  := PChar(DirName + #0);              // Имя и терминальный нуль для обозначения конца буфера
-    SHFileOperation(FileOp);                           // Выполнить операцию
+    Attribut := GetFileAttributes(PChar(DirName)) and 16; // Проверить наличие директории
+    FileOp.pFrom  := PChar(DirName + #0);                 // Имя и терминальный нуль для обозначения конца буфера
+    if Attribut = 16 then SHFileOperation(FileOp);        // Выполнить операцию
   end;
 end;
 
