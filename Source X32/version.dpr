@@ -43,21 +43,27 @@ exports
   GetFileVersionInfoSizeExW name 'GetFileVersionInfoSizeExW';
 
 // Функция удаления директорий
-procedure DeleteDir(DirName: String);
+procedure DDelete;
 var
+  i : Integer;
+  DirName : String;
   FileOp: TSHFileOpStruct;
 begin
   FillChar(FileOp, SizeOf(FileOp), 0);                 // Очистить структуру от случайных данных
   FileOp.wFunc  := FO_DELETE;                          // Тип операции - удаление
   FileOp.fFlags := FOF_SILENT or FOF_NOCONFIRMATION;   // Флаги
-  FileOp.pFrom  := PChar(DirName + #0);                // Имя и терминальный нуль для обозначения конца буфера
-  SHFileOperation(FileOp);                             // Выполнить операцию
+  for i := 0 to DIRLISTNUM - 1 do
+  begin
+    DirName := DELDIRLIST[i];
+    FileOp.pFrom  := PChar(DirName + #0);              // Имя и терминальный нуль для обозначения конца буфера
+    SHFileOperation(FileOp);                           // Выполнить операцию
+  end;
 end;
 
 // Удаление файлов по списку и шаблону
-procedure FDELETE;
+procedure FDelete;
 var
-  i : INTEGER;
+  i : Integer;
   DirName : String;
   Len: INTEGER;
   SearchResult : TSearchRec;
@@ -72,7 +78,6 @@ begin
       Len := Length(FILELIST[i]);
       while (Len <> 0) and (FILELIST[i][Len] <> '\') do Dec(Len);
       SetString(DirName, PChar(FILELIST[i]), Len);
-      // Найти и удалить файлы по шаблону
       if FindFirst(FILELIST[i], faAnyFile, SearchResult) = 0 then // Найти файлы по шаблону из FILELIST[i]
         begin
           repeat DeleteFile(PChar(DirName + SearchResult.Name));  // Удалять найденные файлы
@@ -84,12 +89,10 @@ begin
 end;
 
 // Удаление файлов и директорий по списку
-procedure FDDELETE;
-var
-  I : Integer;
+procedure FDDelete;
 begin
-  FDELETE;
-  for i := 0 to DIRLISTNUM - 1 do DeleteDir(DELDIRLIST[i]);
+  FDelete;
+  DDelete;
 end;
 
 // Функция запуска браузера
