@@ -105,17 +105,18 @@ var
   NameLen: DWORD;
 begin
   Result := False;
-  if COMPNAME <> '' then
+  if COMPNAME <> '' then                                          // Если имя задано
   begin
-    NameLen := Length(COMPNAME);
-    RequiredSize := NameLen + 1;
-    if nSize > RequiredSize then
+    NameLen := Length(COMPNAME);                                  // Определить число символов в имени
+    RequiredSize := NameLen + 1;                                  // Расчитать рекомендуемый размер
+    if nSize < RequiredSize then                                  // Если на входе размер меньше чем рекомендуемый
     begin
-      CopyMemory(lpBuffer, PWideChar(COMPNAME + #0), (NameLen + 1) * 2);
-      nSize := NameLen;
-      Result := True;
+      nSize := RequiredSize;                                      // Передать на выход рекомендуемый размер
+      Exit;                                                       // Выйти из функции
     end;
-    if nSize < RequiredSize then nSize := RequiredSize;
+    CopyMemory(lpBuffer, PWideChar(COMPNAME), (NameLen + 1) * 2); // Скопировать в буфер имя с учетом терминального нуля
+    nSize := NameLen;                                             // Число символов в имени на выход
+    Result := True;
   end;
 end;
 
