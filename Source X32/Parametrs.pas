@@ -186,35 +186,35 @@ begin
 
       // Заполнение массивов из списка удаления директорий
       if POS('DeleteDir', IniLine) <> 0 then if IniParam <> '' then
-        begin
+      begin
         if DATADIR <> '' then REPLACE(IniParam, DATADIR);
         DIRLISTNUM := DIRLISTNUM + 1;
         SetLength(DELDIRLIST,DIRLISTNUM);
         SetLength(BLOCKDIRLIST,DIRLISTNUM);
         DELDIRLIST[DIRLISTNUM-1] := IniParam;
         BLOCKDIRLIST[DIRLISTNUM-1] := DirNameDistil(IniParam);
-        end;
+      end;
 
       // Заполнение массива из списка удаления файлов
       if POS('DeleteFile', IniLine) <> 0 then if IniParam <> '' then
-        begin
+      begin
         if DATADIR <> '' then REPLACE(IniParam, DATADIR);  // Заменить %DATADIR% на значение из параметра DATADIR
         FILELISTNUM := FILELISTNUM + 1;
         SetLength(FILELIST,FILELISTNUM);
         FILELIST[FILELISTNUM-1] := IniParam;
-        end;
+      end;
 
       // Заполнить массив записей из списка обнуления запросов к гугло и его доменам
       if POS('NullDomain', IniLine) <> 0 then if IniParam <> '' then
-        begin
+      begin
         REFINELISTNUM := REFINELISTNUM + 1;
         SetLength(REFINELIST, REFINELISTNUM);
         REFINELIST[REFINELISTNUM-1].len := Length(IniParam);
         SetLength(REFINELIST[REFINELISTNUM-1].buf, REFINELIST[REFINELISTNUM-1].len + 1);  // + 1 к размеру для добавления элемента с #0
         for I := 0 to REFINELIST[REFINELISTNUM-1].len - 1 do REFINELIST[REFINELISTNUM-1].buf[I] := IniParam[I + 1];
-        end;
       end;
 
+      end;
     end;
     CloseFile(IniFile);
   end;
