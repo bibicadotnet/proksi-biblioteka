@@ -108,7 +108,7 @@ begin
   // Если вместо 0 вписать hInstance, то будет путь к имени DLL файла
   GetModuleFileName(0, AppPatch, SizeOF(AppPatch));
   FileName := AppPatch;
-  APPDIR := GetAPPDir(AppPatch);
+  ExeDir := GetAPPDir(AppPatch);
   PARAMS := ADDParam(ARGS);
   // MessageBox(0, pchar(PARAMS), 'Параметры перед запуском', MB_OK);       // Вывод окна перед запуском. Для отладки
 
@@ -120,7 +120,7 @@ begin
     ShellExecuteInfo.fMask := SEE_MASK_NOCLOSEPROCESS or SEE_MASK_FLAG_NO_UI; // Комбинация флагов, определяющих используемую часть структуры
     ShellExecuteInfo.lpVerb := 'open';                                        // Строка, определяющее действие с файлом. 'open' запускает исполняемый файл
     ShellExecuteInfo.lpFile := pchar(FileName);                               // Имя файла (полный путь к файлу)
-    ShellExecuteInfo.lpDirectory := pchar(APPDIR);                            // Рабочая директория программы
+    ShellExecuteInfo.lpDirectory := pchar(ExeDir);                            // Рабочая директория программы
     ShellExecuteInfo.nShow := SW_SHOWNORMAL;                                  // Способ отображения окна
     ShellExecuteInfo.lpParameters := pchar(PARAMS);                           // Параметры
     if ShellExecuteEx(ADDR(ShellExecuteInfo)) then ExitProcess(0);            // Запустить программу
@@ -128,7 +128,7 @@ begin
   else begin
     FillChar(StartupInfo, SizeOf(StartupInfo), 0);
     StartupInfo.cb := SizeOf(StartupInfo);
-    if CreateProcess(nil, pchar(FileName + ' ' + PARAMS), nil, nil, false, 0, nil, pchar(APPDIR), StartupInfo, ProcessInfo) then
+    if CreateProcess(nil, pchar(FileName + ' ' + PARAMS), nil, nil, false, 0, nil, pchar(ExeDir), StartupInfo, ProcessInfo) then
     begin
       ExitProcess(0);
     end;
