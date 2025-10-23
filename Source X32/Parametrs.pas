@@ -17,9 +17,9 @@ type
   end;
 
 VAR
-  AppPatch  : array [0..MAX_PATH] of Char;
+  AppPatch  : array [0..MAX_PATH] of Char; // Переменная для хранения полного пути к программе
   FileName  : string;                      // Переменная для хранения полного имени файла
-  APPDIR    : string;                      // Переменная для хранения пути к программе
+  APPDIR    : string;                      // Переменная для хранения пути к директории программы
   PARAMS    : string;                      // Переменная для хранения параметров запуска
   IniFile   : TextFile;                    // Переменная типа TextFile для файла настроек
 
