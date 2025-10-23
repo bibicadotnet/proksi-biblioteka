@@ -79,18 +79,18 @@ begin
 end;
 
 // Функция для формирования пути к DATADIR и CACHEDIR
-function GetDIR(const ROGDIR: string; PROFDIR : string): string;
+function GetDIR(const PROGDIR: string; PROFDIR : string): string;
 var
   Len    : integer;
 begin
-  Len := Length(ROGDIR);
+  Len := Length(PROGDIR);
   while (POS('..\', PROFDIR) <> 0) and (Len > 2) do
     begin
-      if (ROGDIR[Len] = '\') then Dec(Len);
-      while (Len <> 0) and (ROGDIR[Len] <> '\') do Dec(Len);
+      if (PROGDIR[Len] = '\') then Dec(Len);
+      while (Len <> 0) and (PROGDIR[Len] <> '\') do Dec(Len);
       Delete(PROFDIR, POS('..\', PROFDIR), 3);
     end;
-  Result := Copy(ROGDIR, 0, Len);
+  Result := Copy(PROGDIR, 0, Len);
   Result := Result + PROFDIR;
 end;
 
