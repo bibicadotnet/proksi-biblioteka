@@ -19,7 +19,7 @@ type
 VAR
   AppPatch  : array [0..MAX_PATH] of Char; // Переменная для хранения полного пути к программе
   FileName  : string;                      // Переменная для хранения полного имени файла
-  APPDIR    : string;                      // Переменная для хранения пути к директории программы
+  ExeDir    : string;                      // Переменная для хранения пути к директории программы
   PARAMS    : string;                      // Переменная для хранения параметров запуска
   IniFile   : TextFile;                    // Переменная типа TextFile для файла настроек
 
@@ -91,7 +91,7 @@ var
   DISKCACHEDIR   : String;
 
 begin
-  APP := APPDIR;
+  APP := ExeDir;
   ARGSSTART := '';
   // Проверка наличия параметра '--single-argument'
   if POS('--single-argument', ARGS) <> 0 then
@@ -111,7 +111,7 @@ begin
   //ARGS := ARGS + '--no-first-run' + ' ';
   //ARGS := ARGS + '--no-sandbox' + ' ';
   //ARGS := ARGS + '--test-type' + ' ';
-  //ARGS := ARGS + '--ppapi-flash-path=' + '"' + APPDIR + 'plugins\pepflashplayer32.dll' + ' ';
+  //ARGS := ARGS + '--ppapi-flash-path=' + '"' + ExeDir + 'plugins\pepflashplayer32.dll' + ' ';
 
   if FULLPATCH = FALSE then APP := '';
   if DATADIR <> '' then USERDATADIR := GETDIR(APP, DATADIR);
@@ -122,8 +122,8 @@ begin
   if RUNPARAM <> '' then ARGS := ARGS + RUNPARAM + ' ';
 
   // Если параметры не заданы
-  if POS('--user-data-dir=', ARGS) = 0 then ARGS := ARGS + '--user-data-dir=' + '"' + APPDIR + 'User Data' + '"' + ' ';
-  if POS('--disk-cache-dir=', ARGS) = 0 then ARGS := ARGS + '--disk-cache-dir=' + '"' + APPDIR + 'Cache' + '"' + ' ';
+  if POS('--user-data-dir=', ARGS) = 0 then ARGS := ARGS + '--user-data-dir=' + '"' + ExeDir + 'User Data' + '"' + ' ';
+  if POS('--disk-cache-dir=', ARGS) = 0 then ARGS := ARGS + '--disk-cache-dir=' + '"' + ExeDir + 'Cache' + '"' + ' ';
   RESULT := ARGS + ARGSSTART;
 end;
 
