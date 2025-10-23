@@ -89,7 +89,7 @@ var
   DISKCACHEDIR   : String;
 
 begin
- APP := APPDIR;
+  APP := ExeDir;
   ARGSSTART := '';
   // Проверка наличия параметра '--single-argument'
   if POS('--single-argument', ARGS) <> 0 then
@@ -110,8 +110,8 @@ begin
   if RUNPARAM <> '' then ARGS := ARGS + RUNPARAM + ' ';
 
   // Если параметры не заданы
-  if POS('--user-data-dir=', ARGS) = 0 then ARGS := ARGS + '--user-data-dir=' + '"' + APPDIR + 'User Data' + '"' + ' ';
-  if POS('--disk-cache-dir=', ARGS) = 0 then ARGS := ARGS + '--disk-cache-dir=' + '"' + APPDIR + 'Cache' + '"' + ' ';
+  if POS('--user-data-dir=', ARGS) = 0 then ARGS := ARGS + '--user-data-dir=' + '"' + ExeDir + 'User Data' + '"' + ' ';
+  if POS('--disk-cache-dir=', ARGS) = 0 then ARGS := ARGS + '--disk-cache-dir=' + '"' + ExeDir + 'Cache' + '"' + ' ';
   RESULT := ARGS + ARGSSTART;
 end;
 
