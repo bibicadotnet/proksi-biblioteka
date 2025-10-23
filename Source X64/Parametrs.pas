@@ -102,16 +102,13 @@ begin
   ARGS := ARGS + '--disable-features=RendererCodeIntegrity,FlashDeprecationWarning' + ' ';
 
   if FULLPATCH = FALSE then APP := '';
-  if DATADIR <> '' then USERDATADIR := GETDIR(APP, DATADIR);
-  if CACHEDIR <> '' then DISKCACHEDIR := GETDIR(APP, CACHEDIR);
+  USERDATADIR := GETDIR(APP, DATADIR);
+  DISKCACHEDIR := GETDIR(APP, CACHEDIR);
 
-  if DATADIR <> '' then ARGS := ARGS + '--user-data-dir=' + '"' + USERDATADIR + '"' + ' ';
-  if CACHEDIR <> '' then ARGS := ARGS + '--disk-cache-dir=' + '"' + DISKCACHEDIR + '"' + ' ';
   if RUNPARAM <> '' then ARGS := ARGS + RUNPARAM + ' ';
+  if POS('--user-data-dir=', ARGS) = 0 then ARGS := ARGS + '--user-data-dir=' + '"' + USERDATADIR + '"' + ' ';
+  if POS('--disk-cache-dir=', ARGS) = 0 then ARGS := ARGS + '--disk-cache-dir=' + '"' + DISKCACHEDIR + '"' + ' ';
 
-  // Если параметры не заданы
-  if POS('--user-data-dir=', ARGS) = 0 then ARGS := ARGS + '--user-data-dir=' + '"' + ExeDir + 'User Data' + '"' + ' ';
-  if POS('--disk-cache-dir=', ARGS) = 0 then ARGS := ARGS + '--disk-cache-dir=' + '"' + ExeDir + 'Cache' + '"' + ' ';
   RESULT := ARGS + ARGSSTART;
 end;
 
@@ -208,6 +205,8 @@ begin
     end;
     CloseFile(IniFile);
   end;
+  if DATADIR = '' then DATADIR := 'User Data';
+  if CACHEDIR = '' then CACHEDIR := 'Cache';  
 end;
 
 end.
