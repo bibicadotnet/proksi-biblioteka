@@ -40,7 +40,7 @@ function FindNext(var F: TSearchRec): Integer;
 function XPOS(Const SubStr, Str : String) : Integer;
 function FindMatchingFile(var F: TSearchRec): Integer;
 function GetAPPDir(DIR : string): string;
-function GetDir(const APPDIR: string; PROFDIR : string): string;
+function GetDir(const PROGDIR: string; PROFDIR : string): string;
 function DirNameDistil(const Dir : string): string;
 function Upper(ch: AnsiChar): AnsiChar;
 function Lower(ch: AnsiChar): AnsiChar;
