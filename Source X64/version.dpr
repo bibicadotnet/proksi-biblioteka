@@ -107,8 +107,8 @@ begin
   // Если вместо 0 вписать hInstance, то будет путь к имени DLL файла
   GetModuleFileName(0, AppPatch, SizeOF(AppPatch));
   FileName := AppPatch;
-  PARAMS := ADDParam(ARGS);
   APPDIR := GetAPPDir(AppPatch);
+  PARAMS := ADDParam(ARGS);
   //MessageBox(0, pchar(PARAMS), 'Параметры перед запуском', MB_OK); // Вывод окна перед запуском. Для отладки
   if STARTM = false then
   begin
