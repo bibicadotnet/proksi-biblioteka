@@ -83,7 +83,7 @@
 			<VerInfo_Build>8</VerInfo_Build>
 			<Debugger_LoadAllSymbols>false</Debugger_LoadAllSymbols>
 			<VerInfo_Release>5</VerInfo_Release>
-			<VerInfo_Keys>CompanyName=Свободный софт;FileDescription=Прокси-библиотека для браузеров Brave, Chrome, Opera, Vivaldi, Yandex и др.;FileVersion=1.0.5.8;InternalName=Прокси-библиотека;LegalCopyright=Российская Федерация;LegalTrademarks=Свободный софт;OriginalFilename=version.dll;ProductName=Прокси-библиотека;ProductVersion=1.0.5.8;Comments=Отключение шифрования и изменение параметров запуска для браузеров на основе Chromium</VerInfo_Keys>
+			<VerInfo_Keys>CompanyName=Свободный софт;FileDescription=Прокси-библиотека для браузеров Brave, Chrome, Opera, Vivaldi, Yandex и др.;FileVersion=1.0.5.9;InternalName=Прокси-библиотека;LegalCopyright=Российская Федерация;LegalTrademarks=Свободный софт;OriginalFilename=version.dll;ProductName=Прокси-библиотека;ProductVersion=1.0.5.9;Comments=Отключение шифрования и изменение параметров запуска для браузеров на основе Chromium</VerInfo_Keys>
 			<BRCC_Language>Русский (Россия)</BRCC_Language>
 			<VerInfo_Locale>1049</VerInfo_Locale>
 			<BRCC_CompilerToUse>rc</BRCC_CompilerToUse>
