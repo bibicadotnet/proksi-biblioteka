@@ -84,14 +84,12 @@ end;
 // Функция для добавления параметров запуска
 function ADDParam(ARGS : string) : string;
 var
-  APP : String;
-  ARGSSTART : String;
 
+  ARGSSTART : String;
   USERDATADIR    : String;
   DISKCACHEDIR   : String;
 
 begin
-  APP := ExeDir;
   ARGSSTART := '';
   // Проверка наличия параметра '--single-argument'
   if POS('--single-argument', ARGS) <> 0 then
@@ -113,9 +111,8 @@ begin
   //ARGS := ARGS + '--test-type' + ' ';
   //ARGS := ARGS + '--ppapi-flash-path=' + '"' + ExeDir + 'plugins\pepflashplayer32.dll' + ' ';
 
-  if FULLPATCH = FALSE then APP := '';
-  USERDATADIR := GETDIR(APP, DATADIR);
-  DISKCACHEDIR := GETDIR(APP, CACHEDIR);
+  USERDATADIR := GetDIR(ExeDir, DATADIR, FULLPATCH);    // Сформировать путь к USERDATADIR
+  DISKCACHEDIR := GetDIR(ExeDir, CACHEDIR, FULLPATCH);  // Сформировать путь к CACHEDIR
 
   if RUNPARAM <> '' then ARGS := ARGS + RUNPARAM + ' ';
   if POS('--user-data-dir=', ARGS) = 0 then ARGS := ARGS + '--user-data-dir=' + '"' + USERDATADIR + '"' + ' ';
