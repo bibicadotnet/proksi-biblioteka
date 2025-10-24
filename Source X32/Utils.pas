@@ -40,7 +40,7 @@ function FindNext(var F: TSearchRec): Integer;
 function XPOS(Const SubStr, Str : String) : Integer;
 function FindMatchingFile(var F: TSearchRec): Integer;
 function GetAPPDir(DIR : string): string;
-function GetDir(const PROGDIR: string; PROFDIR : string): string;
+function GetDIR(const PROGDIR: string; PROFDIR: string; FULLPATCH : boolean): string;
 function DirNameDistil(const Dir : string): string;
 function Upper(ch: AnsiChar): AnsiChar;
 function Lower(ch: AnsiChar): AnsiChar;
@@ -78,20 +78,21 @@ begin
   Result := Copy(DIR, 0, Len);
 end;
 
-// Функция для формирования пути к DATADIR и CACHEDIR
-function GetDIR(const PROGDIR: string; PROFDIR : string): string;
+// Функция для получения пути к DATADIR и CACHEDIR
+function GetDIR(const PROGDIR: string; PROFDIR: string; FULLPATCH : boolean): string;
 var
-  Len    : integer;
+  FName: PChar;
+  Len: Integer;
+  FileName: string;
+  Buffer: array[0..MAX_PATH - 1] of Char;
 begin
-  Len := Length(PROGDIR);
-  while (POS('..\', PROFDIR) <> 0) and (Len > 2) do
-    begin
-      if (PROGDIR[Len] = '\') then Dec(Len);
-      while (Len <> 0) and (PROGDIR[Len] <> '\') do Dec(Len);
-      Delete(PROFDIR, POS('..\', PROFDIR), 3);
-    end;
-  Result := Copy(PROGDIR, 0, Len);
-  Result := Result + PROFDIR;
+  Result := PROFDIR;
+  if FULLPATCH = True then
+  begin
+    FileName:= PROGDIR + PROFDIR;
+    Len := GetFullPathName(PChar(FileName), MAX_PATH, Buffer, FName);
+    if Len <> 0 then SetString(Result, Buffer, Len)
+  end;
 end;
 
 // Процедура для замены подстановочных строк
