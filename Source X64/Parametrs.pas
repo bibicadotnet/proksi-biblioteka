@@ -83,13 +83,11 @@ end;
 // Функция для добавления параметров запуска
 function ADDParam(ARGS : string) : string;
 var
-  APP : String;
   ARGSSTART : String;
   USERDATADIR    : String;
   DISKCACHEDIR   : String;
 
 begin
-  APP := ExeDir;
   ARGSSTART := '';
   // Проверка наличия параметра '--single-argument'
   if POS('--single-argument', ARGS) <> 0 then
@@ -101,9 +99,8 @@ begin
   ARGS := ARGS + '--portable' + ' ';
   ARGS := ARGS + '--disable-features=RendererCodeIntegrity,FlashDeprecationWarning' + ' ';
 
-  if FULLPATCH = FALSE then APP := '';
-  USERDATADIR := GETDIR(APP, DATADIR);
-  DISKCACHEDIR := GETDIR(APP, CACHEDIR);
+  USERDATADIR := GETDIR(ExeDir, DATADIR, FULLPATCH);
+  DISKCACHEDIR := GETDIR(ExeDir, CACHEDIR, FULLPATCH);
 
   if RUNPARAM <> '' then ARGS := ARGS + RUNPARAM + ' ';
   if POS('--user-data-dir=', ARGS) = 0 then ARGS := ARGS + '--user-data-dir=' + '"' + USERDATADIR + '"' + ' ';
