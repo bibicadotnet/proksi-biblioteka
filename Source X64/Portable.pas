@@ -395,7 +395,7 @@ end;
 function SHGetFolderPathW(hwnd: HWND; csidl: Integer; hToken: THandle; dwFlags: DWord; pszPath: PWideChar): HRESULT; stdcall;
 begin
   if SPECFOLDER = '' then SPECFOLDER := 'nul';
-  CopyMemory(pszPath, PwideChar(WideString(SPECFOLDER + #0)), Length(WideString(SPECFOLDER + #0)) * 2);
+  CopyMemory(pszPath, PwideChar(WideString(SPECFOLDER)), (Length(SPECFOLDER) + 1) * 2);
   if SPECFOLDER = 'nul' then Result := E_ABORT  else Result := S_OK;
 end;
 
