@@ -89,6 +89,7 @@ TSetsockopt = function(s: TSocket; level, optname: Integer; optval: PChar; optle
 VAR
   RAWWSASend : TWSASend;              // Оригинальная функция WSASend
   RAWSetsockopt : TSetsockopt;        // Оригинальная функция Setsockopt
+  RAWGetaddrinfo : Tgetaddrinfo;      // Оригинальная функция Getaddrinfo
   Closesocket : TClosesocket;         // Функция закрытия сокета
 
 function WSASend(
