@@ -27,6 +27,12 @@ type
 
   NTStatus = cardinal;
 
+  // Перечисляемый тип данных для функции GetComputerNameExW
+  TComputerNameFormat = (ComputerNameNetBIOS, ComputerNameDnsHostname, ComputerNameDnsDomain,
+                         ComputerNameDnsFullyQualified, ComputerNamePhysicalNetBIOS,
+                         ComputerNamePhysicalDnsHostname, ComputerNamePhysicalDnsDomain,
+                         ComputerNamePhysicalDnsFullyQualified, ComputerNameMax);
+
   // Структура для функции LdrLoadDll и NtCreateKey
   UNICODESTRING = packed record
   Length :        Word;           // размер строки в байтах без учета символа конца строки
@@ -97,7 +103,7 @@ begin
   result := False;
 end;
 
-// Модифицированная функция GetComputerNameW
+// Модифицированная функция GetComputerNameW. Передаёт браузеру заданное имя компьютера.
 function GetComputerNameW(lpBuffer: PWideChar; var nSize: DWORD): BOOL; stdcall;
 var
   RequiredSize: DWORD;
@@ -114,9 +120,15 @@ begin
       Exit;                                                       // Выйти из функции
     end;
     CopyMemory(lpBuffer, PWideChar(COMPNAME), (NameLen + 1) * 2); // Скопировать в буфер имя с учетом терминального нуля
-    nSize := NameLen;                                             // Число символов в имени на выход
+    nSize := NameLen;                                             // Передать на выход число символов в имени
     Result := True;
   end;
+end;
+
+// Это модифицированная функция-заглушка. Отключает в браузере использование системного DNS-клиента
+function GetComputerNameExW(NameType: TComputerNameFormat; lpBuffer: PWideChar; var nSize: DWORD): BOOL; stdcall;
+begin
+  Result := false;
 end;
 
 function GetVolumeInformationA
@@ -394,6 +406,16 @@ begin
   CodeHook(Addr(Proc), ADDR(GetComputerNameA));                         // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetComputerNameW');          // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(GetComputerNameW));                         // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+
+  if DNSOFF = True then
+  begin
+    // При установке заглушки на функцию GetComputerNameExW
+    // в браузере активируется функция Getaddrinfo даже если
+    // включена системная служба DNS-клиента
+    Addr(Proc) := GetProcAddress(DLLHandle, 'GetComputerNameExW');      // Определить адрес функции
+    CodeHook(Addr(Proc), ADDR(GetComputerNameExW));                     // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+  end;
+
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetVolumeInformationA');     // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(GetVolumeInformationA));                    // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetVolumeInformationW');     // Определить адрес функции
