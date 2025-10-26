@@ -22,8 +22,6 @@ var
   KEYCODE : HOOKDATA;                  // Структурная переменная для формирования перхвата NtCreateKey
   SSOCODE : HOOKDATA;                  // Структурная переменная для формирования перхвата Setsockopt
 
-  Proc : procedure;                    // Процедурная переменная
-
 procedure SetHook(HOOK: HOOKDATA; OPT: byte);
 procedure CodeHook(OldProcAddress, NewProcAddress: pointer; OPT : byte = 0);
 
@@ -96,6 +94,14 @@ begin
     ReadProcessMemory(HANDLE, OldProcAddress, ADDR(SSOCODE.OLDDATA), 12, VALUE);
   end;
 
+  if OPT = 7 then  // Это для перехвата getaddrinfo
+  begin
+    // Сохранить адрес функции в структуру
+    GAICODE.FUNCADDRES := OldProcAddress;
+    // Схранить начало исходной функци в структуру GAICODE
+    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(GAICODE.OLDDATA), 12, VALUE);
+  end;
+
   // Формирование кода прыжка в прокси функцию в теле исходной функции методом mov rax,addr jmp rax (12 байт)
   RAXJUMP.MOVRRAXOP := $B848;
   RAXJUMP.MOVRRAXARG := NewProcAddress;
@@ -108,6 +114,7 @@ begin
   if OPT = 4 then Move(RAXJUMP, CRDCODE.NEWDATA, 12);
   if OPT = 5 then Move(RAXJUMP, WSACODE.NEWDATA, 12);
   if OPT = 6 then Move(RAXJUMP, SSOCODE.NEWDATA, 12);
+  if OPT = 7 then Move(RAXJUMP, GAICODE.NEWDATA, 12);
 
   // Изменить параметры доступа к области памяти
   if not VirtualProtect(OldProcAddress, 12, PAGE_EXECUTE_READWRITE, ADDR(Protect)) then exit;
