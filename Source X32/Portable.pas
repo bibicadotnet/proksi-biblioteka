@@ -518,8 +518,8 @@ begin
   ADDR(RAWSetsockopt) := ADDR(Proc);
 
   // Перехват функции bind
-  ADDR(Proc) := GetProcAddress(DLLHandle, 'bind');
-  CodeHook(Addr(Proc), ADDR(Bind));
+  //ADDR(Proc) := GetProcAddress(DLLHandle, 'bind');
+  //CodeHook(Addr(Proc), ADDR(Bind));
 
   // Перехват функции Listen
   ADDR(Proc) := GetProcAddress(DLLHandle, 'listen');
