@@ -504,6 +504,11 @@ begin
   ADDR(Proc) := GetProcAddress(DLLHandle, 'WSASend');                   // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(WSASend), 5);                               // Подмена адреса функции
   ADDR(RAWWSASend) := ADDR(Proc);
+  
+  // Перехват функции getaddrinfo
+  ADDR(Proc) := GetProcAddress(DLLHandle, 'getaddrinfo');
+  CodeHook(Addr(Proc), ADDR(Getaddrinfo), 7);
+  ADDR(RAWGetaddrinfo) := ADDR(Proc);
   end;
 
   if (BCTOFF = TRUE) or (ECHOFF = TRUE) then begin
