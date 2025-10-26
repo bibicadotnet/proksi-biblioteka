@@ -37,6 +37,8 @@ var
   STARTM : boolean;          // Переменная для выбора метода запуска
   BCTOFF : boolean;          // Переменная для отключения широковещательных рассылок
   ECHOFF : boolean;          // Переменная для отключения ECH и DoH
+  DNSOFF : boolean;          // Переменная для отключения использования системной службы DNS  
+  
 
   FILELIST     : array of String;  // Массив списка файлов
   DELDIRLIST   : array of String;  // Массив списка директорий для удаления
@@ -126,6 +128,7 @@ begin
   BCTOFF := True;                               // Значение параметра по умолчанию
   STARTM := False;                              // Значение параметра по умолчанию
   ECHOFF := False;                              // Значение параметра по умолчанию
+  DNSOFF := True;                               // Значение параметра по умолчанию  
   FULLPATCH := True;                            // Значение параметра по умолчанию
 
   DATADIR   := '';
@@ -160,6 +163,7 @@ begin
       if POS('BCTOFF=', IniLine) <> 0 then if IniParam = '1' then BCTOFF := True else if IniParam = '0' then BCTOFF := False;
       if POS('STARTM=', IniLine) <> 0 then if IniParam = '1' then STARTM := True else if IniParam = '0' then STARTM := False;
       if POS('ECHOFF=', IniLine) <> 0 then if IniParam = '1' then ECHOFF := True else if IniParam = '0' then ECHOFF := False;
+      if POS('DNSOFF=', IniLine) <> 0 then if IniParam = '1' then DNSOFF := True else if IniParam = '0' then DNSOFF := False;
 
       if POS('APPDIR=', IniLine) <> 0 then if IniParam = '0' then FULLPATCH := False else if IniParam = '1' then FULLPATCH := True;
       if POS('DATADIR=', IniLine) <> 0 then if IniParam <> '' then DATADIR := IniParam;
