@@ -21,6 +21,7 @@ var
   WSACODE : HOOKDATA;                  // Структурная переменная для формирования перхвата WSASend
   KEYCODE : HOOKDATA;                  // Структурная переменная для формирования перхвата NtCreateKey
   SSOCODE : HOOKDATA;                  // Структурная переменная для формирования перхвата Setsockopt
+  GAICODE : HOOKDATA;                  // Структурная переменная для формирования перхвата getaddrinfo
 
 procedure SetHook(HOOK: HOOKDATA; OPT: byte);
 procedure CodeHook(OldProcAddress, NewProcAddress: pointer; OPT : byte = 0);
