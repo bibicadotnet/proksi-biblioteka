@@ -64,8 +64,20 @@ type
   end;
   TSockAddrIn = sockaddrin;
 
-  TWSAOverlappedCompletionRoutine = procedure (dwError : DWORD; cbTransferred : DWORD; var lpOverlapped : WSAOVERLAPPED; dwFlags : DWORD);
+  PAddrInfo = Pointer;        // Нетипизированный указатель
+  AddrInfo = packed record
+    ai_flags: Integer;        // Флаги, указывающие параметры, используемые в функции getaddrinfo
+    ai_family: Integer;       // Семейство адресов
+    ai_socktype: Integer;     // Тип сокета
+    ai_protocol: Integer;     // Тип протокола
+    ai_addrlen: LongWord;     // Длина буфера в байтах, на который указывает элемент ai_addr
+    ai_canonname: PChar;      // Каноническое имя для хоста
+    var ai_addr: TSockAddrIn; // Указатель на структуру TSockAddrIn
+    ai_next: PAddrInfo;       // Указатель PAddrInfo на следующую структуру типа TAddrInfo
+  end;
 
+  TWSAOverlappedCompletionRoutine = procedure (dwError : DWORD; cbTransferred : DWORD; var lpOverlapped : WSAOVERLAPPED; dwFlags : DWORD);
+  TGetaddrinfo = function(const Nodename: PChar; const Servname : PChar; const hints: PAddrInfo; var pResult: PAddrInfo): Integer; stdcall;
   TWSASend = function(
                       S: TSocket;	var lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
                       var lpOverlapped: WSAOverlapped;	lpCompletionRoutine: TWSAOverlappedCompletionRoutine
@@ -78,6 +90,7 @@ VAR
   RAWWSASend : TWSASend;              // Оригинальная функция WSASend
   RAWSetsockopt : TSetsockopt;        // Оригинальная функция Setsockopt
   Closesocket : TClosesocket;         // Функция закрытия сокета
+  RAWGetaddrinfo : Tgetaddrinfo;      // Функция получения адреса
 
 function WSASend(
                  S: TSocket;	var lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
@@ -86,6 +99,7 @@ function WSASend(
 function Setsockopt(s: TSocket; level, optname: Integer; optval: PChar; optlen: Integer): Integer; stdcall;
 function Bind(s: TSocket; var name: TSockAddrin; namelen: Integer): Integer; stdcall;
 function Listen(s: TSocket; backlog: Integer): Integer; stdcall;
+function Getaddrinfo(const Nodename: PChar; const Servname : PChar; const hints: PAddrInfo; var pResult: PAddrInfo): Integer; stdcall;
 
 implementation
 
@@ -239,6 +253,29 @@ function Listen(s: TSocket; backlog: Integer): Integer; stdcall;
 begin
   Closesocket(s);
   Result := 10050;
+end;
+
+// Функция getaddrinfo для получения IP адреса узла из его имени
+function Getaddrinfo(const Nodename: PChar; const Servname : PChar; const hints: PAddrInfo; var pResult: PAddrInfo): Integer; stdcall;
+var
+  Cmp : boolean;
+  I: integer;
+  Name: String;
+begin
+  Cmp := false;
+
+  for I := 0 to REFINELISTNUM - 1 do    // Цикл сравнения имени со списком
+  begin
+    Cmp := false;
+    Name := '';
+    Name := PCHAR(REFINELIST[I].buf); // При таком присвоении в последнем элементе массива обязательно должен быть #0
+    if XPOS(Name, Nodename) <> 0 then Cmp := true;
+    if Cmp = true then break;
+  end;
+  // 11001 - Узел не найден. 11004 - Нет данных.
+  SetHook(GAICODE, 0);
+  if Cmp = true then Result := 11001 else Result := RAWGetaddrinfo(Nodename, Servname, hints, pResult);
+  SetHook(GAICODE, 1);
 end;
 
 end.
