@@ -121,6 +121,7 @@ var
 begin
   AddrPos := 0;
   Cmp := False;
+  Result := False;
   Len := lpBuffers.Len;
   if Len > 15 then
   begin
@@ -139,7 +140,7 @@ begin
     end;
   end;
   Buf := nil;
-  if Cmp = True then Result := True else Result := False;
+  if Cmp = True then Result := True;
 end;
 
 // Функция поиска идентификатора сообщения ClientHello в HTTPS запросах
@@ -162,7 +163,7 @@ begin
       if SEARCHM[i] = $01 then Cmp := True;
       if Cmp = False then break;
     end;
-    if Cmp = True then Result := True else Result := False;
+    if Cmp = True then Result := True;
   end;
 end;
 
