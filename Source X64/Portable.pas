@@ -452,6 +452,11 @@ begin
     CodeHook(Addr(Proc), ADDR(GetComputerNameExW));                     // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
 
+  // Подмена функции GetFileAttributesW исключает заполнение 
+  // директории BrowserMetrics файлами с записями метрик  
+  Addr(Proc) := GetProcAddress(DLLHandle, 'GetFileAttributesW');        // Определить адрес функции
+  CodeHook(Addr(Proc), ADDR(GetFileAttribut), 8);                       // Подмена адреса функции в процессе на адрес функции из DLL
+
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetVolumeInformationA');     // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(GetVolumeInformationA));                    // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetVolumeInformationW');     // Определить адрес функции
