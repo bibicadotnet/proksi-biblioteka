@@ -15,13 +15,14 @@ type
   end;
 
 var
-  OEPCODE : HOOKDATA;                  // Структурная переменная для формирования перхвата точки входа
-  UPTCODE : HOOKDATA;                  // Структурная переменная для формирования перхвата UpdateProcThreadAttribute
-  CRDCODE : HOOKDATA;                  // Структурная переменная для формирования перхвата CreateDirectoryW
-  WSACODE : HOOKDATA;                  // Структурная переменная для формирования перхвата WSASend
-  KEYCODE : HOOKDATA;                  // Структурная переменная для формирования перхвата NtCreateKey
-  SSOCODE : HOOKDATA;                  // Структурная переменная для формирования перхвата Setsockopt
-  GAICODE : HOOKDATA;                  // Структурная переменная для формирования перхвата getaddrinfo
+  OEPCODE : HOOKDATA;                  // Для формирования перхвата точки входа
+  UPTCODE : HOOKDATA;                  // Для формирования перхвата UpdateProcThreadAttribute
+  CRDCODE : HOOKDATA;                  // Для формирования перхвата CreateDirectoryW
+  WSACODE : HOOKDATA;                  // Для формирования перхвата WSASend
+  KEYCODE : HOOKDATA;                  // Для формирования перхвата NtCreateKey
+  SSOCODE : HOOKDATA;                  // Для формирования перхвата Setsockopt
+  GAICODE : HOOKDATA;                  // Для формирования перехвата getaddrinfo
+  GFACODE : HOOKDATA;                  // Для формирования перехвата GetFileAttributesW
 
 procedure SetHook(HOOK: HOOKDATA; OPT: byte);
 procedure CodeHook(OldProcAddress, NewProcAddress: pointer; OPT : byte = 0);
@@ -103,6 +104,14 @@ begin
     ReadProcessMemory(HANDLE, OldProcAddress, ADDR(GAICODE.OLDDATA), 12, VALUE);
   end;
 
+  if OPT = 8 then  // Это для перехвата GetFileAttributesW
+  begin
+    // Сохранить адрес функции в структуру
+    GFACODE.FUNCADDRES := OldProcAddress;
+    // Схранить начало исходной функци в структуру GFACODE
+    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(GFACODE.OLDDATA), 12, VALUE);
+  end;
+
   // Формирование кода прыжка в прокси функцию в теле исходной функции методом mov rax,addr jmp rax (12 байт)
   RAXJUMP.MOVRRAXOP := $B848;
   RAXJUMP.MOVRRAXARG := NewProcAddress;
@@ -116,6 +125,7 @@ begin
   if OPT = 5 then Move(RAXJUMP, WSACODE.NEWDATA, 12);
   if OPT = 6 then Move(RAXJUMP, SSOCODE.NEWDATA, 12);
   if OPT = 7 then Move(RAXJUMP, GAICODE.NEWDATA, 12);
+  if OPT = 8 then Move(RAXJUMP, GFACODE.NEWDATA, 12);
 
   // Изменить параметры доступа к области памяти
   if not VirtualProtect(OldProcAddress, 12, PAGE_EXECUTE_READWRITE, ADDR(Protect)) then exit;
