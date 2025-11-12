@@ -362,15 +362,16 @@ var
 begin
   PathName := PWIDECHAR(lpPathName);                         // Взять имя директории из указателя
   NoCreate := False;                                         // Снять флаг
+  Result := True;
   for I := 0 to DIRLISTNUM - 1 do                            // Цикл сравнения имени директории со списком
   begin
     DirName := BLOCKDIRLIST[i];                              // Имя из списка блокировки в переменную
     if XPOS(DirName, PathName) <> 0 then NoCreate := True;   // Если имя совпадает с именем из списка установить флаг
     if NoCreate = True then break;                           // Если флаг установлен прервать цикл
   end;
-  // Если флаг не установлен выполнить функции CreateDirectoryW иначе просто вернуть положительный результат
+  // Если флаг не установлен выполнить функции CreateDirectoryW
   SetHook(CRDCODE, 0);
-  if NoCreate = False then Result := CreateDirectoryW(lpPathName, lpSecurityAttributes) else Result := True;
+  if NoCreate = False then Result := CreateDirectoryW(lpPathName, lpSecurityAttributes);
   SetHook(CRDCODE, 1);
 end;
 
