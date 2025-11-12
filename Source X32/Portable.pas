@@ -92,6 +92,21 @@ var
   Propsys.dll (PSStringFromPropertyKey)
 }
 
+// Это модифицированная функция для блокировки записи метрик в директорию BrowserMetrics
+function GetFileAttribut(lpFileName: PWideChar): DWORD; stdcall;
+var
+  Name : String;
+  Cmp : boolean;
+begin
+  Cmp := False;
+  Result := DWORD(-1);
+  Name := lpFileName;
+  if XPOS('BrowserMetrics', Name) <> 0 then Cmp := True;
+  SetHook(GFACODE, 0);
+  if Cmp = False then Result := GetFileAttributesW(lpFileName);
+  SetHook(GFACODE, 1);
+end;
+
 // Это модифицированная функция для блокировки System.AppUserModel.ID
 function PSStringFromPropertyKey(const pkey: PROPERTYKEY; psz: PWideChar; cch: INTEGER): HRESULT ; stdcall;
 begin
@@ -415,6 +430,9 @@ begin
     Addr(Proc) := GetProcAddress(DLLHandle, 'GetComputerNameExW');      // Определить адрес функции
     CodeHook(Addr(Proc), ADDR(GetComputerNameExW));                     // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
+
+  Addr(Proc) := GetProcAddress(DLLHandle, 'GetFileAttributesW');        // Определить адрес функции
+  CodeHook(Addr(Proc), ADDR(GetFileAttribut), 8);                       // Подмена адреса функции в процессе на адрес функции из DLL
 
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetVolumeInformationA');     // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(GetVolumeInformationA));                    // Подмена адреса точки входа функции в процессе на адрес функции из DLL
