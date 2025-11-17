@@ -22,7 +22,6 @@ var
   WSACODE : HOOKDATA;                  // Для формирования перехвата WSASend
   SSOCODE : HOOKDATA;                  // Для формирования перехвата setsockopt
   GAICODE : HOOKDATA;                  // Для формирования перехвата getaddrinfo
-  GFACODE : HOOKDATA;                  // Для формирования перехвата GetFileAttributesW
 
 procedure SetHook(HOOK: HOOKDATA; OPT: byte);
 procedure CodeHook(OldProcAddress, NewProcAddress: pointer; OPT : byte = 0);
@@ -104,14 +103,6 @@ begin
     ReadProcessMemory(HANDLE, OldProcAddress, ADDR(GAICODE.OLDDATA), 5, VALUE);
   end;
 
-  if OPT = 8 then  // Это для перехвата GetFileAttributesW
-  begin
-    // Сохранить адрес функции в структуру
-    GFACODE.FUNCADDRES := OldProcAddress;
-    // Схранить начало исходной функци в структуру GFACODE
-    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(GFACODE.OLDDATA), 5, VALUE);
-  end;
-
   // Формирование кода прыжка в прокси функцию в теле исходной функции
   CODE.JMP := $E9;
   CODE.OFFSET := DWORD (NewProcAddress) - DWORD (OldProcAddress) - 5;
@@ -124,7 +115,6 @@ begin
   if OPT = 5 then  Move(CODE, WSACODE.NEWDATA, 5);
   if OPT = 6 then  Move(CODE, SSOCODE.NEWDATA, 5);
   if OPT = 7 then  Move(CODE, GAICODE.NEWDATA, 5);
-  if OPT = 8 then  Move(CODE, GFACODE.NEWDATA, 5);    
 
   // Изменить параметры доступа к области памяти
   if not VirtualProtect(OldProcAddress, 5, PAGE_EXECUTE_READWRITE, ADDR(Protect)) then exit;
