@@ -352,7 +352,7 @@ begin
   begin
     DirName := BLOCKDIRLIST[i];                              // Имя из списка блокировки в переменную
     if XPOS(DirName, PathName) <> 0 then Cmp := True;        // Если имя совпадает с именем из списка установить флаг
-    if NoCreate = True then break;                           // Если флаг установлен прервать цикл
+    if Cmp = True then break;                                // Если флаг установлен прервать цикл
   end;
   if XPOS('BrowserMetrics', PathName) <> 0 then Cmp := True;
   // Если флаг не установлен выполнить функции CreateDirectoryW
