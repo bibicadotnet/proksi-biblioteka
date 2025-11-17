@@ -96,21 +96,6 @@ var
   Propsys.dll (PSStringFromPropertyKey)
 }
 
-// Это модифицированная функция для блокировки записи метрик в директорию BrowserMetrics
-function GetFileAttribut(lpFileName: PWideChar): DWORD; stdcall;
-var
-  Name : String;
-  Cmp : boolean;
-begin
-  Cmp := False;
-  Result := DWORD(-1);
-  Name := lpFileName;
-  if XPOS('BrowserMetrics', Name) <> 0 then Cmp := True;
-  SetHook(GFACODE, 0);
-  if Cmp = False then Result := GetFileAttributesW(lpFileName);
-  SetHook(GFACODE, 1);
-end;
-
 // Модифицированная функция для блокировки System.AppUserModel.ID
 function PSStringFromPropertyKey(const pkey: PROPERTYKEY; psz: PWideChar; cch: INTEGER): HRESULT ; stdcall;
 begin
@@ -380,20 +365,21 @@ var
   PathName : String;
   DirName  : String;
   I: integer;
-  NoCreate : boolean;
+  Cmp : boolean;
 begin
   PathName := PWIDECHAR(lpPathName);                         // Взять имя директории из указателя
-  NoCreate := False;                                         // Снять флаг
+  Cmp := False;                                              // Снять флаг
   Result := True;
-  for I := 0 to DIRLISTNUM - 1 do                            // Цикл сравнения имени директории со списком
+  if DIROFF = True then for I := 0 to DIRLISTNUM - 1 do      // Цикл сравнения имени директории со списком
   begin
     DirName := BLOCKDIRLIST[i];                              // Имя из списка блокировки в переменную
-    if XPOS(DirName, PathName) <> 0 then NoCreate := True;   // Если имя совпадает с именем из списка установить флаг
-    if NoCreate = True then break;                           // Если флаг установлен прервать цикл
+    if XPOS(DirName, PathName) <> 0 then Cmp := True;        // Если имя совпадает с именем из списка установить флаг
+    if Cmp = True then break;                                // Если флаг установлен прервать цикл
   end;
+  if XPOS('BrowserMetrics', PathName) <> 0 then Cmp := True;
   // Если флаг не установлен выполнить функции RawCreateDirectoryW
   SetHook(CRDCODE, 0);
-  if NoCreate = False then Result := CreateDirectoryW(lpPathName, lpSecurityAttributes);
+  if Cmp = False then Result := CreateDirectoryW(lpPathName, lpSecurityAttributes);
   SetHook(CRDCODE, 1);
 end;
 
@@ -453,11 +439,6 @@ begin
     CodeHook(Addr(Proc), ADDR(GetComputerNameExW));                     // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
 
-  // Подмена функции GetFileAttributesW исключает заполнение 
-  // директории BrowserMetrics файлами с записями метрик  
-  Addr(Proc) := GetProcAddress(DLLHandle, 'GetFileAttributesW');        // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(GetFileAttribut), 8);                       // Подмена адреса функции в процессе на адрес функции из DLL
-
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetVolumeInformationA');     // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(GetVolumeInformationA));                    // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetVolumeInformationW');     // Определить адрес функции
@@ -467,13 +448,13 @@ begin
   CodeHook(Addr(Proc), ADDR(UpdateProcThreadAttribute), 2);             // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   ADDR(RawUpdateProcThreadAttribute) := ADDR(Proc);                     // Присвоить адрес функции RawUpdateProcThreadAttribute
   end;
-  if (OS = 1) and (DIROFF = TRUE) then begin
+  if (OS = 1) then begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'CreateDirectoryW');          // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(CreateDirectory), 4);                       // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
 
   // Перехват вызова функций из kernelbase.dll
-  if (OS > 1) and (DIROFF = TRUE) then begin
+  if (OS > 1) then begin
   FileName :=  SysPatch + '\kernelbase.dll';                            // Получить полное имя файла
   DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
   Addr(Proc) := GetProcAddress(DLLHandle, 'CreateDirectoryW');          // Определить адрес функции
