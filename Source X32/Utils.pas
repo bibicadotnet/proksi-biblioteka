@@ -73,9 +73,9 @@ function GetAPPDir(DIR : string): string;
 var
   Len: INTEGER;
 begin
-  Len := Length(DIR);
-  while (Len <> 0) and (DIR[Len] <> '\') do Dec(Len);
-  Result := Copy(DIR, 0, Len);
+  Len := Length(DIR);                                 // Определить длину записи пути
+  while (Len <> 0) and (DIR[Len] <> '\') do Dec(Len); // Расчитать длину до первого символа '\' справа налево (отбрасывается имя файла)
+  SetString(Result, PChar(DIR), Len);                 // Скопировать в результат сокращенный путь (с учетом символа '\')
 end;
 
 // Функция для получения пути к DATADIR и CACHEDIR
@@ -100,11 +100,11 @@ procedure REPLACE(var PSTR: string; RSTR: string);
 var
   SETPOS : integer;
 begin
-  SETPOS := POS('%DATADIR%', PSTR);
+  SETPOS := POS('%DATADIR%', PSTR); // Найти положение '%DATADIR%' в строке
   if SETPOS <> 0 then
   begin
-    Delete(PSTR, SETPOS, 9);
-    Insert(RSTR, PSTR, SETPOS);
+    Delete(PSTR, SETPOS, 9);        // Удалить из строки '%DATADIR%' (9 символов)
+    Insert(RSTR, PSTR, SETPOS);     // Вставить в строку
   end;
 end;
 
