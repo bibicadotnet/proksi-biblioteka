@@ -15,12 +15,12 @@ type
   end;
 
 var
-  OEPCODE : HOOKDATA;                  // Для формирования перхвата точки входа
-  UPTCODE : HOOKDATA;                  // Для формирования перхвата UpdateProcThreadAttribute
-  CRDCODE : HOOKDATA;                  // Для формирования перхвата CreateDirectoryW
-  WSACODE : HOOKDATA;                  // Для формирования перхвата WSASend
-  KEYCODE : HOOKDATA;                  // Для формирования перхвата NtCreateKey
-  SSOCODE : HOOKDATA;                  // Для формирования перхвата Setsockopt
+  CMDCODE : HOOKDATA;                  // Для формирования перехвата GetCommandLineW
+  UPTCODE : HOOKDATA;                  // Для формирования перехвата UpdateProcThreadAttribute
+  CRDCODE : HOOKDATA;                  // Для формирования перехвата CreateDirectoryW
+  WSACODE : HOOKDATA;                  // Для формирования перехвата WSASend
+  KEYCODE : HOOKDATA;                  // Для формирования перехвата NtCreateKey
+  SSOCODE : HOOKDATA;                  // Для формирования перехвата Setsockopt
   GAICODE : HOOKDATA;                  // Для формирования перехвата getaddrinfo
 
 procedure SetHook(HOOK: HOOKDATA; OPT: byte);
@@ -47,12 +47,12 @@ const
 
 begin
 
-  if OPT = 1 then  // Это для перехвата точки входа
+  if OPT = 1 then  // Это для перехвата GetCommandLineW
   begin
     // Сохранить адрес функции
-    OEPCODE.FUNCADDRES := OldProcAddress;
-    // Схранить начало исходной функци в структуру OEPCODE. Размер 12 байт.
-    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(OEPCODE.OLDDATA), 12, VALUE);
+    CMDCODE.FUNCADDRES := OldProcAddress;
+    // Схранить начало исходной функци в структуру CMDCODE. Размер 12 байт.
+    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(CMDCODE.OLDDATA), 12, VALUE);
   end;
 
   if OPT = 2 then  // Это для создания перехвата UpdateProcThreadAttribute WIN7-11
@@ -109,7 +109,7 @@ begin
   RAXJUMP.JMPRAXOP := $E0FF;
 
   // Записать код прыжка в структуру
-  if OPT = 1 then Move(RAXJUMP, OEPCODE.NEWDATA, 12);
+  if OPT = 1 then Move(RAXJUMP, CMDCODE.NEWDATA, 12);
   if OPT = 2 then Move(RAXJUMP, UPTCODE.NEWDATA, 12);
   if OPT = 3 then Move(RAXJUMP, KEYCODE.NEWDATA, 12);
   if OPT = 4 then Move(RAXJUMP, CRDCODE.NEWDATA, 12);
