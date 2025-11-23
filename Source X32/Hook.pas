@@ -15,7 +15,7 @@ type
   end;
 
 var
-  OEPCODE : HOOKDATA;                  // Для формирования перехвата точки входа
+  CMDCODE : HOOKDATA;                  // Для формирования перехвата GetCommandLineW
   KEYCODE : HOOKDATA;                  // Для формирования перехвата NtCreateKey
   UPTCODE : HOOKDATA;                  // Для формирования перехвата UpdateProcThreadAttribute
   CRDCODE : HOOKDATA;                  // Для формирования перехвата CreateDirectoryW
@@ -47,12 +47,12 @@ const
   
 begin
 
-  if OPT = 1 then  // Это для перехвата точки входа
+  if OPT = 1 then  // Это для перехвата GetCommandLineW
   begin
     // Сохранить адрес функции в структуру
-    OEPCODE.FUNCADDRES := OldProcAddress;
-    // Схранить начало исходной функци в структуру OEPCODE
-    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(OEPCODE.OLDDATA), 5, VALUE);
+    CMDCODE.FUNCADDRES := OldProcAddress;
+    // Схранить начало исходной функци в структуру CMDCODE
+    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(CMDCODE.OLDDATA), 5, VALUE);
   end;
 
   if OPT = 2 then  // Это для перехвата UpdateProcThreadAttribute
@@ -73,7 +73,7 @@ begin
 
   if OPT = 4 then  // Это для перехвата CreateDirectoryW
   begin
-    // Сохранить адрес функции
+    // Сохранить адрес функции в структуру
     CRDCODE.FUNCADDRES := OldProcAddress;
     // Схранить начало исходной функци в структуру CRDCODE
     ReadProcessMemory(HANDLE, OldProcAddress, ADDR(CRDCODE.OLDDATA), 5, VALUE);
@@ -108,7 +108,7 @@ begin
   CODE.OFFSET := DWORD (NewProcAddress) - DWORD (OldProcAddress) - 5;
 
   // Сохранить код прыжка в структуру
-  if OPT = 1 then  Move(CODE, OEPCODE.NEWDATA, 5);
+  if OPT = 1 then  Move(CODE, CMDCODE.NEWDATA, 5);
   if OPT = 2 then  Move(CODE, UPTCODE.NEWDATA, 5);
   if OPT = 3 then  Move(CODE, KEYCODE.NEWDATA, 5);
   if OPT = 4 then  Move(CODE, CRDCODE.NEWDATA, 5);
@@ -119,7 +119,7 @@ begin
   // Изменить параметры доступа к области памяти
   if not VirtualProtect(OldProcAddress, 5, PAGE_EXECUTE_READWRITE, ADDR(Protect)) then exit;
   // HANDLE := GetCurrentProcess; // Определить идентификатор текущего процесса
-  // Когда HANDLE := -1 будет использоваться этот процесс
+  // Вместо HANDLE можно вписать INVALID_HANDLE_VALUE - это идентификатор текущего процесса.
   WriteProcessMemory(HANDLE, OldProcAddress, Addr(CODE), 5, VALUE);
   // Восстановить прежние параметры доступа к памяти
   VirtualProtect(OldProcAddress, 5, Protect, ADDR(Protect));
