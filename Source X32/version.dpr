@@ -1,5 +1,7 @@
 library version;
 
+{$R 'VersionInfo.res' 'VersionInfo.rc'}
+
 uses
   Windows,
   PSAPI,
@@ -9,8 +11,6 @@ uses
   Utils in 'Utils.pas',
   Refining in 'Refining.pas',
   Parametrs in 'Parametrs.pas';
-
-{$R version.res}
 
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
 
