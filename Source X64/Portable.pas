@@ -96,6 +96,40 @@ var
   Propsys.dll (PSStringFromPropertyKey)
 }
 
+// Измененная функция GetCommandLineW. Добавляет аргументы в командную строку перед запуском
+function CommandLineW: PWideChar;
+var
+ARG: WideString;
+PARAMS : WideString;
+I : Integer;
+
+begin
+  SetHook(CMDCODE, 0);
+  Result := GetCommandLineW;
+  SetHook(CMDCODE, 1);
+  // Первый параметр - это выполняемая программа, он всегда передаётся в кавычках. Следующие это остальные параметры.
+  // Первый параметр нужно исключить.
+  ARG := Result;
+  I := 2;
+  if ARG[1] = '"' then                   // Если в начале кавычка тогда
+  begin
+    while (ARG[I] <> '"') do inc(I);     // дойти до второй кавычки
+    if (ARG[I] = '"') then inc(I);       // если кавычка то перейти за неё
+    if (ARG[I] = ' ') then inc(I);       // если пробел то перейти за него
+    Delete(ARG, 1, I-1);                 // Исключить первый параметр
+  end;
+  if ARG <> '' then ARG := ARG + ' ';    // Добавить пробел (пробел - это разделитель между параметрами)
+  if (POS('-type=', String(ARG)) = 0) and (POS('--portable', String(ARG)) = 0) then
+  begin
+    GetModuleFileName(0, AppPatch, SizeOF(AppPatch));          // Получить полный путь (с именем файла)
+    FileName := AppPatch;                                      // Имя выполняемой программы
+    ExeDir := GetAPPDir(AppPatch);                             // Получить путь к директории (без имени файла)
+    PARAMS := ADDParam(ARG);                                   // Добавить параметры к уже полученным
+    PARAMS := '"' + WideString(FileName) + '"' + ' ' + PARAMS; // Поместить перед всеми параметрами имя выполняемой программы
+    Result := PWideChar(PARAMS + #0);                          // Готовый результат
+  end;
+end;
+
 // Модифицированная функция для блокировки System.AppUserModel.ID
 function PSStringFromPropertyKey(const pkey: PROPERTYKEY; psz: PWideChar; cch: INTEGER): HRESULT ; stdcall;
 begin
@@ -377,7 +411,7 @@ begin
     if Cmp = True then break;                                // Если флаг установлен прервать цикл
   end;
   if XPOS('BrowserMetrics', PathName) <> 0 then Cmp := True;
-  // Если флаг не установлен выполнить функции RawCreateDirectoryW
+  // Если флаг не установлен выполнить функции CreateDirectoryW
   SetHook(CRDCODE, 0);
   if Cmp = False then Result := CreateDirectoryW(lpPathName, lpSecurityAttributes);
   SetHook(CRDCODE, 1);
@@ -430,6 +464,9 @@ begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetComputerNameW');          // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(GetComputerNameW));                         // Подмена адреса точки входа функции в процессе на адрес функции из DLL
 
+  Addr(Proc) := GetProcAddress(DLLHandle, 'GetCommandLineW');           // Определить адрес функции
+  CodeHook(Addr(Proc), ADDR(CommandLineW), 1);                          // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+
   if DNSOFF = True then
   begin
     // При установке заглушки на функцию GetComputerNameExW
@@ -448,18 +485,10 @@ begin
   CodeHook(Addr(Proc), ADDR(UpdateProcThreadAttribute), 2);             // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   ADDR(RawUpdateProcThreadAttribute) := ADDR(Proc);                     // Присвоить адрес функции RawUpdateProcThreadAttribute
   end;
-  if (OS = 1) then begin
-  Addr(Proc) := GetProcAddress(DLLHandle, 'CreateDirectoryW');          // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(CreateDirectory), 4);                       // Подмена адреса точки входа функции в процессе на адрес функции из DLL
-  end;
 
-  // Перехват вызова функций из kernelbase.dll
-  if (OS > 1) then begin
-  FileName :=  SysPatch + '\kernelbase.dll';                            // Получить полное имя файла
-  DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
   Addr(Proc) := GetProcAddress(DLLHandle, 'CreateDirectoryW');          // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(CreateDirectory), 4);                       // Подмена адреса точки входа функции в процессе на адрес функции из DLL
-  end;
+
   if (OS > 1) and (RMDISK = TRUE) then begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetFinalPathNameByHandleW'); // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(GetFinalPathNameByHandleW));                // Подмена адреса точки входа функции в процессе на адрес функции из DLL
@@ -568,9 +597,7 @@ begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'setsockopt');                // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(Setsockopt), 6);                            // Подмена адреса функции
   ADDR(RAWSetsockopt) := ADDR(Proc);
-  // Перехват функции bind
-  //ADDR(Proc) := GetProcAddress(DLLHandle, 'bind');                      // Определить адрес функции
-  //CodeHook(Addr(Proc), ADDR(Bind));
+
   // Перехват функции Listen
   ADDR(Proc) := GetProcAddress(DLLHandle, 'listen');                    // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(Listen));
