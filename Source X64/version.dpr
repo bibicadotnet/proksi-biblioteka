@@ -10,7 +10,7 @@ uses
   Refining in 'Refining.pas',
   Parametrs in 'Parametrs.pas';
 
-{$R version.res}
+{$R 'VersionInfo.res' 'VersionInfo.rc'}
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
 
 var
