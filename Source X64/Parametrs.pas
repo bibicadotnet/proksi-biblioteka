@@ -34,7 +34,6 @@ var
   RMDISK : boolean;          // Переменная для включения определения пути к TEMP на рамдиске
   REFINE : boolean;          // Переменная для включения обнуления запросов к серверам
   SPFOLD : boolean;          // Переменная для включения подмены пути к спецпапкам
-  STARTM : boolean;          // Переменная для выбора метода запуска
   BCTOFF : boolean;          // Переменная для отключения широковещательных рассылок
   ECHOFF : boolean;          // Переменная для отключения ECH и DoH
   DNSOFF : boolean;          // Переменная для отключения использования системной службы DNS  
@@ -53,6 +52,9 @@ var
   REFINELISTNUM : integer;            // Число эдементов массива списка обнуления
 
 procedure READPARAM;
+procedure DDelete;
+procedure FDelete;
+procedure FDDelete;
 function ADDParam(ARGS : string) : string;
 
 implementation
@@ -126,7 +128,6 @@ begin
   REFINE := True;                               // Значение параметра по умолчанию
   SPFOLD := False;                              // Значение параметра по умолчанию
   BCTOFF := True;                               // Значение параметра по умолчанию
-  STARTM := False;                              // Значение параметра по умолчанию
   ECHOFF := False;                              // Значение параметра по умолчанию
   DNSOFF := True;                               // Значение параметра по умолчанию  
   FULLPATCH := True;                            // Значение параметра по умолчанию
@@ -161,7 +162,6 @@ begin
       if POS('REFINE=', IniLine) <> 0 then if IniParam = '1' then REFINE := True else if IniParam = '0' then REFINE := False;
       if POS('SPFOLD=', IniLine) <> 0 then if IniParam = '1' then SPFOLD := True else if IniParam = '0' then SPFOLD := False;
       if POS('BCTOFF=', IniLine) <> 0 then if IniParam = '1' then BCTOFF := True else if IniParam = '0' then BCTOFF := False;
-      if POS('STARTM=', IniLine) <> 0 then if IniParam = '1' then STARTM := True else if IniParam = '0' then STARTM := False;
       if POS('ECHOFF=', IniLine) <> 0 then if IniParam = '1' then ECHOFF := True else if IniParam = '0' then ECHOFF := False;
       if POS('DNSOFF=', IniLine) <> 0 then if IniParam = '1' then DNSOFF := True else if IniParam = '0' then DNSOFF := False;
 
@@ -208,6 +208,73 @@ begin
   end;
   if DATADIR = '' then DATADIR := 'User Data';
   if CACHEDIR = '' then CACHEDIR := 'Cache';  
+end;
+
+procedure DDelete;
+var
+  i : integer;
+  DirName: String;
+
+  procedure DeleteFolder(const FolderPath: string);
+  var
+    Search: TSearchRec;
+  begin
+    if FindFirst(PChar(FolderPath + '\*'), faAnyFile, Search) = 0 then // Найти первый файл или директорию внутри директории
+    begin
+      repeat
+        if (Search.Name <> '.') and (Search.Name <> '..') then         // Пропускать директории "." и ".."
+        begin
+          if (Search.Attr and faDirectory) <> 0                        // Если найдена директория
+          then  DeleteFolder(FolderPath + '\' + Search.Name)           // рекурсивный вызов функции для перехода внутрь директории
+          else DeleteFile(PChar(FolderPath + '\' + Search.Name));      // иначе удалить файл
+        end;
+      until FindNext(Search) <> 0;                                     // Продолжить поиск
+      FindClose(Search);                                               // Освободить ресурс поиска
+    end;
+    RemoveDirectory(PChar(FolderPath));                                // Удалить корневую директорию
+  end;
+begin
+  for i := 0 to DIRLISTNUM - 1 do
+  begin
+    DirName := DELDIRLIST[i];                                          // Имя из списка
+    DeleteFolder(DirName);
+  end;
+end;
+
+// Удаление файлов по списку и шаблону
+procedure FDelete;
+var
+  i : Integer;
+  DirName : String;
+  Len: INTEGER;
+  SearchResult : TSearchRec;
+begin
+  for i := 0 to FILELISTNUM - 1 do
+  begin
+  if XPOS('*', FILELIST[i]) = 0 then DeleteFile(PChar(FILELIST[i]));
+  if XPOS('*', FILELIST[i]) <> 0 then
+    begin
+      DirName := '';
+      // Извлечь путь к файлу
+      Len := Length(FILELIST[i]);
+      while (Len <> 0) and (FILELIST[i][Len] <> '\') do Dec(Len);
+      SetString(DirName, PChar(FILELIST[i]), Len);
+      // Найти и удалить файлы по шаблону
+      if FindFirst(FILELIST[i], faAnyFile, SearchResult) = 0 then  // Найти файлы по шаблону из FILELIST[i]
+        begin
+          repeat DeleteFile(PChar(DirName + SearchResult.Name));   // Удалять найденные файлы
+          until FindNext(SearchResult) <> 0;                       // до тех пор пока еще есть соответствующие шаблону файлы
+          FindClose(SearchResult);                                 // Освободить ресурсы используемые процессом поиска
+        end;
+    end;
+  end;
+end;
+
+// Удаление файлов и директорий по списку
+procedure FDDelete;
+begin
+  FDelete;
+  DDelete;
 end;
 
 end.
