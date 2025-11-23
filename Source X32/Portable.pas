@@ -92,6 +92,41 @@ var
   Propsys.dll (PSStringFromPropertyKey)
 }
 
+// Измененная функция GetCommandLineW. Добавляет аргументы в командную строку перед запуском
+function CommandLineW: PWideChar;
+var
+ARG: WideString;
+PARAMS : WideString;
+I : Integer;
+
+begin
+  SetHook(CMDCODE, 0);
+  Result := GetCommandLineW;
+  SetHook(CMDCODE, 1);
+
+  // Первый параметр - это выполняемая программа, он всегда передаётся в кавычках. Следующие это остальные параметры.
+  // Первый параметр нужно исключить.
+  ARG := Result;
+  I := 2;
+  if ARG[1] = '"' then                   // Если в начале кавычка тогда
+  begin
+    while (ARG[I] <> '"') do inc(I);     // дойти до второй кавычки
+    if (ARG[I] = '"') then inc(I);       // если кавычка то перейти за неё
+    if (ARG[I] = ' ') then inc(I);       // если пробел то перейти за него
+    Delete(ARG, 1, I-1);                 // Исключить первый параметр
+  end;
+  if ARG <> '' then ARG := ARG + ' ';    // Добавить пробел (пробел - это разделитель между параметрами)
+  if (POS('-type=', String(ARG)) = 0) and (POS('--portable', String(ARG)) = 0) then
+  begin
+    GetModuleFileName(0, AppPatch, SizeOF(AppPatch)); // Получить полный путь (с именем файла)
+    FileName := AppPatch;
+    ExeDir := GetAPPDir(AppPatch);                    // Получить путь к директории (без имени файла)
+    PARAMS := ADDParam(ARG);                          // Добавить параметры к уже полученным
+    PARAMS := '"' + FileName + '"' + ' ' + PARAMS;    // Поместить перед всеми параметрами имя выполняемой программы
+    Result := PWideChar(PARAMS + #0);                 // Готовый результат
+  end;
+end;
+
 // Это модифицированная функция для блокировки System.AppUserModel.ID
 function PSStringFromPropertyKey(const pkey: PROPERTYKEY; psz: PWideChar; cch: INTEGER): HRESULT ; stdcall;
 begin
