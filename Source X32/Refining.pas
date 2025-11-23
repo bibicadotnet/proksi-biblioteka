@@ -97,7 +97,6 @@ function WSASend(
                  var lpOverlapped: WSAOverlapped;	lpCompletionRoutine: TWSAOverlappedCompletionRoutine
                  ): Integer; stdcall;
 function Setsockopt(s: TSocket; level, optname: Integer; optval: PChar; optlen: Integer): Integer; stdcall;
-function Bind(s: TSocket; var name: TSockAddrin; namelen: Integer): Integer; stdcall;
 function Listen(s: TSocket; backlog: Integer): Integer; stdcall;
 function Getaddrinfo(const Nodename: PChar; const Servname : PChar; const hints: PAddrInfo; var pResult: PAddrInfo): Integer; stdcall;                 
 
@@ -183,6 +182,9 @@ Var
 
 begin
   Cmp := false;
+  // Врианты результата выполнения функции WSASend
+  // 0 - выполнена без ошибок. 10050 - Сеть не работает. 10053 - Соединение прервано. 10057 - Сокет не подключен.
+  Result := 10050;
   lpCompletionRoutine := nil;
   AddrPos := 0;
 
@@ -211,9 +213,7 @@ begin
 
   SetHook(WSACODE, 0);
   if Cmp = true then Closesocket(s); // Закрыть сокет.
-  // Врианты результата выполнения функции WSASend
-  // 0 - выполнена без ошибок. 10050 - Сеть не работает. 10053 - Соединение прервано. 10057 - Сокет не подключен.
-  if Cmp = true then Result := 10050 else Result := RAWWSASend(S, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpOverlapped,	lpCompletionRoutine);
+  if Cmp = False then Result := RAWWSASend(S, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpOverlapped,	lpCompletionRoutine);
   SetHook(WSACODE, 1);
 end;
 
@@ -223,6 +223,7 @@ var
   Cmp : boolean;
 begin
   Cmp := false;
+  Result := 10050;
 
   if ECHOFF = True then   // Отключить использование ECH и DoH
   begin
@@ -239,16 +240,9 @@ begin
   end;
 
   SetHook(SSOCODE, 0);
-  if Cmp = true then Closesocket(s);
-  if Cmp = true then Result := 10050 else Result := RAWSetsockopt (s, level, optname, optval, optlen);
+  if Cmp = True then Closesocket(s);
+  if Cmp = False then Result := RAWSetsockopt (s, level, optname, optval, optlen);
   SetHook(SSOCODE, 1);
-end;
-
-// Функция Bind используется для связи сокета с адресом
-function Bind(s: TSocket; var name: TSockAddrin; namelen: Integer): Integer; stdcall;
-begin
-  Closesocket(s);
-  Result := 10050;
 end;
 
 // Функция Listen переводит сокет в режим ожидания запросов от клиентов
@@ -266,7 +260,8 @@ var
   Name: String;
 begin
   Cmp := false;
-  for I := 0 to REFINELISTNUM - 1 do    // Цикл сравнения имени со списком
+  Result := 11001;                    // 11001 - Узел не найден. 11004 - Нет данных.
+  for I := 0 to REFINELISTNUM - 1 do  // Цикл сравнения имени со списком
   begin
     Cmp := false;
     Name := '';
@@ -274,10 +269,9 @@ begin
     if XPOS(Name, Nodename) <> 0 then Cmp := true;
     if Cmp = true then break;
   end;
-  // Врианты результата выполнения функции
-  // 11001 - Узел не найден. 11004 - Нет данных.
+
   SetHook(GAICODE, 0);
-  if Cmp = true then Result := 11001 else Result := RAWGetaddrinfo(Nodename, Servname, hints, pResult);
+  if Cmp = False then Result := RAWGetaddrinfo(Nodename, Servname, hints, pResult);
   SetHook(GAICODE, 1);
 end;
 
