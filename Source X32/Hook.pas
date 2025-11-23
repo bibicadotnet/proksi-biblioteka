@@ -105,7 +105,7 @@ begin
 
   // Формирование кода прыжка в прокси функцию в теле исходной функции
   CODE.JMP := $E9;
-  CODE.OFFSET := DWORD (NewProcAddress) - DWORD (OldProcAddress) - 5;
+  CODE.OFFSET := CodeOffset(DWORD(OldProcAddress), DWORD(NewProcAddress));
 
   // Сохранить код прыжка в структуру
   if OPT = 1 then  Move(CODE, CMDCODE.NEWDATA, 5);
