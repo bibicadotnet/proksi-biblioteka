@@ -444,6 +444,9 @@ begin
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetComputerNameW');          // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(GetComputerNameW));                         // Подмена адреса точки входа функции в процессе на адрес функции из DLL
 
+  Addr(Proc) := GetProcAddress(DLLHandle, 'GetCommandLineW');           // Определить адрес функции
+  CodeHook(Addr(Proc), ADDR(CommandLineW), 1);                          // Подмена адреса функции в процессе на адрес функции из DLL
+
   if DNSOFF = True then
   begin
     // При установке заглушки на функцию GetComputerNameExW
