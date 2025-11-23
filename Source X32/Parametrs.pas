@@ -35,7 +35,6 @@ VAR
   RMDISK : boolean;          // Переменная для включения определения пути к TEMP на рамдиске
   REFINE : boolean;          // Переменная для включения обнуления запросов по протоколу TCP  
   SPFOLD : boolean;          // Переменная для включения указания пути к спецпапкам
-  STARTM : boolean;          // Переменная для выбора метода запуска
   BCTOFF : boolean;          // Переменная для отключения широковещательных рассылок
   ECHOFF : boolean;          // Переменная для отключения Encrypted Client Hello
   DNSOFF : boolean;          // Переменная для отключения использования системной службы DNS
@@ -52,7 +51,12 @@ VAR
   REFINELIST : array of TDomainList;  // Массив записей для обнуления запросов к гугле и его доменам
   REFINELISTNUM : integer;            // Число эдементов массива списка обнуления
 
+  USERDATADIR    : String;
+  DISKCACHEDIR   : String;
+
 procedure READPARAM;
+procedure FDelete;
+procedure FDDelete;
 function ADDParam(ARGS : string) : string;
 
 implementation
@@ -87,13 +91,10 @@ function ADDParam(ARGS : string) : string;
 var
 
   ARGSSTART : String;
-  USERDATADIR    : String;
-  DISKCACHEDIR   : String;
 
 begin
   ARGSSTART := '';
-  // Проверка наличия параметра '--single-argument'
-  if POS('--single-argument', ARGS) <> 0 then
+  if POS('--single-argument', ARGS) <> 0 then    // Проверка наличия параметра '--single-argument'
   begin
     ARGSSTART := ARGS;
     ARGS := '';
@@ -102,15 +103,7 @@ begin
   ARGS := ARGS + '--portable' + ' ';
   ARGS := ARGS + '--disable-features=RendererCodeIntegrity,FlashDeprecationWarning' + ' ';
 
-  //if (POS('--disk-cache-dir=', ARGS) = 0) then ARGS := ARGS + '--disk-cache-dir=' + '"' + 'nul' + '"' + ' ';
-  //if (POS('--disk-cache-size=', ARGS) = 0) then ARGS := ARGS + '--disk-cache-size=' + '"' + '0' + '"' + ' ';
-  //if (POS('--media-cache-size=', ARGS) = 0) then ARGS := ARGS + '--media-cache-size=' + '"' + '0' + '"' + ' ';
-  //ARGS := ARGS + '--simulate-critical-update' + ' ';
-  //ARGS := ARGS + '--disable-logging' + ' ';
-  //ARGS := ARGS + '--no-first-run' + ' ';
-  //ARGS := ARGS + '--no-sandbox' + ' ';
-  //ARGS := ARGS + '--test-type' + ' ';
-  //ARGS := ARGS + '--ppapi-flash-path=' + '"' + ExeDir + 'plugins\pepflashplayer32.dll' + ' ';
+
 
   USERDATADIR := GetDIR(ExeDir, DATADIR, FULLPATCH);    // Сформировать путь к USERDATADIR
   DISKCACHEDIR := GetDIR(ExeDir, CACHEDIR, FULLPATCH);  // Сформировать путь к CACHEDIR
@@ -138,7 +131,6 @@ begin
   REFINE := True;                               // Значение параметра по умолчанию
   SPFOLD := False;                              // Значение параметра по умолчанию
   BCTOFF := True;                               // Значение параметра по умолчанию
-  STARTM := False;                              // Значение параметра по умолчанию
   ECHOFF := False;                              // Значение параметра по умолчанию
   DNSOFF := True;                               // Значение параметра по умолчанию 
   FULLPATCH := True;                            // Значение параметра по умолчанию
@@ -173,7 +165,6 @@ begin
       if POS('REFINE=', IniLine) <> 0 then if IniParam = '1' then REFINE := True else if IniParam = '0' then REFINE := False;
       if POS('SPFOLD=', IniLine) <> 0 then if IniParam = '1' then SPFOLD := True else if IniParam = '0' then SPFOLD := False;
       if POS('BCTOFF=', IniLine) <> 0 then if IniParam = '1' then BCTOFF := True else if IniParam = '0' then BCTOFF := False;
-      if POS('STARTM=', IniLine) <> 0 then if IniParam = '1' then STARTM := True else if IniParam = '0' then STARTM := False;
       if POS('ECHOFF=', IniLine) <> 0 then if IniParam = '1' then ECHOFF := True else if IniParam = '0' then ECHOFF := False;
       if POS('DNSOFF=', IniLine) <> 0 then if IniParam = '1' then DNSOFF := True else if IniParam = '0' then DNSOFF := False;
 
@@ -222,5 +213,71 @@ begin
   if CACHEDIR = '' then CACHEDIR := 'Cache';
 end;
 
-end.
+procedure DDelete;
+var
+  i : integer;
+  DirName: String;
 
+  procedure DeleteFolder(const FolderPath: string);
+  var
+    Search: TSearchRec;
+  begin
+    if FindFirst(PChar(FolderPath + '\*'), faAnyFile, Search) = 0 then // Найти первый файл или директорию внутри директории
+    begin
+      repeat
+        if (Search.Name <> '.') and (Search.Name <> '..') then         // Пропускать директории "." и ".."
+        begin
+          if (Search.Attr and faDirectory) <> 0                        // Если найдена директория
+          then  DeleteFolder(FolderPath + '\' + Search.Name)           // рекурсивный вызов функции для перехода внутрь директории
+          else DeleteFile(PChar(FolderPath + '\' + Search.Name));      // иначе удалить файл
+        end;
+      until FindNext(Search) <> 0;                                     // Продолжить поиск
+      FindClose(Search);                                               // Освободить ресурс поиска
+    end;
+    RemoveDirectory(PChar(FolderPath));                                // Удалить корневую директорию
+  end;
+begin
+  for i := 0 to DIRLISTNUM - 1 do
+  begin
+    DirName := DELDIRLIST[i];                                          // Имя из списка
+    DeleteFolder(DirName);
+  end;
+end;
+
+// Функция удаления файлов по списку и шаблону
+procedure FDelete;
+var
+  i : integer;
+  DirName : string;
+  Len: integer;
+  SearchResult : TSearchRec;
+begin
+  for i := 0 to FILELISTNUM - 1 do
+  begin
+  if XPOS('*', FILELIST[i]) = 0 then DeleteFile(PChar(FILELIST[i]));
+  if XPOS('*', FILELIST[i]) <> 0 then
+    begin
+      DirName := '';
+      // Извлечь путь к файлу
+      Len := Length(FILELIST[i]);
+      while (Len <> 0) and (FILELIST[i][Len] <> '\') do Dec(Len);  // Определить длину строки до первого разделителя '\'
+      SetString(DirName, PChar(FILELIST[i]), Len);                 // Задать размер для DirName и скопировать из массива данные размером Len.
+      if FindFirst(FILELIST[i], faAnyFile, SearchResult) = 0 then  // Найти все файлы по шаблону из FILELIST[i]
+      begin
+        repeat DeleteFile(PChar(DirName + SearchResult.Name));     // Удалять найденные файлы
+        until FindNext(SearchResult) <> 0;                         // до тех пор пока еще есть соответствующие шаблону файлы
+        FindClose(SearchResult);                                   // Освободить ресурсы используемые процессом поиска
+      end;
+
+    end;
+  end;
+end;
+
+// Удаление файлов и директорий
+procedure FDDelete;
+begin
+  FDelete;
+  DDelete;
+end;
+
+end.
