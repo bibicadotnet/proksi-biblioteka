@@ -20,13 +20,13 @@ var
 // Адреса функций определяются динамически.
 
 procedure GetFileVersionInfoSizeW; stdcall; asm jmp dword ptr [proc + 0 * 4] end;
-procedure GetFileVersionInfoW; stdcall; asm jmp dword ptr [proc + 1 * 4]; end;
-procedure VerQueryValueW; stdcall; asm jmp dword ptr [proc + 2 * 4]; end;
-procedure GetFileVersionInfoSizeA; stdcall; asm jmp dword ptr [proc + 3 * 4]; end;
-procedure GetFileVersionInfoA; stdcall; asm jmp dword ptr [proc + 4 * 4]; end;
-procedure VerQueryValueA; stdcall; asm jmp dword ptr [proc + 5 * 4]; end;
-procedure GetFileVersionInfoExW; stdcall; asm jmp dword ptr [proc + 6 * 4]; end;
-procedure GetFileVersionInfoSizeExW; stdcall; asm jmp dword ptr [proc + 7 * 4]; end;
+procedure GetFileVersionInfoW; stdcall; asm jmp dword ptr [proc + 1 * 4] end;
+procedure VerQueryValueW; stdcall; asm jmp dword ptr [proc + 2 * 4] end;
+procedure GetFileVersionInfoSizeA; stdcall; asm jmp dword ptr [proc + 3 * 4] end;
+procedure GetFileVersionInfoA; stdcall; asm jmp dword ptr [proc + 4 * 4] end;
+procedure VerQueryValueA; stdcall; asm jmp dword ptr [proc + 5 * 4] end;
+procedure GetFileVersionInfoExW; stdcall; asm jmp dword ptr [proc + 6 * 4] end;
+procedure GetFileVersionInfoSizeExW; stdcall; asm jmp dword ptr [proc + 7 * 4] end;
 
 // Объявление списока экспортируемых функций
 exports
@@ -65,15 +65,15 @@ procedure DllMain(fdwReason: DWORD);
 begin
   if (fdwReason = DLL_PROCESS_ATTACH) then
   begin
-    READPARAM;                                                // Прочитать параметры из INI файла
-    GetOSVer;                                                 // Определить версию ОС
-    RedirectEXP;                                              // Выполнить переадресацию функций экспорта
-    if DIROFF = true then FDDelete;                           // Удалить файлы и директории если параметр включен
+    READPARAM;                                            // Прочитать параметры из INI файла
+    GetOSVer;                                             // Определить версию ОС
+    RedirectEXP;                                          // Выполнить переадресацию функций экспорта
     HookPreferences;
+    if DIROFF = true then FDDelete;                       // Удалить файлы и директории если параметр включен
   end;
   if (fdwReason = DLL_PROCESS_DETACH) then
   begin
-    if DIROFF = TRUE then FDELETE;                            // Удалить файлы если параметр включен
+    if DIROFF = TRUE then FDELETE;                        // Удалить файлы если параметр включен
   end;
 end;
 
