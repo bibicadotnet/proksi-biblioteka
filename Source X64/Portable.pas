@@ -119,7 +119,7 @@ begin
     Delete(ARG, 1, I-1);                 // Исключить первый параметр
   end;
   if ARG <> '' then ARG := ARG + ' ';    // Добавить пробел (пробел - это разделитель между параметрами)
-  if (POS('-type=', String(ARG)) = 0) and (POS('--portable', String(ARG)) = 0) then
+  if (XPOS('-type=', String(ARG)) = 0) and (XPOS('--portable', String(ARG)) = 0) then
   begin
     GetModuleFileName(0, AppPatch, SizeOF(AppPatch));          // Получить полный путь (с именем файла)
     FileName := AppPatch;                                      // Имя выполняемой программы
