@@ -68,8 +68,8 @@ begin
     READPARAM;                                            // Прочитать параметры из INI файла
     GetOSVer;                                             // Определить версию ОС
     RedirectEXP;                                          // Выполнить переадресацию функций экспорта
-    if DIROFF = TRUE then FDDELETE;                       // Удалить файлы и директории если параметр включен
     HookPreferences;                                      // Выполнить переадресацию функций
+    if DIROFF = TRUE then FDDELETE;                       // Удалить файлы и директории если параметр включен
   end;
   if (fdwReason = DLL_PROCESS_DETACH) then                // Если отключение библиотеки
   begin
