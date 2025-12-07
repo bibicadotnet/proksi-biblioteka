@@ -21,7 +21,7 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 #define InternalName	   0x041F,0x0440,0x043E,0x043A,0x0441,0x0438,0x002D,0x0431,0x0438,0x0431,0x043B \
 	                       0x0438,0x043E,0x0442,0x0435,0x043A,0x0430,0x00
 
-                         //"Российская Федерация" в кодировке UNICOD
+                         //"Российская Федерация"
 #define LegalCopyright	 0x0420,0x043E,0x0441,0x0441,0x0438,0x0439,0x0441,0x043A 0x0430,0x044F,0x0020 \
 	                       0x0424,0x0435,0x0434,0x0435,0x0440,0x0430,0x0446,0x0438,0x044F,0x00
 
@@ -34,14 +34,14 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 	                       0x0438,0x043E,0x0442,0x0435,0x043A,0x0430,0x00
 
 #define OriginalFilename "version.dll\0"
-#define ProductVersion   "1.0.6.0\0"
-#define FileVersion      "1.0.6.0\0"
+#define ProductVersion   "1.0.6.1\0"
+#define FileVersion      "1.0.6.1\0"
 
 // Version info
 #define MAJOR       1
 #define MINOR       0
 #define RELEASE     6
-#define BUILD       0
+#define BUILD       1
 
 1 VERSIONINFO
 FILEVERSION MAJOR, MINOR, RELEASE, BUILD
