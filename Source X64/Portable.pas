@@ -561,10 +561,12 @@ begin
 
   // Перехват вызова функции SHGetFolderPathW
   if SPFOLD = TRUE then begin
-  DLLHandle := GetModuleHandle('SHELL32.dll');
-  Addr(Proc) := GetProcAddress(DLLHandle, 'SHGetFolderPathW');
-  CodeHook(Addr(Proc), ADDR(SHGetFolderPathW));
+  FileName := SysPatch + '\SHELL32.dll';                                // Получить полное имя файла
+  DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
+  Addr(Proc) := GetProcAddress(DLLHandle, 'SHGetFolderPathW');          // Определить адрес функции
+  CodeHook(Addr(Proc), ADDR(SHGetFolderPathW));                         // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
+  
   // Перехват вызова функций из Propsys.dll
   if AIDOFF = TRUE then begin  
   FileName :=  SysPatch + '\Propsys.dll';                               // Получить полное имя файла
