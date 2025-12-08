@@ -541,7 +541,8 @@ begin
 
   // Перехват вызова функции SHGetFolderPathW
   if SPFOLD = TRUE then begin
-  DLLHandle := GetModuleHandle('SHELL32.dll');                          // Получить идентификатор модуля (адрес по которому он загружен)
+  FileName :=  SysPatch + '\SHELL32.dll';                               // Получить полное имя файла
+  DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
   Addr(Proc) := GetProcAddress(DLLHandle, 'SHGetFolderPathW');          // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(SHGetFolderPathW));                         // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
