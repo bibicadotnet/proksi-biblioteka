@@ -78,9 +78,13 @@ type
   CreateKey = function(KeyHandle : PHANDLE; DesiredAccess : ACCESS_MASK; var ObjectAttributes : ObjectAttributes; TitleIndex:ULONG;
                        var ObjectClass : UNICODESTRING; CreateOptions:ULONG; Disposition:PULONG) : NTSTATUS; stdcall;
 
+  // Обявление типа фукции с параметрами вызова и возврата соответующими оригинальной функции PSStringFromPropertyKey
+  PSStringFPropKey = function(const pkey: PROPERTYKEY; psz: PWideChar; cch: INTEGER): HRESULT ; stdcall;
+
 var
   RawUpdateProcThreadAttribute : UpdProcThrAttr;
   RawCreateKey  : CreateKey;
+  RawPSStringFromPropertyKey : PSStringFPropKey;
 
 {
   Описание функций для подмены в системных библиотеках
@@ -128,9 +132,14 @@ begin
 end;
 
 // Это модифицированная функция для блокировки System.AppUserModel.ID
-function PSStringFromPropertyKey(const pkey: PROPERTYKEY; psz: PWideChar; cch: INTEGER): HRESULT ; stdcall;
+function StringFromPropertyKey(const pkey: PROPERTYKEY; psz: PWideChar; cch: INTEGER): HRESULT ; stdcall;
 begin
-  result := 0;
+  SetHook(PFPCODE, 0);
+  Result := RawPSStringFromPropertyKey(pkey, psz, cch);
+  SetHook(PFPCODE, 0);
+  if (SUCCEEDED(Result)) then
+  if (pkey.fmtid.D1 = $9F4C2855) and (pkey.fmtid.D2 = $9F79) and (pkey.fmtid.D3 = $4B39) and (pkey.pid = 5) then
+  Result := Longint(-1);
 end;
 
 function GetComputerNameA(lpBuffer: PChar; var nSize: DWORD): BOOL; stdcall;
@@ -552,7 +561,8 @@ begin
   FileName :=  SysPatch + '\Propsys.dll';   ;                           // Получить полное имя файла
   DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
   Addr(Proc) := GetProcAddress(DLLHandle, 'PSStringFromPropertyKey');   // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(PSStringFromPropertyKey));                  // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+  CodeHook(Addr(Proc), ADDR(StringFromPropertyKey), 8);                 // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+  ADDR(RAWPSStringFromPropertyKey) := ADDR(Proc);                       // Присвоить адрес функции RAWPSStringFromPropertyKey
   end;
 
   if (REFINE = TRUE) or (BCTOFF = TRUE) or (ECHOFF = TRUE) then begin
