@@ -79,7 +79,7 @@ type
                        var ObjectClass : UNICODESTRING; CreateOptions:ULONG; Disposition:PULONG) : NTSTATUS; stdcall;
 
   // Обявление типа фукции с параметрами вызова и возврата соответующими оригинальной функции PSStringFromPropertyKey
-  PSStringFPropKey = function(const pkey: PROPERTYKEY; psz: PWideChar; cch: INTEGER): HRESULT ; stdcall;
+  PSStringFPropKey = function(const pkey: PROPERTYKEY; psz: PWideChar; cch: LongWord): HRESULT ; stdcall;
 
 var
   RawUpdateProcThreadAttribute : UpdProcThrAttr;
@@ -132,7 +132,7 @@ begin
 end;
 
 // Это модифицированная функция для блокировки System.AppUserModel.ID
-function StringFromPropertyKey(const pkey: PROPERTYKEY; psz: PWideChar; cch: INTEGER): HRESULT ; stdcall;
+function StringFromPropertyKey(const pkey: PROPERTYKEY; psz: PWideChar; cch: LongWord): HRESULT ; stdcall;
 begin
   SetHook(PFPCODE, 0);
   Result := RawPSStringFromPropertyKey(pkey, psz, cch);
