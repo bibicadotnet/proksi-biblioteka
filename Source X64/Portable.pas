@@ -78,7 +78,7 @@ type
                       var ObjectClass : UNICODESTRING; CreateOptions:ULONG; Disposition:PULONG) : NTSTATUS; stdcall;
 
   // Обявление типа фукции с параметрами вызова и возврата соответующими оригинальной функции PSStringFromPropertyKey
-  PSStringFPropKey = function(const pkey: PROPERTYKEY; psz: PWideChar; cch: INTEGER): HRESULT ; stdcall;
+  PSStringFPropKey = function(const pkey: PROPERTYKEY; psz: PWideChar; cch: LongWord): HRESULT ; stdcall;
 
 // Объявление константы с именем PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY
 // с типом данных DWORD и присвоение ей значения в соответствии с WinBase.h
@@ -134,7 +134,7 @@ begin
 end;
 
 // Это модифицированная функция для блокировки System.AppUserModel.ID
-function StringFromPropertyKey(const pkey: PROPERTYKEY; psz: PWideChar; cch: INTEGER): HRESULT ; stdcall;
+function StringFromPropertyKey(const pkey: PROPERTYKEY; psz: PWideChar; cch: LongWord): HRESULT ; stdcall;
 begin
   SetHook(PFPCODE, 0);
   Result := RawPSStringFromPropertyKey(pkey, psz, cch);
