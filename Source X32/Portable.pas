@@ -558,8 +558,12 @@ begin
 
   // Перехват вызова функций из Propsys.dll
   if AIDOFF = TRUE then begin
-  FileName :=  SysPatch + '\Propsys.dll';   ;                           // Получить полное имя файла
-  DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
+  DLLHandle := GetModuleHandle('Propsys.dll');                          // Получить идентификатор
+  if (DLLHandle = 0) then                                               // Если идентификатор не получен
+  begin
+    FileName :=  SysPatch + '\Propsys.dll';                             // Получить полное имя файла
+    DLLHandle := LoadLibrary(pchar(FileName));                          // Загрузить библиотеку и получить её идентификатор
+  end;
   Addr(Proc) := GetProcAddress(DLLHandle, 'PSStringFromPropertyKey');   // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(StringFromPropertyKey), 8);                 // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   ADDR(RAWPSStringFromPropertyKey) := ADDR(Proc);                       // Присвоить адрес функции RAWPSStringFromPropertyKey
