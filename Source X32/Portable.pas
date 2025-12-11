@@ -136,7 +136,7 @@ function StringFromPropertyKey(const pkey: PROPERTYKEY; psz: PWideChar; cch: INT
 begin
   SetHook(PFPCODE, 0);
   Result := RawPSStringFromPropertyKey(pkey, psz, cch);
-  SetHook(PFPCODE, 0);
+  SetHook(PFPCODE, 1);
   if (SUCCEEDED(Result)) then
   if (pkey.fmtid.D1 = $9F4C2855) and (pkey.fmtid.D2 = $9F79) and (pkey.fmtid.D3 = $4B39) and (pkey.pid = 5) then
   Result := Longint(-1);
