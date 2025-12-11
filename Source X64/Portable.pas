@@ -77,6 +77,8 @@ type
   CreateKey= function(KeyHandle : PHANDLE; DesiredAccess : ACCESS_MASK; var ObjectAttributes : ObjectAttributes; TitleIndex:ULONG;
                       var ObjectClass : UNICODESTRING; CreateOptions:ULONG; Disposition:PULONG) : NTSTATUS; stdcall;
 
+  // Обявление типа фукции с параметрами вызова и возврата соответующими оригинальной функции PSStringFromPropertyKey
+  PSStringFPropKey = function(const pkey: PROPERTYKEY; psz: PWideChar; cch: INTEGER): HRESULT ; stdcall;
 
 // Объявление константы с именем PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY
 // с типом данных DWORD и присвоение ей значения в соответствии с WinBase.h
@@ -85,6 +87,7 @@ const PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY = DWORD ($00020007);
 var
   RawUpdateProcThreadAttribute : UpdProcThrAttr;
   RawCreateKey  : CreateKey;
+  RawPSStringFromPropertyKey : PSStringFPropKey;
 
 {
   Описание функций для подмены в системных библиотеках
@@ -130,10 +133,15 @@ begin
   end;
 end;
 
-// Модифицированная функция для блокировки System.AppUserModel.ID
-function PSStringFromPropertyKey(const pkey: PROPERTYKEY; psz: PWideChar; cch: INTEGER): HRESULT ; stdcall;
+// Это модифицированная функция для блокировки System.AppUserModel.ID
+function StringFromPropertyKey(const pkey: PROPERTYKEY; psz: PWideChar; cch: INTEGER): HRESULT ; stdcall;
 begin
-  result := 0;
+  SetHook(PFPCODE, 0);
+  Result := RawPSStringFromPropertyKey(pkey, psz, cch);
+  SetHook(PFPCODE, 1);
+  if (SUCCEEDED(Result)) then
+  if (pkey.fmtid.D1 = $9F4C2855) and (pkey.fmtid.D2 = $9F79) and (pkey.fmtid.D3 = $4B39) and (pkey.pid = 5) then
+  Result := Longint(-1);
 end;
 
 function GetComputerNameA(lpBuffer: PChar; var nSize: DWORD): BOOL; stdcall;
@@ -568,11 +576,16 @@ begin
   end;
   
   // Перехват вызова функций из Propsys.dll
-  if AIDOFF = TRUE then begin  
-  FileName :=  SysPatch + '\Propsys.dll';                               // Получить полное имя файла
-  DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
+  if AIDOFF = TRUE then begin
+  DLLHandle := GetModuleHandle('Propsys.dll');                          // Получить идентификатор
+  if (DLLHandle = 0) then                                               // Если идентификатор не получен
+  begin
+    FileName :=  SysPatch + '\Propsys.dll';                             // Получить полное имя файла
+    DLLHandle := LoadLibrary(pchar(FileName));                          // Загрузить библиотеку и получить её идентификатор
+  end;
   Addr(Proc) := GetProcAddress(DLLHandle, 'PSStringFromPropertyKey');   // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(PSStringFromPropertyKey));                  // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+  CodeHook(Addr(Proc), ADDR(StringFromPropertyKey), 8);                 // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+  ADDR(RAWPSStringFromPropertyKey) := ADDR(Proc);                       // Присвоить адрес функции RAWPSStringFromPropertyKey
   end;
 
   if (REFINE = TRUE) or (BCTOFF = TRUE) or (ECHOFF = TRUE) then begin
