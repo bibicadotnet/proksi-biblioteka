@@ -70,8 +70,8 @@ type
   UpdProcThrAttr = function (lpAttributeList: Pointer; dwFlags: DWORD; Attribute: DWORD_PTR; lpValue: Pointer;
                              cbSize: SIZE_T; lpPreviousValue: PPointer; lpReturnSize: PSIZE_T): BOOL; stdcall;
 
-  // Обявление типа фукции с парамеи вызова и возврата соответующими оригинальной функции  LoadDll
-  LoadDll = function(PathToFile: PWideChar; Flags: DWORD; var ModuleFileName: UNICODESTRING; ModuleHandle: PPointer):NTSTATUS; stdcall;
+
+
 
   // Обявление типа фукции с парамеи вызова и возврата соответующими оригинальной функции  NtCreateKey
   CreateKey= function(KeyHandle : PHANDLE; DesiredAccess : ACCESS_MASK; var ObjectAttributes : ObjectAttributes; TitleIndex:ULONG;
@@ -122,7 +122,7 @@ begin
     Delete(ARG, 1, I-1);                 // Исключить первый параметр
   end;
   if ARG <> '' then ARG := ARG + ' ';    // Добавить пробел (пробел - это разделитель между параметрами)
-  if (XPOS('-type=', String(ARG)) = 0) and (XPOS('--portable', String(ARG)) = 0) then
+  if (XPOS('-type=', ARG) = 0) and (XPOS('--portable', ARG) = 0) then
   begin
     GetModuleFileName(0, AppPatch, SizeOF(AppPatch));          // Получить полный путь (с именем файла)
     FileName := AppPatch;                                      // Имя выполняемой программы
@@ -149,7 +149,7 @@ begin
   result := False;
 end;
 
-// Модифицированная функция GetComputerNameW
+// Модифицированная функция GetComputerNameW. Передаёт браузеру заданное имя компьютера.
 function GetComputerNameW(lpBuffer: PWideChar; var nSize: DWORD): BOOL; stdcall;
 var
   RequiredSize: DWORD;
@@ -166,7 +166,7 @@ begin
       Exit;                                                       // Выйти из функции
     end;
     CopyMemory(lpBuffer, PWideChar(COMPNAME), (NameLen + 1) * 2); // Скопировать в буфер имя с учетом терминального нуля
-    nSize := NameLen;                                             // Число символов в имени на выход
+    nSize := NameLen;                                             // Передать на выход число символов в имени
     Result := True;
   end;
 end;
@@ -237,13 +237,13 @@ end;
 
 function LogonUserA(lpszUsername, lpszDomain, lpszPassword: PAnsiChar; dwLogonType, dwLogonProvider: DWORD; var phToken: THandle): BOOL; stdcall;
 begin
-  phToken := $09051945;
+  //phToken := $09051945;
   result := True;
 end;
 
 function LogonUserW(lpszUsername, lpszDomain, lpszPassword: PWideChar; dwLogonType, dwLogonProvider: DWORD; var phToken: THandle): BOOL; stdcall;
 begin
-  phToken := $09051945;
+  //phToken := $09051945;
   result := True;
 end;
 
@@ -401,7 +401,7 @@ begin
   SetHook(KEYCODE, 1);
 end;
 
-// Модифицированная функция CreateDirectoryW для блокировки создания папок из списка
+// Модифицированная функция CreateDirectoryW для блокировки создания директорий по списку
 function CreateDirectory(lpPathName: PWideChar; lpSecurityAttributes: PSecurityAttributes): BOOL; stdcall;
 var
   PathName : String;
@@ -450,7 +450,7 @@ begin
   Result := NameLen;
 end;
 
-// Модифицированная функция SHGetFolderPathW для блокировки доступа к специальным папкам
+// Модифицированная функция SHGetFolderPathW для указания своего пути к спецпапкам
 function SHGetFolderPathW(hwnd: HWND; csidl: Integer; hToken: THandle; dwFlags: DWord; pszPath: PWideChar): HRESULT; stdcall;
 begin
   if SPECFOLDER = '' then SPECFOLDER := 'nul';
@@ -561,7 +561,7 @@ begin
 
   // Перехват вызова функции NtCreateKey.
   if REGOFF = TRUE then begin
-  DLLHandle := GetModuleHandle('ntdll.dll');                            // DLLHandle = дескриптор модуля (адрес по которому он загружен)
+  DLLHandle := GetModuleHandle('ntdll.dll');                            // DLLHandle = идентификатор модуля (адрес по которому он загружен)
   Addr(Proc) := GetProcAddress(DLLHandle, 'NtCreateKey');               // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(NtCreateKey), 3);                           // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   ADDR(RawCreateKey) := ADDR(Proc);                                     // Присвоить адрес функции RawCreateKey
