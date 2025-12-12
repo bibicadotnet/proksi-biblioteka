@@ -93,8 +93,8 @@ var
 
 begin
   ARGSSTART := '';
-  // Проверка наличия параметра '--single-argument'
-  if POS('--single-argument', ARGS) <> 0 then
+  if POS('--single-argument', ARGS) <> 0 then   // Проверка наличия параметра '--single-argument'
+
   begin
     ARGSSTART := ARGS;
     ARGS := '';
@@ -103,8 +103,8 @@ begin
   ARGS := ARGS + '--portable' + ' ';
   ARGS := ARGS + '--disable-features=RendererCodeIntegrity,FlashDeprecationWarning' + ' ';
 
-  USERDATADIR := GETDIR(ExeDir, DATADIR, FULLPATCH);
-  DISKCACHEDIR := GETDIR(ExeDir, CACHEDIR, FULLPATCH);
+  USERDATADIR := GETDIR(ExeDir, DATADIR, FULLPATCH);    // Сформировать путь к USERDATADIR
+  DISKCACHEDIR := GETDIR(ExeDir, CACHEDIR, FULLPATCH);  // Сформировать путь к CACHEDIR
 
   if RUNPARAM <> '' then ARGS := ARGS + RUNPARAM + ' ';
   if POS('--user-data-dir=', ARGS) = 0 then ARGS := ARGS + '--user-data-dir=' + '"' + USERDATADIR + '"' + ' ';
@@ -206,8 +206,8 @@ begin
     end;
     CloseFile(IniFile);
   end;
-  if DATADIR = '' then DATADIR := 'User Data';
-  if CACHEDIR = '' then CACHEDIR := 'Cache';  
+  if DATADIR = '' then DATADIR := 'User Data';  // Если DATADIR не задан тогда
+  if CACHEDIR = '' then CACHEDIR := 'Cache';    // Если CACHEDIR не задан тогда  
 end;
 
 procedure DDelete;
