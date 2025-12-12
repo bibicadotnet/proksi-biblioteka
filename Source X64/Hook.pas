@@ -40,8 +40,8 @@ var
   JMPRAXOP   : WORD;                    // Поле для записи опкода инструкции JMP RAX    | FF E0
   end;
 
-  Protect : DWORD;                     // Переменная для хранения параметров доступа к странице памяти
-  VALUE   : SIZE_T;                    // Переменная для функции WriteProcessMemory
+  Protect : Cardinal;                   // Переменная для хранения параметров доступа к странице памяти
+  VALUE   : NativeUInt;                 // Переменная для функции WriteProcessMemory
 
 const
   HANDLE = THandle(-1);
@@ -139,8 +139,8 @@ end;
 // Включить или Отключить перхват
 procedure SetHook(HOOK: HOOKDATA; OPT: byte);
 var
-  Protect : DWORD;                      // Переменная для хранения параметров доступа к странице памяти
-  VALUE   : SIZE_T;                     // Переменная для функции WriteProcessMemory
+  Protect : Cardinal;                      // Переменная для хранения параметров доступа к странице памяти
+  VALUE   : NativeUInt;                    // Переменная для функции WriteProcessMemory
 const
   HANDLE = THandle(-1);
 begin
