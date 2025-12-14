@@ -265,7 +265,7 @@ begin
   begin
     Cmp := false;
     Name := '';
-    Name := PCHAR(REFINELIST[I].buf); // При таком присвоении в последнем элементе массива обязательно должен быть #0
+    SetString(Name, PCHAR(REFINELIST[I].buf), REFINELIST[I].Len);  // Скопировать символы из буфера в строку
     if XPOS(Name, Nodename) <> 0 then Cmp := true;
     if Cmp = true then break;
   end;
