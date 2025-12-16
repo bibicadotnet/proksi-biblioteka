@@ -235,13 +235,11 @@ end;
 
 function LogonUserA(lpszUsername, lpszDomain, lpszPassword: PAnsiChar; dwLogonType, dwLogonProvider: DWORD; var phToken: THandle): BOOL; stdcall;
 begin
-  phToken := $09051945;
   result := True;
 end;
 
 function LogonUserW(lpszUsername, lpszDomain, lpszPassword: PWideChar; dwLogonType, dwLogonProvider: DWORD; var phToken: THandle): BOOL; stdcall;
 begin
-  phToken := $09051945;
   result := True;
 end;
 
