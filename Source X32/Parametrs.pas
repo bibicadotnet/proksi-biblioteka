@@ -23,7 +23,6 @@ VAR
   PARAMS    : string;                      // Переменная для хранения параметров запуска
   IniFile   : TextFile;                    // Переменная типа TextFile для файла настроек
 
-
   DATADIR   : string;
   CACHEDIR  : string;
   RUNPARAM  : string;
@@ -89,9 +88,7 @@ end;
 // Функция для добавления параметров запуска
 function ADDParam(ARGS : string) : string;
 var
-
   ARGSSTART : String;
-
 begin
   ARGSSTART := '';
   if POS('--single-argument', ARGS) <> 0 then    // Проверка наличия параметра '--single-argument'
@@ -99,19 +96,13 @@ begin
     ARGSSTART := ARGS;
     ARGS := '';
   end;
-
   ARGS := ARGS + '--portable' + ' ';
   ARGS := ARGS + '--disable-features=RendererCodeIntegrity,FlashDeprecationWarning' + ' ';
-
-
-
   USERDATADIR := GetDIR(ExeDir, DATADIR, FULLPATCH);    // Сформировать путь к USERDATADIR
   DISKCACHEDIR := GetDIR(ExeDir, CACHEDIR, FULLPATCH);  // Сформировать путь к CACHEDIR
-
   if RUNPARAM <> '' then ARGS := ARGS + RUNPARAM + ' ';
   if POS('--user-data-dir=', ARGS) = 0 then ARGS := ARGS + '--user-data-dir=' + '"' + USERDATADIR + '"' + ' ';
   if POS('--disk-cache-dir=', ARGS) = 0 then ARGS := ARGS + '--disk-cache-dir=' + '"' + DISKCACHEDIR + '"' + ' ';
-
   RESULT := ARGS + ARGSSTART;
 end;
 
