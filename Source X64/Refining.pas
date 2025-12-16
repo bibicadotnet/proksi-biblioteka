@@ -139,7 +139,6 @@ begin
       if Cmp = True then break;
     end;
   end;
-  Buf := nil;
   if Cmp = True then Result := True;
 end;
 
@@ -207,14 +206,11 @@ begin
         end;
     if Cmp = True then break;
     end;
-    Buf := nil;
   end;
 
   SetHook(WSACODE, 0);
   if Cmp = True then Closesocket(s); // Закрыть сокет.
   if Cmp = False then Result := RAWWSASend(S, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpOverlapped,	lpCompletionRoutine);
-
-
   SetHook(WSACODE, 1);
 end;
 
@@ -251,13 +247,6 @@ begin
   Closesocket(s);
   Result := 10050;
 end;
-
-
-
-
-
-
-
 
 // Функция getaddrinfo для получения IP адреса узла из его имени
 function Getaddrinfo(const Nodename: PChar; const Servname : PChar; const hints: PAddrInfo; var pResult: PAddrInfo): Integer; stdcall;
