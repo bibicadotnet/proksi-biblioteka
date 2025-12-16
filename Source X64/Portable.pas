@@ -237,13 +237,11 @@ end;
 
 function LogonUserA(lpszUsername, lpszDomain, lpszPassword: PAnsiChar; dwLogonType, dwLogonProvider: DWORD; var phToken: THandle): BOOL; stdcall;
 begin
-  //phToken := $09051945;
   result := True;
 end;
 
 function LogonUserW(lpszUsername, lpszDomain, lpszPassword: PWideChar; dwLogonType, dwLogonProvider: DWORD; var phToken: THandle): BOOL; stdcall;
 begin
-  //phToken := $09051945;
   result := True;
 end;
 
@@ -295,15 +293,12 @@ end;
 function RegCreateKeyExA(hKey: HKEY; lpSubKey: PAnsiChar; Reserved: DWORD; lpClass: PAnsiChar; dwOptions: DWORD; samDesired: REGSAM;
                          lpSecurityAttributes: PSecurityAttributes; phkResult: PHKEY; lpdwDisposition: PDWORD): Longint; stdcall;
 begin
-  lpdwDisposition := nil;
   Result := 0;
 end;
 
 function RegCreateKeyExW(hKey: HKEY; lpSubKey: PWideChar; Reserved: DWORD; lpClass: PWideChar; dwOptions: DWORD; samDesired: REGSAM;
                          lpSecurityAttributes: PSecurityAttributes; phkResult: PHKEY; lpdwDisposition: PDWORD): Longint; stdcall;
 begin
-  phkResult := nil;
-  lpdwDisposition := nil;
   Result := 0;
 end;
 
@@ -336,8 +331,6 @@ function RegCreateKeyTransactedA(
                                  hTransaction: DWORD; pExtendedParemeter: Pointer
                                  ): Longint; stdcall;
 begin
-  phkResult := 0;
-  lpdwDisposition := nil;
   Result := 0;
 end;
 
@@ -350,8 +343,6 @@ function RegCreateKeyTransactedW(
                                  hTransaction: DWORD; pExtendedParemeter: Pointer
                                  ): Longint; stdcall;
 begin
-  phkResult := 0;
-  lpdwDisposition := nil;
   Result := 0;
 end;
 
