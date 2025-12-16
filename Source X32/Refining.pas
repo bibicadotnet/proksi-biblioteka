@@ -138,7 +138,6 @@ begin
       if Cmp = True then break;
     end;
   end;
-  Buf := nil;
   if Cmp = True then Result := True;
 end;
 
@@ -208,7 +207,6 @@ begin
       end;
     if Cmp = True then break;
     end;
-    Buf := nil;
   end;
 
   SetHook(WSACODE, 0);
