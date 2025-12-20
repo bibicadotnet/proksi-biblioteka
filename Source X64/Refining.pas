@@ -262,7 +262,7 @@ begin
     Cmp := false;
     Name := '';
     SetString(Name, PCHAR(REFINELIST[I].buf), REFINELIST[I].Len);
-    if (String(Nodename) <> '') then if XPOS(Name, Nodename) <> 0 then Cmp := true;
+    if (Nodename <> nil) and (String(Nodename) <> '') then if XPOS(Name, Nodename) <> 0 then Cmp := true;
     if Cmp = true then break;
   end;
 
