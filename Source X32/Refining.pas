@@ -264,7 +264,7 @@ begin
     Cmp := false;
     Name := '';
     SetString(Name, PCHAR(REFINELIST[I].buf), REFINELIST[I].Len);  // Скопировать символы из буфера в строку
-    if XPOS(Name, Nodename) <> 0 then Cmp := true;
+    if (String(Nodename) <> '') then if XPOS(Name, Nodename) <> 0 then Cmp := true;
     if Cmp = true then break;
   end;
 
