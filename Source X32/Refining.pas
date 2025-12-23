@@ -12,6 +12,8 @@ uses
 
 type
 
+  BuffAnsi = array of AnsiChar;    // Тип данных для функций Host, ClientHello, WSASend
+
   // Запись для функции WSASend
   WSABUF = record
     len: Cardinal;
