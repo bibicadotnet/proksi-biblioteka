@@ -109,30 +109,25 @@ implementation
 // *******************************************
 
 // Функция поиска положения адреса в HTTP запросах
-function Host(var lpBuffers: WSABuf; var AddrPos: integer): boolean;
+function Host(const Buf: BuffAnsi; Len: Integer; var AddrPos: integer): boolean;
 const
   SEARSH   : array [0..15] of Byte = ($48,$54,$54,$50,$2F,$31,$2E,$31,$0D,$0A,$48,$6F,$73,$74,$3A,$20); // HTTP/1.1 + перевод строки + Host: + пробел
   SEARCHM  : array [0..15] of Byte = ($00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$01,$00,$00,$00,$00,$00); // Маска поиска
 var
-  Buf : array of Byte;
   Cmp : boolean;
-  Len: integer;
   i : integer;
   X : integer;
 begin
   AddrPos := 0;
   Cmp := False;
   Result := False;
-  Len := lpBuffers.Len;
   if Len > 15 then
   begin
-    SetLength(Buf, Len);
-    CopyMemory(Addr(buf[0]), lpBuffers.buf, Len);
     for X := 0 to Len - 15 do                       // Цикл проверки буфера от начала
     begin
       for i := 0 to 15 do                           // Цикл проверки последовательности
       begin
-        Cmp := Buf[X + i] = SEARSH[i];
+        Cmp := Byte(Buf[X + i]) = SEARSH[i];
         if SEARCHM[i] = $01 then Cmp := True;
         if Cmp = False then break;
       end;
@@ -144,22 +139,20 @@ begin
 end;
 
 // Функция поиска идентификатора сообщения ClientHello в HTTPS запросах
-function ClientHello(var lpBuffers: WSABuf): boolean;
+function ClientHello(const Buf: BuffAnsi; Len: Integer): boolean;
 const
   SEARSH   : array [0..5] of Byte = ($16,$03,$01,$FF,$FF,$01); // Тип + Версия + Размер + Тип сообщения
   SEARCHM  : array [0..5] of Byte = ($00,$00,$01,$01,$01,$00); // Маска поиска
 var
-  Buf : array [0..5] of Byte;
   Cmp : boolean;
   i : integer;
 begin
   Result := False;
-  if lpBuffers.Len > 5 then
+  if Len > 5 then
   begin
-    CopyMemory(Addr(buf), lpBuffers.buf, 6);
     for i := 0 to 5 do
     begin
-      Cmp := Buf[i] = SEARSH[i];
+      Cmp := Byte(Buf[i]) = SEARSH[i];
       if SEARCHM[i] = $01 then Cmp := True;
       if Cmp = False then break;
     end;
@@ -169,7 +162,7 @@ end;
 
 // Модифицированная функция WSASend. Проверят содержимое буфера, закрывает сокет или отправляет данные в подключенный сокет.
 function WSASend(
-                 S: TSocket;	var lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
+                 S: TSocket;	const lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
                  var lpOverlapped: WSAOverlapped;	lpCompletionRoutine: TWSAOverlappedCompletionRoutine
                  ): Integer; stdcall;
 
@@ -177,7 +170,7 @@ Var
   I: integer;
   Cmp : boolean;
   X, Y: integer;
-  Buf : array of AnsiChar;
+  Buf : BuffAnsi;
   Len: Integer;
   AddrPos : Integer;
 
@@ -189,11 +182,12 @@ begin
   lpCompletionRoutine := nil;
   AddrPos := 0;
 
-  if ClientHello(lpBuffers) or Host(lpBuffers, AddrPos) then
+  Len := lpBuffers.len;
+  SetLength(Buf, Len);
+  CopyMemory(Addr(Buf[0]), lpBuffers.buf, Len);
+
+  if ClientHello(Buf, Len) or Host(Buf, Len, AddrPos) then
   begin
-    Len := lpBuffers.len;
-    SetLength(Buf, Len);
-    CopyMemory(Addr(Buf[0]), lpBuffers.buf, Len);
     // Цикл сравнения содержимого буфера со списком
     for I := 0 to REFINELISTNUM - 1 do
     begin
