@@ -81,7 +81,7 @@ type
   TWSAOverlappedCompletionRoutine = procedure (dwError : DWORD; cbTransferred : DWORD; var lpOverlapped : WSAOVERLAPPED; dwFlags : DWORD);
   TGetaddrinfo = function(const Nodename: PAnsiChar; const Servname : PAnsiChar; const hints: PAddrInfo; var pResult: PAddrInfo): Integer; stdcall;
   TWSASend = function(
-                      S: TSocket;	var lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
+                      S: TSocket;	const lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
                       var lpOverlapped: WSAOverlapped;	lpCompletionRoutine: TWSAOverlappedCompletionRoutine
                       ): Integer; stdcall;
 
@@ -95,7 +95,7 @@ VAR
   RAWGetaddrinfo : Tgetaddrinfo;      // Функция получения адреса
 
 function WSASend(
-                 S: TSocket;	var lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
+                 S: TSocket; const lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
                  var lpOverlapped: WSAOverlapped;	lpCompletionRoutine: TWSAOverlappedCompletionRoutine
                  ): Integer; stdcall;
 function Setsockopt(s: TSocket; level, optname: Integer; optval: PAnsiChar; optlen: Integer): Integer; stdcall;
