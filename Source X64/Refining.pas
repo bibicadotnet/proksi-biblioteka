@@ -32,10 +32,10 @@ type
   TSocket = Cardinal;
 
   SunB = packed record // Структура представления адреса
-    B1: Char; // в виде 4-х байт
-    B2: Char;
-    B3: Char;
-    B4: Char;
+    B1: Byte; // в виде 4-х байт
+    B2: Byte;
+    B3: Byte;
+    B4: Byte;
   end;
 
   SunW = packed record // Структура представления адреса
@@ -43,25 +43,25 @@ type
     W2: Word;
   end;
 
-  inaddr = record          // Структура для хранения IP-адреса
-    case integer of        // Вариант представления адреса
-      0: (SB: SunB);       // как последовательнось четырех байт
-      1: (SW: SunW);       // как последовательность двух двухбайтных слов
-      2: (Saddr: Longint); // как одно четырехбайтное слово
+  inaddr = record           // Структура для хранения IP-адреса
+    case integer of         // Вариант представления адреса
+      0: (SB: SunB);        // как последовательнось четырех байт
+      1: (SW: SunW);        // как последовательность двух двухбайтных слов
+      2: (Saddr: Cardinal); // как одно четырехбайтное слово
   end;
   TInAddr = inaddr;
 
   sockaddrin = record // Структура для сокета
-    case Integer of                    // Вариант представления данных
+    case Integer of                         // Вариант представления данных
       0: (
-          sinfamily: Word;             // Семейство адресов (2 байта)
-          sinport: Word;               // Номер порта (2 байта)
-          sinaddr: TInAddr;            // Структура с IP-адресом (4 байта)
-          sinzero: array[0..7] of Char // Дополнение до размера структуры sockaddr (8 байт)
+          sinfamily: Word;                  // Семейство адресов (2 байта)
+          sinport: Word;                    // Номер порта (2 байта)
+          sinaddr: TInAddr;                 // Структура с IP-адресом (4 байта)
+          sinzero: array[0..7] of PAnsiChar // Дополнение до размера структуры sockaddr (8 байт)
          );
       1: (
-          safamily: Word;              // Семейство адресов (2 байта)
-          sadata: array[0..13] of Char // Данные (14 байт)
+          safamily: Word;                   // Семейство адресов (2 байта)
+          sadata: array[0..13] of PAnsiChar // Данные (14 байт)
          )
   end;
   TSockAddrIn = sockaddrin;
@@ -72,8 +72,8 @@ type
     ai_family: Integer;       // Семейство адресов
     ai_socktype: Integer;     // Тип сокета
     ai_protocol: Integer;     // Тип протокола
-    ai_addrlen: LongWord;     // Длина буфера в байтах, на который указывает элемент ai_addr
-    ai_canonname: PChar;      // Каноническое имя для хоста
+    ai_addrlen: NativeUInt;   // Длина буфера в байтах, на который указывает элемент ai_addr
+    ai_canonname: PAnsiChar;  // Каноническое имя для хоста
     var ai_addr: TSockAddrIn; // Указатель на структуру TSockAddrIn
     ai_next: PAddrInfo;       // Указатель PAddrInfo на следующую структуру типа TAddrInfo
   end;
