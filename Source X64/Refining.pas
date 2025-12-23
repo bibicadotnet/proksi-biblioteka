@@ -12,6 +12,8 @@ uses
 
 type
 
+  BuffAnsi = array of AnsiChar;    // Тип данных для функций Host, ClientHello, WSASend
+
   // Запись для функции WSASend
   WSABUF = record
     len: Cardinal;
@@ -77,7 +79,7 @@ type
   end;
 
   TWSAOverlappedCompletionRoutine = procedure (dwError : DWORD; cbTransferred : DWORD; var lpOverlapped : WSAOVERLAPPED; dwFlags : DWORD);
-  TGetaddrinfo = function(const Nodename: PChar; const Servname : PChar; const hints: PAddrInfo; var pResult: PAddrInfo): Integer; stdcall;
+  TGetaddrinfo = function(const Nodename: PAnsiChar; const Servname : PAnsiChar; const hints: PAddrInfo; var pResult: PAddrInfo): Integer; stdcall;
   TWSASend = function(
                       S: TSocket;	var lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
                       var lpOverlapped: WSAOverlapped;	lpCompletionRoutine: TWSAOverlappedCompletionRoutine
@@ -99,7 +101,7 @@ function WSASend(
 function Setsockopt(s: TSocket; level, optname: Integer; optval: PChar; optlen: Integer): Integer; stdcall;
 
 function Listen(s: TSocket; backlog: Integer): Integer; stdcall;
-function Getaddrinfo(const Nodename: PChar; const Servname : PChar; const hints: PAddrInfo; var pResult: PAddrInfo): Integer; stdcall;
+function Getaddrinfo(const Nodename: PAnsiChar; const Servname : PAnsiChar; const hints: PAddrInfo; var pResult: PAddrInfo): Integer; stdcall;
 
 implementation
 
@@ -249,7 +251,7 @@ begin
 end;
 
 // Функция getaddrinfo для получения IP адреса узла из его имени
-function Getaddrinfo(const Nodename: PChar; const Servname : PChar; const hints: PAddrInfo; var pResult: PAddrInfo): Integer; stdcall;
+function Getaddrinfo(const Nodename: PAnsiChar; const Servname : PAnsiChar; const hints: PAddrInfo; var pResult: PAddrInfo): Integer; stdcall;
 var
   Cmp : boolean;
   I: integer;
@@ -261,7 +263,7 @@ begin
   begin
     Cmp := false;
     Name := '';
-    SetString(Name, PCHAR(REFINELIST[I].buf), REFINELIST[I].Len);
+    SetString(Name, PAnsiChar(REFINELIST[I].buf), REFINELIST[I].Len);
     if (Nodename <> nil) and (String(Nodename) <> '') then if XPOS(Name, Nodename) <> 0 then Cmp := true;
     if Cmp = true then break;
   end;
