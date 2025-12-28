@@ -23,6 +23,7 @@ var
   SSOCODE : HOOKDATA;                  // Для формирования перехвата Setsockopt
   GAICODE : HOOKDATA;                  // Для формирования перехвата getaddrinfo
   PFPCODE : HOOKDATA;                  // Для формирования перехвата PSStringFromPropertyKey
+  WSTCODE : HOOKDATA;                  // Для формирования перехвата WSASendTo
 
 procedure SetHook(HOOK: HOOKDATA; OPT: byte);
 procedure CodeHook(OldProcAddress, NewProcAddress: pointer; OPT : byte = 0);
@@ -112,6 +113,14 @@ begin
     ReadProcessMemory(HANDLE, OldProcAddress, ADDR(PFPCODE.OLDDATA), 12, VALUE);
   end;
 
+  if OPT = 9 then  // Это для перехвата WSASendTo
+  begin
+    // Сохранить адрес функции в структуру
+    WSTCODE.FUNCADDRES := OldProcAddress;
+    // Схранить начало исходной функци в структуру STOCODE
+    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(WSTCODE.OLDDATA), 12, VALUE);
+  end;
+
   // Формирование кода прыжка в прокси функцию в теле исходной функции методом mov rax,addr jmp rax (12 байт)
   RAXJUMP.MOVRRAXOP := $B848;
   RAXJUMP.MOVRRAXARG := NewProcAddress;
@@ -126,6 +135,7 @@ begin
   if OPT = 6 then Move(RAXJUMP, SSOCODE.NEWDATA, 12);
   if OPT = 7 then Move(RAXJUMP, GAICODE.NEWDATA, 12);
   if OPT = 8 then Move(RAXJUMP, PFPCODE.NEWDATA, 12);
+  if OPT = 9 then Move(RAXJUMP, WSTCODE.NEWDATA, 12);
 
   // Изменить параметры доступа к области памяти
   if not VirtualProtect(OldProcAddress, 12, PAGE_EXECUTE_READWRITE, ADDR(Protect)) then exit;
