@@ -23,6 +23,7 @@ var
   SSOCODE : HOOKDATA;                  // Для формирования перехвата setsockopt
   GAICODE : HOOKDATA;                  // Для формирования перехвата getaddrinfo
   PFPCODE : HOOKDATA;                  // Для формирования перехвата PSStringFromPropertyKey
+  WSTCODE : HOOKDATA;                  // Для формирования перехвата WSASendTo
 
 procedure SetHook(HOOK: HOOKDATA; OPT: byte);
 procedure CodeHook(OldProcAddress, NewProcAddress: pointer; OPT : byte = 0);
@@ -112,6 +113,14 @@ begin
     ReadProcessMemory(HANDLE, OldProcAddress, ADDR(PFPCODE.OLDDATA), 5, VALUE);
   end;
 
+  if OPT = 9 then  // Это для перехвата WSASendTo
+  begin
+    // Сохранить адрес функции в структуру
+    WSTCODE.FUNCADDRES := OldProcAddress;
+    // Схранить начало исходной функци в структуру STOCODE
+    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(WSTCODE.OLDDATA), 5, VALUE);
+  end;
+
   // Формирование кода прыжка в прокси функцию в теле исходной функции
   CODE.JMP := $E9;
   CODE.OFFSET := CodeOffset(DWORD(OldProcAddress), DWORD(NewProcAddress));
@@ -125,7 +134,8 @@ begin
   if OPT = 6 then  Move(CODE, SSOCODE.NEWDATA, 5);
   if OPT = 7 then  Move(CODE, GAICODE.NEWDATA, 5);
   if OPT = 8 then  Move(CODE, PFPCODE.NEWDATA, 5);
-
+  if OPT = 9 then  Move(CODE, WSTCODE.NEWDATA, 5);
+  
   // Изменить параметры доступа к области памяти
   if not VirtualProtect(OldProcAddress, 5, PAGE_EXECUTE_READWRITE, ADDR(Protect)) then exit;
   // HANDLE := GetCurrentProcess; // Определить идентификатор текущего процесса
