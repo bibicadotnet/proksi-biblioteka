@@ -586,14 +586,21 @@ begin
   ADDR(RAWGetaddrinfo) := ADDR(Proc);
   end;
 
-  if (BCTOFF = TRUE) or (ECHOFF = TRUE) then begin
+    if (REFINE = True) or (ECHOFF = True) then begin
+  //Перехват функции WSASendTo
+  ADDR(Proc) := GetProcAddress(DLLHandle, 'WSASendTo');
+  CodeHook(Addr(Proc), ADDR(WSASendTo), 9);                             // Подмена адреса функции
+  ADDR(RAWWSASendTo) := ADDR(Proc);
+  end;
+
+  if BCTOFF = TRUE then begin
   // Перехват функции setsockopt
-  Addr(Proc) := GetProcAddress(DLLHandle, 'setsockopt');               // Определить адрес функции
+  Addr(Proc) := GetProcAddress(DLLHandle, 'setsockopt');                // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(Setsockopt), 6);
   ADDR(RAWSetsockopt) := ADDR(Proc);
 
-  // Перехват функции Listen
-  ADDR(Proc) := GetProcAddress(DLLHandle, 'listen');                   // Определить адрес функции
+  // Перехват функции listen
+  ADDR(Proc) := GetProcAddress(DLLHandle, 'listen');                    // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(Listen));
   end;
   end;
