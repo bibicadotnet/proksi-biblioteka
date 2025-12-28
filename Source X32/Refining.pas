@@ -66,6 +66,12 @@ type
   end;
   TSockAddrIn = sockaddrin;
 
+  sockaddr = record
+    sinfamily: Word;
+    sinzero: array[0..13] of Char;
+  end;
+  TSockAddr = sockaddr;
+
   PAddrInfo = Pointer;        // Нетипизированный указатель
   AddrInfo = packed record
     ai_flags: Integer;        // Флаги, указывающие параметры, используемые в функции getaddrinfo
@@ -84,12 +90,16 @@ TWSASend = function(
                     S: TSocket;	const lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
                     var lpOverlapped: WSAOverlapped;	lpCompletionRoutine: TWSAOverlappedCompletionRoutine
                     ): Integer; stdcall;
-
+TWSASendTo = function(
+                      S: TSocket; const lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
+                      const lpTo: TSockAddr; iTolen: Integer; var lpOverlapped: WSAOverlapped; lpCompletionRoutine: TWSAOverlappedCompletionRoutine
+                      ): Integer; stdcall;
 TClosesocket = function(s: TSocket): Integer; stdcall;
 TSetsockopt = function(s: TSocket; level, optname: Integer; optval: PChar; optlen: Integer): Integer; stdcall;
 
 VAR
   RAWWSASend : TWSASend;              // Оригинальная функция WSASend
+  RAWWSASendTo : TWSASendTo;          // Оригинальная функция WSASendTo
   RAWSetsockopt : TSetsockopt;        // Оригинальная функция Setsockopt
   RAWGetaddrinfo : Tgetaddrinfo;      // Оригинальная функция Getaddrinfo
   Closesocket : TClosesocket;         // Функция закрытия сокета
@@ -98,6 +108,9 @@ function WSASend(
                  S: TSocket;	const lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
                  var lpOverlapped: WSAOverlapped;	lpCompletionRoutine: TWSAOverlappedCompletionRoutine
                  ): Integer; stdcall;
+function WSASendTo(S: TSocket; const lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
+                   const lpTo: TSockAddr; iTolen: Integer; var lpOverlapped: WSAOverlapped; lpCompletionRoutine: TWSAOverlappedCompletionRoutine
+                  ): Integer; stdcall;
 function Setsockopt(s: TSocket; level, optname: Integer; optval: PChar; optlen: Integer): Integer; stdcall;
 function Listen(s: TSocket; backlog: Integer): Integer; stdcall;
 function Getaddrinfo(const Nodename: PChar; const Servname : PChar; const hints: PAddrInfo; var pResult: PAddrInfo): Integer; stdcall;                 
@@ -107,6 +120,58 @@ implementation
 // *******************************************
 //    Реализация функций доступа к интернет
 // *******************************************
+
+// Функция поиска DNS записи в UDP запросах
+function DNS(const Buf: BuffAnsi; Len : integer; var Name : String; var HTTPS: boolean): boolean;
+const
+  SEARSH   : array [0..11] of Byte = ($FF,$FF,$01,$00,$00,$01,$00,$00,$00,$00,$00,$00); // ID + флаги
+  SEARCHM  : array [0..11] of Byte = ($01,$01,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00); // Маска поиска
+var
+  Cmp : boolean;
+  I : integer;
+  X : integer;
+  L : integer;
+  P : integer;
+
+begin
+  Cmp := False;
+  Result := False;
+  P := 0;
+
+  if Len > 11 then                                  // Если размер данных больше 11
+  begin
+    for X := 0 to Len - 11 do                       // Цикл проверки буфера от начала
+    begin
+      for I := 0 to 11 do                           // Цикл проверки последовательности
+      begin
+        Cmp := Byte(Buf[X + I]) = SEARSH[i];        // Сравнить байты
+        if SEARCHM[i] = $01 then Cmp := True;       // Использовать маску (для любого байта)
+        if Cmp = False then break;                  // Прервать цикл при первом же отличии
+      end;
+      if Cmp = True then P := X + 12;               // Положение размера первой метки в данных
+      if Cmp = True then break;                     // Прервать цикл
+    end;
+
+    if Cmp = True then                              // Декодирование меток
+    begin
+      while (P < Len) do
+      begin
+        L := Byte(Buf[P]);                                                  // Считать размер метки
+        Inc(P, 1);                                                          // Перейти на позицию метки
+        if (L = 0) then Break;                                              // Прервать цикл если метка нулевая или если конец меток
+        if (Name <> '') then  Name := Name + '.';                           // Добавить точку после каждой метки
+        for I := P to P + L - 1 do Name := Name + Buf[I];                   // Считать метку из буфера
+        Inc(P, L);                                                          // Увеличить P на L (перейти на позицию размера следующей метки)
+      end;
+    end;
+
+    if Cmp = True then             // Определение типа записи HTTPS
+    begin
+      if (Byte(Buf[Len-3]) = $41) and (Byte(Buf[Len-1]) = $01) then HTTPS := True else HTTPS := False;
+    end;
+  end;
+  if Cmp = True then Result := True;
+end;
 
 // Функция поиска положения адреса в HTTP запросах
 function Host(const Buf: BuffAnsi; Len: Integer; var AddrPos: integer): boolean;
@@ -211,6 +276,50 @@ begin
   SetHook(WSACODE, 1);
 end;
 
+// Функция WSASendTo используется в протоколах UDP
+// В том числе в DNS запросах. Не используется если DNSOFF=1.
+function WSASendTo(s: TSocket; const lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
+                   const lpTo: TSockAddr; iTolen: Integer; var lpOverlapped: WSAOverlapped; lpCompletionRoutine: TWSAOverlappedCompletionRoutine
+                  ): Integer; stdcall;
+Var
+  I: integer;
+  Cmp : boolean;
+  Buf : BuffAnsi;
+  Len: Integer;
+  Name : String;
+  HostName : String;
+  HTTPS : boolean;
+begin
+  Cmp := False;
+  HTTPS := False;
+  // Врианты результата выполнения функции WSASendTo
+  // 0 - выполнена без ошибок. 10050 - Сеть не работает. 10053 - Соединение прервано. 10057 - Сокет не подключен.
+  Result := 10050;
+  Name := '';
+  HostName := '';
+
+  Len := lpBuffers.len;
+  SetLength(Buf, Len);
+  CopyMemory(Addr(Buf[0]), lpBuffers.buf, Len);
+
+  if DNS(Buf, Len, HostName, HTTPS) then         // Если в данных DNS запроса
+  begin
+    for I := 0 to REFINELISTNUM - 1 do
+    begin
+      Cmp := false;
+      SetString(Name, PCHAR(REFINELIST[I].buf), REFINELIST[I].Len);
+      if HostName <> '' then if XPOS(Name, HostName) <> 0 then Cmp := True;
+      if Cmp = True then break;
+    end;
+    if ECHOFF = True then if HTTPS = True then Cmp := True;
+  end;
+
+  SetHook(WSTCODE, 0);
+  if Cmp = True then CloseSocket(s); // Закрыть сокет.
+  if Cmp = False then Result := RAWWSASendTo(S, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpTo, iTolen, lpOverlapped,	lpCompletionRoutine);
+  SetHook(WSTCODE, 1);
+end;
+
 // Функция задаёт парамтры сокета. level  - это уровень,  optname - это опция
 function Setsockopt(s: TSocket; level, optname: Integer; optval: PChar; optlen: Integer): Integer; stdcall;
 var
@@ -218,12 +327,6 @@ var
 begin
   Cmp := false;
   Result := 10050;
-
-  if ECHOFF = True then   // Отключить использование ECH и DoH
-  begin
-    if (level = $FFFF) and (optname = $3005) then Cmp := true; // Игнорирование свойства SO_RANDOMIZE_PORT отлючает ECH и DoH
-    if level = $29 then Cmp := true;                           // Не использовать семейство адресов IP6
-  end;
 
   if BCTOFF = True then   // Отключить широковещательные рассылки
   begin
