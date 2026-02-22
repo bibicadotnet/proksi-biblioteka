@@ -114,7 +114,6 @@ begin
     FileName := AppPatch;
     ExeDir := GetAPPDir(AppPatch);                    // Получить путь к директории (без имени файла)
     PARAMS := ADDParam(ARG + ' ');                    // Добавить параметры к уже полученным
-    PARAMS := '"' + FileName + '"' + ' ' + PARAMS;    // Поместить перед всеми параметрами имя выполняемой программы
     Result := PWideChar(PARAMS + #0);                 // Готовый результат
   end;
 end;
