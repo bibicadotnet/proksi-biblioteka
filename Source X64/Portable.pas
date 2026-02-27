@@ -116,7 +116,7 @@ begin
     GetModuleFileName(0, AppPatch, SizeOF(AppPatch));          // Получить полный путь (с именем файла)
     FileName := AppPatch;                                      // Имя выполняемой программы
     ExeDir := GetAPPDir(AppPatch);                             // Получить путь к директории (без имени файла)
-    PARAMS := ADDParam(ARG);                                   // Добавить параметры к уже полученным
+    PARAMS := ADDParam(ARG + ' ');                             // Добавить параметры к уже полученным
     Result := PWideChar(PARAMS + #0);                          // Готовый результат
   end;
 end;
