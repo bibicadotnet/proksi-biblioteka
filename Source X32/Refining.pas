@@ -95,7 +95,7 @@ TWSASendTo = function(
                       const lpTo: TSockAddr; iTolen: Integer; var lpOverlapped: WSAOverlapped; lpCompletionRoutine: TWSAOverlappedCompletionRoutine
                       ): Integer; stdcall;
 TClosesocket = function(s: TSocket): Integer; stdcall;
-TSetsockopt = function(s: TSocket; level, optname: Integer; optval: PChar; optlen: Integer): Integer; stdcall;
+TSetsockopt = function(s: TSocket; level, optname: Integer; optval: PByte; optlen: Integer): Integer; stdcall;
 
 VAR
   RAWWSASend : TWSASend;              // Оригинальная функция WSASend
@@ -111,7 +111,7 @@ function WSASend(
 function WSASendTo(S: TSocket; const lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
                    const lpTo: TSockAddr; iTolen: Integer; var lpOverlapped: WSAOverlapped; lpCompletionRoutine: TWSAOverlappedCompletionRoutine
                   ): Integer; stdcall;
-function Setsockopt(s: TSocket; level, optname: Integer; optval: PChar; optlen: Integer): Integer; stdcall;
+function Setsockopt(s: TSocket; level, optname: Integer; optval: PByte; optlen: Integer): Integer; stdcall;
 function Listen(s: TSocket; backlog: Integer): Integer; stdcall;
 function Getaddrinfo(const Nodename: PChar; const Servname : PChar; const hints: PAddrInfo; var pResult: PAddrInfo): Integer; stdcall;                 
 
@@ -321,7 +321,7 @@ begin
 end;
 
 // Функция задаёт парамтры сокета. level  - это уровень,  optname - это опция
-function Setsockopt(s: TSocket; level, optname: Integer; optval: PChar; optlen: Integer): Integer; stdcall;
+function Setsockopt(s: TSocket; level, optname: Integer; optval: PByte; optlen: Integer): Integer; stdcall;
 var
   Cmp : boolean;
 begin
