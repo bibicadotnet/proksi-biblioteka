@@ -3,7 +3,7 @@ unit Parametrs;
 interface
 
 uses
-  Windows,
+  SysTypFunc,
   Utils;
 
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
@@ -155,25 +155,25 @@ begin
     Readln(IniFile, IniLine);                   // Прочитат строку в переменную IniLine
     if GetParam(IniLine, IniParam) = true then  // Извлечь из строки значение параметра
     begin
-      if POS('REGOFF=', IniLine) <> 0 then if IniParam = '1' then REGOFF := True else if IniParam = '0' then REGOFF := False;
-      if POS('AIDOFF=', IniLine) <> 0 then if IniParam = '1' then AIDOFF := True else if IniParam = '0' then AIDOFF := False;
-      if POS('DIROFF=', IniLine) <> 0 then if IniParam = '1' then DIROFF := True else if IniParam = '0' then DIROFF := False;
-      if POS('RMDISK=', IniLine) <> 0 then if IniParam = '1' then RMDISK := True else if IniParam = '0' then RMDISK := False;
-      if POS('REFINE=', IniLine) <> 0 then if IniParam = '1' then REFINE := True else if IniParam = '0' then REFINE := False;
-      if POS('SPFOLD=', IniLine) <> 0 then if IniParam = '1' then SPFOLD := True else if IniParam = '0' then SPFOLD := False;
-      if POS('BCTOFF=', IniLine) <> 0 then if IniParam = '1' then BCTOFF := True else if IniParam = '0' then BCTOFF := False;
-      if POS('ECHOFF=', IniLine) <> 0 then if IniParam = '1' then ECHOFF := True else if IniParam = '0' then ECHOFF := False;
-      if POS('DNSOFF=', IniLine) <> 0 then if IniParam = '1' then DNSOFF := True else if IniParam = '0' then DNSOFF := False;
+      if XPOS('REGOFF=', IniLine) <> 0 then if IniParam = '1' then REGOFF := True else if IniParam = '0' then REGOFF := False;
+      if XPOS('AIDOFF=', IniLine) <> 0 then if IniParam = '1' then AIDOFF := True else if IniParam = '0' then AIDOFF := False;
+      if XPOS('DIROFF=', IniLine) <> 0 then if IniParam = '1' then DIROFF := True else if IniParam = '0' then DIROFF := False;
+      if XPOS('RMDISK=', IniLine) <> 0 then if IniParam = '1' then RMDISK := True else if IniParam = '0' then RMDISK := False;
+      if XPOS('REFINE=', IniLine) <> 0 then if IniParam = '1' then REFINE := True else if IniParam = '0' then REFINE := False;
+      if XPOS('SPFOLD=', IniLine) <> 0 then if IniParam = '1' then SPFOLD := True else if IniParam = '0' then SPFOLD := False;
+      if XPOS('BCTOFF=', IniLine) <> 0 then if IniParam = '1' then BCTOFF := True else if IniParam = '0' then BCTOFF := False;
+      if XPOS('ECHOFF=', IniLine) <> 0 then if IniParam = '1' then ECHOFF := True else if IniParam = '0' then ECHOFF := False;
+      if XPOS('DNSOFF=', IniLine) <> 0 then if IniParam = '1' then DNSOFF := True else if IniParam = '0' then DNSOFF := False;
 
-      if POS('APPDIR=', IniLine) <> 0 then if IniParam = '0' then FULLPATCH := False else if IniParam = '1' then FULLPATCH := True;
-      if POS('DATADIR=', IniLine) <> 0 then if IniParam <> '' then DATADIR := IniParam;
-      if POS('CACHEDIR=', IniLine) <> 0 then if IniParam <> '' then CACHEDIR := IniParam;
-      if POS('SPECFOLDER=', IniLine) <> 0 then if IniParam <> '' then SPECFOLDER := IniParam;
-      if POS('RUNPARAM=', IniLine) <> 0 then if IniParam <> '' then RUNPARAM := IniParam;
-      if POS('COMPNAME=', IniLine) <> 0 then if IniParam <> '' then COMPNAME := IniParam;
+      if XPOS('APPDIR=', IniLine) <> 0 then if IniParam = '0' then FULLPATCH := False else if IniParam = '1' then FULLPATCH := True;
+      if XPOS('DATADIR=', IniLine) <> 0 then if IniParam <> '' then DATADIR := IniParam;
+      if XPOS('CACHEDIR=', IniLine) <> 0 then if IniParam <> '' then CACHEDIR := IniParam;
+      if XPOS('SPECFOLDER=', IniLine) <> 0 then if IniParam <> '' then SPECFOLDER := IniParam;
+      if XPOS('RUNPARAM=', IniLine) <> 0 then if IniParam <> '' then RUNPARAM := IniParam;
+      if XPOS('COMPNAME=', IniLine) <> 0 then if IniParam <> '' then COMPNAME := IniParam;
 
         // Заполнение массивов из списка удаления директорий
-      if POS('DeleteDir', IniLine) <> 0 then if IniParam <> '' then
+      if XPOS('DeleteDir', IniLine) <> 0 then if IniParam <> '' then
       begin
         if DATADIR <> '' then REPLACE(IniParam, DATADIR);
         DIRLISTNUM := DIRLISTNUM + 1;
@@ -184,7 +184,7 @@ begin
       end;
 
       // Заполнение массива из списка удаления файлов
-      if POS('DeleteFile', IniLine) <> 0 then if IniParam <> '' then
+      if XPOS('DeleteFile', IniLine) <> 0 then if IniParam <> '' then
       begin
         if DATADIR <> '' then REPLACE(IniParam, DATADIR);  // Заменить %DATADIR% на значение из параметра DATADIR
         FILELISTNUM := FILELISTNUM + 1;
@@ -193,7 +193,7 @@ begin
       end;
 
       // Заполнить массив записей из списка обнуления запросов к гугло и его доменам
-      if POS('NullDomain', IniLine) <> 0 then if IniParam <> '' then
+      if XPOS('NullDomain', IniLine) <> 0 then if IniParam <> '' then
       begin
         REFINELISTNUM := REFINELISTNUM + 1;
         SetLength(REFINELIST, REFINELISTNUM);
