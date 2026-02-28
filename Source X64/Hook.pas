@@ -3,7 +3,7 @@ unit Hook;
 interface
 
 uses
-  Windows;
+  SysTypFunc;
 
   {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
 
