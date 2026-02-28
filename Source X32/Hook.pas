@@ -3,7 +3,7 @@ unit Hook;
 interface
 
 uses
-  Windows;
+  SysTypFunc;
 
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
 
@@ -41,8 +41,8 @@ var
   OFFSET : DWORD;                      // Поле для записи аргумента инструкции JMP  | DWORD
   end;
 
-  Protect : DWORD;                     // Переменная для хранения параметров доступа к странице памяти
-  VALUE   : DWORD;                     // Переменная для функции WriteProcessMemory
+  Protect : LongWord;                  // Переменная для хранения параметров доступа к странице памяти
+  VALUE   : LongWord;                  // Переменная для функции WriteProcessMemory
 
 const
   HANDLE = THandle(-1);
@@ -164,8 +164,8 @@ end;
 // Включить или Отключить перхват
 procedure SetHook(HOOK: HOOKDATA; OPT: byte);
 var
-  Protect : DWORD;                     // Переменная для хранения параметров доступа к странице памяти
-  VALUE   : DWORD;                     // Переменная для функции WriteProcessMemory
+  Protect : LongWord;                  // Переменная для хранения параметров доступа к странице памяти
+  VALUE   : LongWord;                  // Переменная для функции WriteProcessMemory
 const
   HANDLE = THandle(-1);
 begin
