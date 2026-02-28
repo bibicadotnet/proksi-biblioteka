@@ -3,8 +3,7 @@ unit Portable;
 interface
 
 uses
-Windows,
-PsApi,
+SysTypFunc,
 Utils,
 Parametrs,
 Hook,
@@ -440,12 +439,9 @@ end;
 procedure HookPreferences;
 var
   DLLHandle : THandle;                                                  // Переменная типа THandle
-  SysPatch  : array [0..MAX_PATH] of Char;                              // Переменная для хранения пути
-  FileName  : string;                                                   // Переменная для хранения полного имени файла
 begin
-  GetSystemDirectory(SysPatch, SizeOf(SysPatch));                       // Определить Путь к системной директории
   // Перехват вызова функций из kernel32.dll
-  DLLHandle := GetModuleHandle('kernel32.dll');
+  DLLHandle := GetModule('kernel32.dll');                               // Получить идентификатор библиотеки
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetComputerNameA');          // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(GetComputerNameA));                         // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetComputerNameW');          // Определить адрес функции
@@ -482,12 +478,7 @@ begin
   end;
 
   // Перехват вызова функций из advapi32.dll
-  DLLHandle := GetModuleHandle('advapi32.dll');                         // Получить идентификатор
-  if (DLLHandle = 0) then                                               // Если идентификатор не получен
-  begin
-    FileName :=  SysPatch + '\advapi32.dll';                            // Получить полное имя файла
-    DLLHandle := LoadLibrary(pchar(FileName));                          // Загрузить библиотеку и получить её идентификатор
-  end;  
+  DLLHandle := GetModule('advapi32.dll');                               // Получить идентификатор библиотеки
   Addr(Proc) := GetProcAddress(DLLHandle, 'LogonUserA');                // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(LogonUserW));                               // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'LogonUserW');                // Определить адрес функции
@@ -531,8 +522,7 @@ begin
   CodeHook(ADDR(Proc), ADDR(RegisterEventSourceW));                     // Подмена адреса функции в процессе на адрес функции из DLL
 
   // Перехват вызова функций из Crypt32.dll
-  FileName :=  SysPatch + '\Crypt32.dll';                               // Получить полное имя файла
-  DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
+  DLLHandle := GetModule('Crypt32.dll');                                // Получить идентификатор библиотеки
   Addr(Proc) := GetProcAddress(DLLHandle, 'CryptProtectData');          // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(CryptProtectData));                         // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'CryptUnprotectData');        // Определить адрес функции
@@ -540,7 +530,7 @@ begin
 
   // Перехват вызова функции NtCreateKey.
   if REGOFF = TRUE then begin
-  DLLHandle := GetModuleHandle('ntdll.dll');                            // DLLHandle = идентификатор модуля (адрес по которому он загружен)
+  DLLHandle := GetModule('ntdll.dll');                                  // Полученить идентификатор библиотеки
   Addr(Proc) := GetProcAddress(DLLHandle, 'NtCreateKey');               // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(NtCreateKey), 3);                           // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   ADDR(RawCreateKey) := ADDR(Proc);                                     // Присвоить адрес функции RawCreateKey
@@ -548,29 +538,21 @@ begin
 
   // Перехват вызова функции SHGetFolderPathW
   if SPFOLD = TRUE then begin
-  FileName := SysPatch + '\SHELL32.dll';                                // Получить полное имя файла
-  DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
+  DLLHandle := GetModule('SHELL32.dll');                                // Получить идентификатор библиотеки
   Addr(Proc) := GetProcAddress(DLLHandle, 'SHGetFolderPathW');          // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(SHGetFolderPathW));                         // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
   
   // Перехват вызова функций из Propsys.dll
   if AIDOFF = TRUE then begin
-  DLLHandle := GetModuleHandle('Propsys.dll');                          // Получить идентификатор
-  if (DLLHandle = 0) then                                               // Если идентификатор не получен
-  begin
-    FileName :=  SysPatch + '\Propsys.dll';                             // Получить полное имя файла
-    DLLHandle := LoadLibrary(pchar(FileName));                          // Загрузить библиотеку и получить её идентификатор
-  end;
+  DLLHandle := GetModule('Propsys.dll');                                // Получить идентификатор библиотеки
   Addr(Proc) := GetProcAddress(DLLHandle, 'PSStringFromPropertyKey');   // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(StringFromPropertyKey), 8);                 // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   ADDR(RAWPSStringFromPropertyKey) := ADDR(Proc);                       // Присвоить адрес функции RAWPSStringFromPropertyKey
   end;
 
   if (REFINE = TRUE) or (BCTOFF = TRUE) or (ECHOFF = TRUE) then begin
-  //Подключение библиотеки WS2_32.dll
-  FileName := SysPatch + '\WS2_32.dll';                                 // Получить полное имя файла
-  DLLHandle := LoadLibrary(pchar(FileName));                            // Загрузить библиотеку и получить её идентификатор
+  DLLHandle := GetModule('WS2_32.dll');                                 // Получить идентификатор библиотеки
   // Импорт функции closesocket
   ADDR(closesocket) := GetProcAddress(DLLHandle, 'closesocket');
   
