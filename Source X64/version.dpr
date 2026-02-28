@@ -3,12 +3,12 @@ library version;
 {$R 'VersionInfo.res' 'VersionInfo.rc'}
 
 uses
-  Windows,
   Hook in 'Hook.pas',
   Portable in 'Portable.pas',
   Utils in 'Utils.pas',
   Refining in 'Refining.pas',
-  Parametrs in 'Parametrs.pas';
+  Parametrs in 'Parametrs.pas',
+  SysTypFunc in 'SysTypFunc.pas';
 
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
 
