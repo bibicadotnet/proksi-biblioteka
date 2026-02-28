@@ -2,7 +2,7 @@ unit SysTypFunc;
 
 interface
 
-{ *Описание типов данных из модуля Windows и PSAPI* }
+{ *РћРїРёСЃР°РЅРёРµ С‚РёРїРѕРІ РґР°РЅРЅС‹С… РёР· РјРѕРґСѓР»СЏ Windows Рё PSAPI* }
 Const
   kernel32  = 'kernel32.dll';
   PAGE_EXECUTE_READWRITE = $40;
@@ -193,7 +193,7 @@ function Succeeded(Status: HRESULT): BOOL; inline;
 procedure CopyMemory(Destination: Pointer; Source: Pointer; Length: NativeUInt);
 function GetMappedFileNameW(hProcess: THandle; lpv: Pointer; lpFilename: PWideChar; nSize: DWORD): DWORD;
 
-{ *Описание типов данных из модуля Windows и PSAPI* }
+{ *РћРїРёСЃР°РЅРёРµ С‚РёРїРѕРІ РґР°РЅРЅС‹С… РёР· РјРѕРґСѓР»СЏ Windows Рё PSAPI* }
 
 implementation
 
