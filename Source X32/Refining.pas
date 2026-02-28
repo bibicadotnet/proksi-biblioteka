@@ -3,7 +3,7 @@ unit Refining;
 interface
 
 uses
-  Windows,
+  SysTypFunc,
   Parametrs,
   Hook,
   Utils;
