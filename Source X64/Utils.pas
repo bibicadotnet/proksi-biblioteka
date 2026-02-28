@@ -3,7 +3,7 @@ unit Utils;
 interface
 
 uses
-  Windows;
+  SysTypFunc;
 
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
 {$WARN SYMBOL_PLATFORM OFF}
@@ -43,6 +43,7 @@ function FindMatchingFile(var F: TSearchRec): Integer;
 function GetDIR(const PROGDIR: string; PROFDIR: string; FULLPATCH : boolean): string;
 function GetAPPDir(DIR : string): string;
 function DirNameDistil(const Dir : string): string;
+function GetModule(Const Module: PChar): THandle;
 
 implementation
 
@@ -55,7 +56,14 @@ begin
   GetVersionEx(OSINFO);
   OS := 2;
   if OSINFO.dwMajorVersion = 5 then OS := 1; // Windows XP
-end;  
+end; 
+
+// Функция для получения идентификатора библиотеки
+function GetModule(Const Module: PChar): THandle;
+begin
+  Result := GetModuleHandle(Module);                       // Получить идентификатор
+  if Result = 0 then Result := LoadLibrary(Module);        // Если идентификатор не получен загрузить библиотеку
+end;
 
 // Удалить из имени директории последовательно все '..\' и '.'
 function DirNameDistil(const Dir : string): string;
@@ -130,7 +138,7 @@ procedure FindClose(var F: TSearchRec);
 begin
   if F.FindHandle <> INVALID_HANDLE_VALUE then
   begin
-    Windows.FindClose(F.FindHandle);
+    SysTypFunc.FindClose(F.FindHandle);
     F.FindHandle := INVALID_HANDLE_VALUE;
   end;
 end;
