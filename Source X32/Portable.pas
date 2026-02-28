@@ -426,10 +426,6 @@ procedure HookPreferences;
 var
   DLLHandle : THandle;                                                  // Переменная типа THandle (соответствует LONGWORD)
 begin
-
-
-
-
   // Перехват вызова функций из kernel32.dll
   DLLHandle := GetModule('kernel32.dll');                               // Получить идентификатор
   Addr(Proc) := GetProcAddress(DLLHandle, 'GetComputerNameA');          // Определить адрес функции
@@ -469,11 +465,6 @@ begin
   
   //Перехват вызова функций из advapi32.dll
   DLLHandle := GetModule('advapi32.dll');                               // Получить идентификатор
-
-
-
-
-
   Addr(Proc) := GetProcAddress(DLLHandle, 'LogonUserA');                // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(LogonUserW));                               // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   Addr(Proc) := GetProcAddress(DLLHandle, 'LogonUserW');                // Определить адрес функции
@@ -543,11 +534,6 @@ begin
   // Перехват вызова функций из Propsys.dll
   if AIDOFF = TRUE then begin
   DLLHandle := GetModule('Propsys.dll');                                // Получить идентификатор
-
-
-
-
-
   Addr(Proc) := GetProcAddress(DLLHandle, 'PSStringFromPropertyKey');   // Определить адрес функции
   CodeHook(Addr(Proc), ADDR(StringFromPropertyKey), 8);                 // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   ADDR(RAWPSStringFromPropertyKey) := ADDR(Proc);                       // Присвоить адрес функции RAWPSStringFromPropertyKey
@@ -555,7 +541,6 @@ begin
 
   if (REFINE = TRUE) or (BCTOFF = TRUE) or (ECHOFF = TRUE) then begin
   DLLHandle := GetModule('WS2_32.dll');                                 // Получить идентификатор
-
 
   // Импорт функции closesocket
   ADDR(closesocket) := GetProcAddress(DLLHandle, 'closesocket');
