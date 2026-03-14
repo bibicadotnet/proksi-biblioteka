@@ -210,7 +210,6 @@ var
 begin
   if (Attribute = PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY) and (cbSize >= sizeof(UInt64)) then
   begin
-    SetLength(Buffer, cbSize);                     // Задать размер буфера
     CopyMemory(ADDR(Value), lpValue, cbSize);      // Скопировать значение атрибута из адреса по указателю
     Value := Value and not (UInt64(1) shl 44);     // Сбросить бит NON_MICROSOFT_BINARIES_ALWAYS_ON
     Value := Value and not (UInt64(1) shl 28);     // Сбросить бит WIN32K_SYSTEM_CALL_DISABLE_ALWAYS_ON	
