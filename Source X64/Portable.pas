@@ -206,16 +206,15 @@ function UpdateProcThreadAttribute
    lpReturnSize: PSIZE_T            // Этот параметр зарезервирован и должен иметь значение NULL
   ): BOOL; stdcall;
 var
-  Buffer : array of byte;
+  Value : UInt64;
 begin
   if (Attribute = PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY) and (cbSize >= sizeof(UInt64)) then
   begin
     SetLength(Buffer, cbSize);                     // Задать размер буфера
-    CopyMemory(Addr(Buffer[0]), lpValue, cbSize);  // Скопировать в массив значение атрибута из адреса по указателю
-    Buffer[5] := Buffer[5] and not (1 shl 4);          // Сбросить бит NON_MICROSOFT_BINARIES_ALWAYS_ON - это пятый бит шестого байта Int64
-    Buffer[3] := Buffer[3] and not (1 shl 4);          // Сбросить бит WIN32K_SYSTEM_CALL_DISABLE_ALWAYS_ON - это пятый бит четвертого байта Int64	
-    CopyMemory(lpValue, Addr(Buffer[0]), cbSize);  // Скопировать в адрес по указателю значения из буфера
-    Buffer := nil;                                 // Освободить память буфера
+    CopyMemory(ADDR(Value), lpValue, cbSize);      // Скопировать значение атрибута из адреса по указателю
+    Value := Value and not (UInt64(1) shl 44);     // Сбросить бит NON_MICROSOFT_BINARIES_ALWAYS_ON
+    Value := Value and not (UInt64(1) shl 28);     // Сбросить бит WIN32K_SYSTEM_CALL_DISABLE_ALWAYS_ON	
+    CopyMemory(lpValue, ADDR(Value), cbSize);      // Скопировать в адрес по указателю значения атрибута
   end;
   SetHook(UPTCODE, 0);
   result := RawUpdateProcThreadAttribute(lpAttributeList, dwFlags, Attribute, lpValue, cbSize, lpPreviousValue, lpReturnSize);
