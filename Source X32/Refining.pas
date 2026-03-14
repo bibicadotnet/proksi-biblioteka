@@ -297,6 +297,7 @@ begin
   Result := 10050;
   Name := '';
   HostName := '';
+  lpCompletionRoutine := nil;
 
   Len := lpBuffers.len;
   SetLength(Buf, Len);
