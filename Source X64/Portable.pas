@@ -88,15 +88,7 @@ var
   RawCreateKey  : CreateKey;
   RawPSStringFromPropertyKey : PSStringFPropKey;
 
-{
-  Описание функций для подмены в системных библиотеках
-  kernel32.dll (GetComputerName, GetVolumeInformation, UpdateProcThreadAttribute, CreateDirectoryW в XP)
-  kernelbase.dll (CreateDirectoryW в 7-11)
-  Advapi32.dll (LogonUserA, LogonUserW)
-  Crypt32.dll (CryptProtectData, CryptUnprotectData)
-  ntdll.dll (NtCreateKey, LoadDll)
-  Propsys.dll (PSStringFromPropertyKey)
-}
+{ * Реализация прокси функций * }
 
 // Измененная функция GetCommandLineW. Добавляет аргументы в командную строку перед запуском
 function CommandLineW: PWideChar;
