@@ -197,7 +197,7 @@ end;
 procedure Move(const Source; var Dest; Count : Cardinal);
 var
   S, D: PAnsiChar;
-  I: Cardinal;
+  I: Integer;
 begin
   S := PAnsiChar(Addr(Source));      // Получить адрес данных и присвоить его указателю
   D := PAnsiChar(Addr(Dest));        // Получить адрес данных и присвоить его указателю
@@ -210,7 +210,7 @@ end;
 procedure CopyMemory(Destination: Pointer; Source: Pointer; Length: Cardinal);
 var
   Dest, Sour : PAnsiChar;
-  I : Cardinal;
+  I : Integer;
 begin
   Sour := PAnsiChar(Source);            // Привести нетипизированный указатель к типизированному
   Dest := PAnsiChar(Destination);       // Привести нетипизированный указатель к типизированному
