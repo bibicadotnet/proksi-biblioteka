@@ -140,9 +140,6 @@ end;
 procedure SetHook(HOOK: HOOKDATA; OPT: byte);
 var
   Protect : LongWord;                  // Переменная для хранения параметров доступа к странице памяти
-  VALUE   : LongWord;                  // Переменная для функции WriteProcessMemory
-const
-  HANDLE = THandle(-1);
 begin
   // Изменить параметры доступа к памяти где расположена функция
   if not VirtualProtect(HOOK.FUNCADDRES, 5, PAGE_EXECUTE_READWRITE, ADDR(Protect)) then exit;
