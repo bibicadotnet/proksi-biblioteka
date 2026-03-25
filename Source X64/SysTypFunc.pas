@@ -47,15 +47,14 @@ Type
   FARPROC = Pointer;
 
   PSecurityAttributes = ^TSecurityAttributes;
-  _SECURITY_ATTRIBUTES = record
+  SECURITY_ATTRIBUTES = record
     nLength: DWORD;
     lpSecurityDescriptor: Pointer;
     bInheritHandle: BOOL;
   end;
-  TSecurityAttributes = _SECURITY_ATTRIBUTES;
-  SECURITY_ATTRIBUTES = _SECURITY_ATTRIBUTES;
+  TSecurityAttributes = SECURITY_ATTRIBUTES;
 
-  _OSVERSIONINFOA = record
+  OSVERSIONINFOA = record
     dwOSVersionInfoSize: DWORD;
     dwMajorVersion: DWORD;
     dwMinorVersion: DWORD;
@@ -64,7 +63,7 @@ Type
     szCSDVersion: array[0..127] of AnsiChar; { Maintenance AnsiString for PSS usage }
   end;
 
-  _OSVERSIONINFOW = record
+  OSVERSIONINFOW = record
     dwOSVersionInfoSize: DWORD;
     dwMajorVersion: DWORD;
     dwMinorVersion: DWORD;
@@ -73,18 +72,18 @@ Type
     szCSDVersion: array[0..127] of WideChar; { Maintenance UnicodeString for PSS usage }
   end;
 
-  TOSVersionInfoA = _OSVERSIONINFOA;
-  TOSVersionInfoW = _OSVERSIONINFOW;
+  TOSVersionInfoA = OSVERSIONINFOA;
+  TOSVersionInfoW = OSVERSIONINFOW;
   TOSVersionInfo = TOSVersionInfoW;
 
-  _FILETIME = record
+  FILETIME = record
     dwLowDateTime: DWORD;
     dwHighDateTime: DWORD;
   end;
 
-  TFileTime = _FILETIME;
+  TFileTime = FILETIME;
 
-  _WIN32_FIND_DATAA = record
+  WIN32_FIND_DATAA = record
     dwFileAttributes: DWORD;
     ftCreationTime: TFileTime;
     ftLastAccessTime: TFileTime;
@@ -97,7 +96,7 @@ Type
     cAlternateFileName: array[0..13] of AnsiChar;
   end;
 
-  _WIN32_FIND_DATAW = record
+  WIN32_FIND_DATAW = record
     dwFileAttributes: DWORD;
     ftCreationTime: TFileTime;
     ftLastAccessTime: TFileTime;
@@ -110,22 +109,14 @@ Type
     cAlternateFileName: array[0..13] of WideChar;
   end;
 
-  TWin32FindDataA = _WIN32_FIND_DATAA;
-  TWin32FindDataW = _WIN32_FIND_DATAW;
+  TWin32FindDataA = WIN32_FIND_DATAA;
+  TWin32FindDataW = WIN32_FIND_DATAW;
   TWin32FindData = TWin32FindDataW;
 
   TGetMappedFileNameW = function (hProcess: THandle; lpv: Pointer; lpFilename: PWideChar; nSize: DWORD): DWORD stdcall;
 
-function ReadProcessMemory(hProcess: THandle; const lpBaseAddress: Pointer; lpBuffer: Pointer; nSize: SIZE_T; var lpNumberOfBytesRead: SIZE_T): BOOL; stdcall;
-function ReadProcessMemory; external kernel32 name 'ReadProcessMemory';
-
-function VirtualProtect(lpAddress: Pointer; dwSize: SIZE_T; flNewProtect: DWORD; lpflOldProtect: Pointer): BOOL; stdcall; overload;
-function VirtualProtect(lpAddress: Pointer; dwSize: SIZE_T; flNewProtect: DWORD; var OldProtect: DWORD): BOOL; stdcall; overload;
+function VirtualProtect(lpAddress: Pointer; dwSize: SIZE_T; flNewProtect: DWORD; lpflOldProtect: Pointer): BOOL; stdcall;
 function VirtualProtect(lpAddress: Pointer; dwSize: SIZE_T; flNewProtect: DWORD; lpflOldProtect: Pointer): BOOL; external kernel32 name 'VirtualProtect';
-function VirtualProtect(lpAddress: Pointer; dwSize: SIZE_T; flNewProtect: DWORD; var OldProtect: DWORD): BOOL; external kernel32 name 'VirtualProtect';
-
-function WriteProcessMemory(hProcess: THandle; const lpBaseAddress: Pointer; lpBuffer: Pointer; nSize: SIZE_T; var lpNumberOfBytesWritten: SIZE_T): BOOL; stdcall;
-function WriteProcessMemory; external kernel32 name 'WriteProcessMemory';
 
 function GetVersionEx(var lpVersionInformation: TOSVersionInfo): BOOL; stdcall;
 function GetVersionEx(var lpVersionInformation: TOSVersionInfo): BOOL; external kernel32 name 'GetVersionExW';
@@ -190,6 +181,7 @@ function LoadLibrary(lpLibFileName: PWideChar): HMODULE; stdcall;
 function LoadLibrary; external kernel32 name 'LoadLibraryW';
 
 function Succeeded(Status: HRESULT): BOOL; inline;
+procedure Move(const Source; var Dest; Count : NativeUInt);
 procedure CopyMemory(Destination: Pointer; Source: Pointer; Length: NativeUInt);
 function GetMappedFileNameW(hProcess: THandle; lpv: Pointer; lpFilename: PWideChar; nSize: DWORD): DWORD;
 
@@ -206,9 +198,28 @@ begin
   Result := Status and HRESULT($80000000) = 0;
 end;
 
-procedure CopyMemory(Destination: Pointer; Source: Pointer; Length: NativeUInt);
+procedure Move(const Source; var Dest; Count : NativeUInt);
+var
+  S, D: PAnsiChar;
+  I: NativeUInt;
 begin
-  Move(Source^, Destination^, Length);
+  S := PAnsiChar(Addr(Source));      // Получить Адрес памяти с данными в указатель
+  D := PAnsiChar(Addr(Dest));        // Получить Адрес памяти с данными в указатель
+  if S = D then Exit;                // Сравнить и выйти из процедуры если равны
+  if NativeUInt(D) > NativeUInt(S) then for I := Count - 1 downto 0 do D[I] := S[I];
+  if NativeUInt(D) < NativeUInt(S) then for I := 0 to Count - 1 do D[I] := S[I];
+end;
+
+procedure CopyMemory(Destination: Pointer; Source: Pointer; Length: NativeUInt);
+var
+  Sour, Dest: PAnsiChar;
+  I: NativeUInt;
+begin
+  Sour := PAnsiChar(Source);          // Привести указатель к типу PChar
+  Dest := PAnsiChar(Destination);     // Привести указатель к типу PChar
+  if Sour = Dest then Exit;           // Сравнить и выйти из процедуры если равны
+  if NativeUInt(Dest) > NativeUInt(Sour) then for I := Length - 1 downto 0 do Dest[I] := Sour[I];
+  if NativeUInt(Dest) < NativeUInt(Sour) then for I := 0 to Length - 1 do Dest[I] := Sour[I];
 end;
 
 function CheckPSAPILoaded: Boolean;
