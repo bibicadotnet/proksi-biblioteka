@@ -42,106 +42,81 @@ var
   end;
 
   Protect : Cardinal;                   // Переменная для хранения параметров доступа к странице памяти
-  VALUE   : NativeUInt;                 // Переменная для функции WriteProcessMemory
-
-const
-  HANDLE = THandle(-1);
 
 begin
 
-  if OPT = 1 then  // Это для перехвата GetCommandLineW
-  begin
-    // Сохранить адрес функции
-    CMDCODE.FUNCADDRES := OldProcAddress;
-    // Схранить начало исходной функци в структуру CMDCODE. Размер 12 байт.
-    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(CMDCODE.OLDDATA), 12, VALUE);
-  end;
-
-  if OPT = 2 then  // Это для создания перехвата UpdateProcThreadAttribute WIN7-11
-  begin
-    // Сохранить адрес функции
-    UPTCODE.FUNCADDRES := OldProcAddress;
-    // Схранить начало исходной функци в структуру UPTCODE. Размер 12 байт.
-    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(UPTCODE.OLDDATA), 12, VALUE);
-  end;
-
-  if OPT = 3 then  // Это для создания перехвата NtCreateKey
-  begin
-    // Сохранить адрес функции
-    KEYCODE.FUNCADDRES := OldProcAddress;
-    // Схранить начало исходной функци в структуру KEYCODE. Размер 12 байт.
-    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(KEYCODE.OLDDATA), 12, VALUE);
-  end;
-
-  if OPT = 4 then  // Это для создание перехвата CreateDirectoryW WIN XP - 11
-  begin
-    // Сохранить адрес функции
-    CRDCODE.FUNCADDRES := OldProcAddress;
-    // Схранить начало исходной функци в структуру CRDCODE
-    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(CRDCODE.OLDDATA), 12, VALUE);
-  end;
-
-  if OPT = 5 then  // Это для создания перехвата WSASend  WIN XP-11
-  begin
-    // Сохранить адрес функции
-    WSACODE.FUNCADDRES := OldProcAddress;
-    // Схранить начало исходной функци в структуру WSACODE
-    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(WSACODE.OLDDATA), 12, VALUE);
-  end;
-
-  if OPT = 6 then // Это для перехвата setsockopt
-  begin
-    // Сохранить адрес функции в структуру
-    SSOCODE.FUNCADDRES := OldProcAddress;
-    // Схранить начало исходной функци в структуру SSOCODE
-    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(SSOCODE.OLDDATA), 12, VALUE);
-  end;
-
-  if OPT = 7 then  // Это для перехвата getaddrinfo
-  begin
-    // Сохранить адрес функции в структуру
-    GAICODE.FUNCADDRES := OldProcAddress;
-    // Схранить начало исходной функци в структуру GAICODE
-    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(GAICODE.OLDDATA), 12, VALUE);
-  end;
-
-    if OPT = 8 then  // Это для перехвата PSStringFromPropertyKey
-  begin
-    // Сохранить адрес функции в структуру
-    PFPCODE.FUNCADDRES := OldProcAddress;
-    // Схранить начало исходной функци в структуру PFPCODE
-    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(PFPCODE.OLDDATA), 12, VALUE);
-  end;
-
-  if OPT = 9 then  // Это для перехвата WSASendTo
-  begin
-    // Сохранить адрес функции в структуру
-    WSTCODE.FUNCADDRES := OldProcAddress;
-    // Схранить начало исходной функци в структуру STOCODE
-    ReadProcessMemory(HANDLE, OldProcAddress, ADDR(WSTCODE.OLDDATA), 12, VALUE);
-  end;
-
-  // Формирование кода прыжка в прокси функцию в теле исходной функции методом mov rax,addr jmp rax (12 байт)
+  // Формирование кода прыжка в прокси функцию методом mov rax,addr jmp rax (12 байт)
   RAXJUMP.MOVRRAXOP := $B848;
   RAXJUMP.MOVRRAXARG := NewProcAddress;
   RAXJUMP.JMPRAXOP := $E0FF;
 
-  // Записать код прыжка в структуру
-  if OPT = 1 then Move(RAXJUMP, CMDCODE.NEWDATA, 12);
-  if OPT = 2 then Move(RAXJUMP, UPTCODE.NEWDATA, 12);
-  if OPT = 3 then Move(RAXJUMP, KEYCODE.NEWDATA, 12);
-  if OPT = 4 then Move(RAXJUMP, CRDCODE.NEWDATA, 12);
-  if OPT = 5 then Move(RAXJUMP, WSACODE.NEWDATA, 12);
-  if OPT = 6 then Move(RAXJUMP, SSOCODE.NEWDATA, 12);
-  if OPT = 7 then Move(RAXJUMP, GAICODE.NEWDATA, 12);
-  if OPT = 8 then Move(RAXJUMP, PFPCODE.NEWDATA, 12);
-  if OPT = 9 then Move(RAXJUMP, WSTCODE.NEWDATA, 12);
+  if OPT = 1 then  // Это для перехвата GetCommandLineW
+  begin
+    CMDCODE.FUNCADDRES := OldProcAddress;                  // Сохранить адрес функции в структуру
+    CopyMemory(ADDR(CMDCODE.NEWDATA), ADDR(RAXJUMP), 12);  // Сохранить код прыжка в структуру
+    CopyMemory(ADDR(CMDCODE.OLDDATA), OldProcAddress, 12); // Схранить начало исходной функци в структуру CMDCODE. Размер 12 байт.
+  end;
+
+  if OPT = 2 then  // Это для создания перехвата UpdateProcThreadAttribute WIN7-11
+  begin
+    UPTCODE.FUNCADDRES := OldProcAddress;                  // Сохранить адрес функции в структуру
+    CopyMemory(ADDR(UPTCODE.NEWDATA), ADDR(RAXJUMP), 12);  // Сохранить код прыжка в структуру
+    CopyMemory(ADDR(UPTCODE.OLDDATA), OldProcAddress, 12); // Схранить начало исходной функци в структуру UPTCODE. Размер 12 байт.
+  end;
+
+  if OPT = 3 then  // Это для создания перехвата NtCreateKey
+  begin
+    KEYCODE.FUNCADDRES := OldProcAddress;                  // Сохранить адрес функции в структуру
+    CopyMemory(ADDR(KEYCODE.NEWDATA), ADDR(RAXJUMP), 12);  // Сохранить код прыжка в структуру
+    CopyMemory(ADDR(KEYCODE.OLDDATA), OldProcAddress, 12); // Схранить начало исходной функци в структуру KEYCODE. Размер 12 байт.
+  end;
+
+  if OPT = 4 then  // Это для создание перехвата CreateDirectoryW WIN XP - 11
+  begin
+    CRDCODE.FUNCADDRES := OldProcAddress;                  // Сохранить адрес функции в структуру
+    CopyMemory(ADDR(CRDCODE.NEWDATA), ADDR(RAXJUMP), 12);  // Сохранить код прыжка в структуру
+    CopyMemory(ADDR(CRDCODE.OLDDATA), OldProcAddress, 12); // Схранить начало исходной функци в структуру CRDCODE. Размер 12 байт.
+  end;
+
+  if OPT = 5 then  // Это для создания перехвата WSASend  WIN XP-11
+  begin
+    WSACODE.FUNCADDRES := OldProcAddress;                  // Сохранить адрес функции в структуру
+    CopyMemory(ADDR(WSACODE.NEWDATA), ADDR(RAXJUMP), 12);  // Сохранить код прыжка в структуру
+    CopyMemory(ADDR(WSACODE.OLDDATA), OldProcAddress, 12); // Схранить начало исходной функци в структуру WSACODE. Размер 12 байт.
+  end;
+
+  if OPT = 6 then // Это для перехвата setsockopt
+  begin
+    SSOCODE.FUNCADDRES := OldProcAddress;                  // Сохранить адрес функции в структуру
+    CopyMemory(ADDR(SSOCODE.NEWDATA), ADDR(RAXJUMP), 12);  // Сохранить код прыжка в структуру
+    CopyMemory(ADDR(SSOCODE.OLDDATA), OldProcAddress, 12); // Схранить начало исходной функци в структуру SSOCODE. Размер 12 байт.
+  end;
+
+  if OPT = 7 then  // Это для перехвата getaddrinfo
+  begin
+    GAICODE.FUNCADDRES := OldProcAddress;                  // Сохранить адрес функции в структуру
+    CopyMemory(ADDR(GAICODE.NEWDATA), ADDR(RAXJUMP), 12);  // Сохранить код прыжка в структуру
+    CopyMemory(ADDR(GAICODE.OLDDATA), OldProcAddress, 12); // Схранить начало исходной функци в структуру GAICODE. Размер 12 байт.
+  end;
+
+    if OPT = 8 then  // Это для перехвата PSStringFromPropertyKey
+  begin
+    PFPCODE.FUNCADDRES := OldProcAddress;                  // Сохранить адрес функции в структуру
+    CopyMemory(ADDR(PFPCODE.NEWDATA), ADDR(RAXJUMP), 12);  // Сохранить код прыжка в структуру
+    CopyMemory(ADDR(PFPCODE.OLDDATA), OldProcAddress, 12); // Схранить начало исходной функци в структуру PFPCODE. Размер 12 байт.
+  end;
+
+  if OPT = 9 then  // Это для перехвата WSASendTo
+  begin
+    WSTCODE.FUNCADDRES := OldProcAddress;                  // Сохранить адрес функции в структуру
+    CopyMemory(ADDR(WSTCODE.NEWDATA), ADDR(RAXJUMP), 12);  // Сохранить код прыжка в структуру
+    CopyMemory(ADDR(WSTCODE.OLDDATA), OldProcAddress, 12); // Схранить начало исходной функци в структуру WSTCODE. Размер 12 байт.
+  end;
 
   // Изменить параметры доступа к области памяти
   if not VirtualProtect(OldProcAddress, 12, PAGE_EXECUTE_READWRITE, ADDR(Protect)) then exit;
-  // Записать в тело функции в памяти процесса код прыжка в прокси функцию
-  // HANDLE := GetCurrentProcess; // Определить идентификатор текущего процесса
-  WriteProcessMemory(HANDLE, OldProcAddress, ADDR(RAXJUMP), 12, VALUE);
+  // Записать код прыжка в начало исходной функци
+  CopyMemory(OldProcAddress, Addr(RAXJUMP), 12);
   // Восстановить прежние параметры доступа к памяти
   VirtualProtect(OldProcAddress, 12, Protect, ADDR(Protect));
 end;
@@ -150,16 +125,11 @@ end;
 procedure SetHook(HOOK: HOOKDATA; OPT: byte);
 var
   Protect : Cardinal;                      // Переменная для хранения параметров доступа к странице памяти
-  VALUE   : NativeUInt;                    // Переменная для функции WriteProcessMemory
-const
-  HANDLE = THandle(-1);
 begin
   // Изменить параметры доступа к памяти где расположена функция
   if not VirtualProtect(HOOK.FUNCADDRES, 12, PAGE_EXECUTE_READWRITE, ADDR(Protect)) then exit;
-  // Записать в память где расположена функция исходный код
-  if OPT = 0 then WriteProcessMemory(HANDLE, HOOK.FUNCADDRES, ADDR(HOOK.OLDDATA), 12, VALUE);
-  // Записать в память где расположена функция код прыжка
-  if OPT = 1 then WriteProcessMemory(HANDLE, HOOK.FUNCADDRES, ADDR(HOOK.NEWDATA), 12, VALUE);
+  if OPT = 0 then CopyMemory(HOOK.FUNCADDRES, ADDR(HOOK.OLDDATA), 12); // Записать в память по адресу функции исходный код
+  if OPT = 1 then CopyMemory(HOOK.FUNCADDRES, ADDR(HOOK.NEWDATA), 12); // Записать в память по адресу функции код прыжка
   // Восстановить прежние параметры доступа к памяти
   VirtualProtect(HOOK.FUNCADDRES, 12, Protect, ADDR(Protect));
 end;
