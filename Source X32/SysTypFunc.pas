@@ -41,15 +41,14 @@ Type
   FARPROC = Pointer;
 
   PSecurityAttributes = ^TSecurityAttributes;
-  _SECURITY_ATTRIBUTES = record
+  SECURITY_ATTRIBUTES = record
     nLength: DWORD;
     lpSecurityDescriptor: Pointer;
     bInheritHandle: BOOL;
   end;
-  TSecurityAttributes = _SECURITY_ATTRIBUTES;
-  SECURITY_ATTRIBUTES = _SECURITY_ATTRIBUTES;
+  TSecurityAttributes = SECURITY_ATTRIBUTES;
 
-  _OSVERSIONINFOA = record
+  OSVERSIONINFOA = record
     dwOSVersionInfoSize: DWORD;
     dwMajorVersion: DWORD;
     dwMinorVersion: DWORD;
@@ -58,7 +57,7 @@ Type
     szCSDVersion: array[0..127] of AnsiChar; { Maintenance AnsiString for PSS usage }
   end;
 
-  _OSVERSIONINFOW = record
+  OSVERSIONINFOW = record
     dwOSVersionInfoSize: DWORD;
     dwMajorVersion: DWORD;
     dwMinorVersion: DWORD;
@@ -67,18 +66,18 @@ Type
     szCSDVersion: array[0..127] of WideChar; { Maintenance WideString for PSS usage }
   end;
 
-  TOSVersionInfoA = _OSVERSIONINFOA;
-  TOSVersionInfoW = _OSVERSIONINFOW;
+  TOSVersionInfoA = OSVERSIONINFOA;
+  TOSVersionInfoW = OSVERSIONINFOW;
   TOSVersionInfo = TOSVersionInfoA;
 
-  _FILETIME = record
+  FILETIME = record
     dwLowDateTime: DWORD;
     dwHighDateTime: DWORD;
   end;
 
-  TFileTime = _FILETIME;
+  TFileTime = FILETIME;
 
-  _WIN32_FIND_DATAA = record
+  WIN32_FIND_DATAA = record
     dwFileAttributes: DWORD;
     ftCreationTime: TFileTime;
     ftLastAccessTime: TFileTime;
@@ -91,7 +90,7 @@ Type
     cAlternateFileName: array[0..13] of AnsiChar;
   end;
 
-  _WIN32_FIND_DATAW = record
+  WIN32_FIND_DATAW = record
     dwFileAttributes: DWORD;
     ftCreationTime: TFileTime;
     ftLastAccessTime: TFileTime;
@@ -104,8 +103,8 @@ Type
     cAlternateFileName: array[0..13] of WideChar;
   end;
 
-  TWin32FindDataA = _WIN32_FIND_DATAA;
-  TWin32FindDataW = _WIN32_FIND_DATAW;
+  TWin32FindDataA = WIN32_FIND_DATAA;
+  TWin32FindDataW = WIN32_FIND_DATAW;
   TWin32FindData = TWin32FindDataA;
 
   TGetMappedFileNameW = function (hProcess: THandle; lpv: Pointer; lpFilename: PWideChar; nSize: DWORD): DWORD stdcall;
@@ -114,9 +113,7 @@ function ReadProcessMemory(hProcess: THandle; const lpBaseAddress: Pointer; lpBu
 function ReadProcessMemory; external kernel32 name 'ReadProcessMemory';
 
 function VirtualProtect(lpAddress: Pointer; dwSize, flNewProtect: DWORD; lpflOldProtect: Pointer): BOOL; stdcall; overload;
-function VirtualProtect(lpAddress: Pointer; dwSize, flNewProtect: DWORD; var OldProtect: DWORD): BOOL; stdcall; overload;
 function VirtualProtect(lpAddress: Pointer; dwSize, flNewProtect: DWORD; lpflOldProtect: Pointer): BOOL; external kernel32 name 'VirtualProtect';
-function VirtualProtect(lpAddress: Pointer; dwSize, flNewProtect: DWORD; var OldProtect: DWORD): BOOL; external kernel32 name 'VirtualProtect';
 
 function WriteProcessMemory(hProcess: THandle; const lpBaseAddress: Pointer; lpBuffer: Pointer; nSize: DWORD; var lpNumberOfBytesWritten: DWORD): BOOL; stdcall;
 function WriteProcessMemory; external kernel32 name 'WriteProcessMemory';
@@ -186,6 +183,8 @@ function LoadLibrary; external kernel32 name 'LoadLibraryA';
 function Succeeded(Status: HRESULT): BOOL; inline;
 procedure CopyMemory(Destination: Pointer; Source: Pointer; Length: DWORD);
 function GetMappedFileNameW(hProcess: THandle; lpv: Pointer; lpFilename: PWideChar; nSize: DWORD): DWORD;
+
+{$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
 
 { *Описание типов данных из модуля Windows и PSAPI* }
 
