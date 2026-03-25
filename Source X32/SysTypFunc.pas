@@ -109,14 +109,8 @@ Type
 
   TGetMappedFileNameW = function (hProcess: THandle; lpv: Pointer; lpFilename: PWideChar; nSize: DWORD): DWORD stdcall;
 
-function ReadProcessMemory(hProcess: THandle; const lpBaseAddress: Pointer; lpBuffer: Pointer; nSize: DWORD; var lpNumberOfBytesRead: DWORD): BOOL; stdcall;
-function ReadProcessMemory; external kernel32 name 'ReadProcessMemory';
-
 function VirtualProtect(lpAddress: Pointer; dwSize, flNewProtect: DWORD; lpflOldProtect: Pointer): BOOL; stdcall; overload;
 function VirtualProtect(lpAddress: Pointer; dwSize, flNewProtect: DWORD; lpflOldProtect: Pointer): BOOL; external kernel32 name 'VirtualProtect';
-
-function WriteProcessMemory(hProcess: THandle; const lpBaseAddress: Pointer; lpBuffer: Pointer; nSize: DWORD; var lpNumberOfBytesWritten: DWORD): BOOL; stdcall;
-function WriteProcessMemory; external kernel32 name 'WriteProcessMemory';
 
 function GetVersionEx(var lpVersionInformation: TOSVersionInfo): BOOL; stdcall;
 function GetVersionEx; external kernel32 name 'GetVersionExA';
@@ -181,7 +175,8 @@ function LoadLibrary(lpLibFileName: PChar): HMODULE; stdcall;
 function LoadLibrary; external kernel32 name 'LoadLibraryA';
 
 function Succeeded(Status: HRESULT): BOOL; inline;
-procedure CopyMemory(Destination: Pointer; Source: Pointer; Length: DWORD);
+procedure Move(const Source; var Dest; Count : Cardinal);
+procedure CopyMemory(Destination: Pointer; Source: Pointer; Length: Cardinal);
 function GetMappedFileNameW(hProcess: THandle; lpv: Pointer; lpFilename: PWideChar; nSize: DWORD): DWORD;
 
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
@@ -199,9 +194,29 @@ begin
   Result := Status and HRESULT($80000000) = 0;
 end;
 
-procedure CopyMemory(Destination: Pointer; Source: Pointer; Length: DWORD);
+procedure Move(const Source; var Dest; Count : Cardinal);
+var
+  S, D: PAnsiChar;
+  I: Cardinal;
 begin
-  Move(Source^, Destination^, Length);
+  S := PAnsiChar(Addr(Source));      // Получить адрес данных и присвоить его указателю
+  D := PAnsiChar(Addr(Dest));        // Получить адрес данных и присвоить его указателю
+  if S = D then Exit;
+  if Cardinal(D) > Cardinal(S) then for I := Count - 1 downto 0 do D[I] := S[I];
+  if Cardinal(D) < Cardinal(S) then for I := 0 to Count - 1 do D[I] := S[I];
+end;
+
+// Функция CopyMemory без вызова Move
+procedure CopyMemory(Destination: Pointer; Source: Pointer; Length: Cardinal);
+var
+  Dest, Sour : PAnsiChar;
+  I : Cardinal;
+begin
+  Sour := PAnsiChar(Source);            // Привести нетипизированный указатель к типизированному
+  Dest := PAnsiChar(Destination);       // Привести нетипизированный указатель к типизированному
+  if Sour = Dest then Exit;
+  if Cardinal(Dest) > Cardinal(Sour) then for I := Length - 1 downto 0 do Dest[I] := Sour[I];
+  if Cardinal(Dest) < Cardinal(Sour) then for I := 0 to Length - 1 do Dest[I] := Sour[I];
 end;
 
 function CheckPSAPILoaded: Boolean;
