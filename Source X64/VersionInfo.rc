@@ -34,14 +34,14 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 	                       0x0438,0x043E,0x0442,0x0435,0x043A,0x0430,0x00
 
 #define OriginalFilename "version.dll\0"
-#define ProductVersion   "1.0.7.1\0"
-#define FileVersion      "1.0.7.1\0"
+#define ProductVersion   "1.0.7.2\0"
+#define FileVersion      "1.0.7.2\0"
 
 // Version info
 #define MAJOR       1
 #define MINOR       0
 #define RELEASE     7
-#define BUILD       1
+#define BUILD       2
 
 1 VERSIONINFO
 FILEVERSION MAJOR, MINOR, RELEASE, BUILD
