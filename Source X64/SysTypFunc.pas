@@ -180,9 +180,12 @@ function GetProcAddress(hModule: HMODULE; lpProcName: LPCSTR): FARPROC; external
 function LoadLibrary(lpLibFileName: PWideChar): HMODULE; stdcall;
 function LoadLibrary; external kernel32 name 'LoadLibraryW';
 
+procedure CopyMemory(Destination, Source: Pointer; Length: NativeUInt); stdcall;
+procedure CopyMemory; external kernel32 name 'RtlMoveMemory';
+
 function Succeeded(Status: HRESULT): BOOL; inline;
-procedure Move(const Source; var Dest; Count : NativeUInt);
-procedure CopyMemory(Destination: Pointer; Source: Pointer; Length: NativeUInt);
+//procedure Move(const Source; var Dest; Count : NativeUInt);
+//procedure CopyMemory(Destination: Pointer; Source: Pointer; Length: NativeUInt);
 function GetMappedFileNameW(hProcess: THandle; lpv: Pointer; lpFilename: PWideChar; nSize: DWORD): DWORD;
 
 { *Описание типов данных из модуля Windows и PSAPI* }
@@ -197,7 +200,7 @@ function Succeeded(Status: HRESULT): BOOL;
 begin
   Result := Status and HRESULT($80000000) = 0;
 end;
-
+{
 procedure Move(const Source; var Dest; Count : NativeUInt);
 var
   S, D: PAnsiChar;
@@ -221,7 +224,7 @@ begin
   if NativeUInt(Dest) > NativeUInt(Sour) then for I := Length - 1 downto 0 do Dest[I] := Sour[I];
   if NativeUInt(Dest) < NativeUInt(Sour) then for I := 0 to Length - 1 do Dest[I] := Sour[I];
 end;
-
+}
 function CheckPSAPILoaded: Boolean;
 begin
   if hPSAPI = 0 then
