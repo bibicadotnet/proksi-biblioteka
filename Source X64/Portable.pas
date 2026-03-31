@@ -202,10 +202,10 @@ var
 begin
   if (Attribute = PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY) and (cbSize >= sizeof(UInt64)) then
   begin
-    CopyMemory(ADDR(Value), lpValue, cbSize);      // Скопировать значение атрибута из адреса по указателю
-    Value := Value and not (UInt64(1) shl 44);     // Сбросить бит NON_MICROSOFT_BINARIES_ALWAYS_ON
-    Value := Value and not (UInt64(1) shl 28);     // Сбросить бит WIN32K_SYSTEM_CALL_DISABLE_ALWAYS_ON	
-    CopyMemory(lpValue, ADDR(Value), cbSize);      // Скопировать в адрес по указателю значения атрибута
+    CopyMemory(ADDR(Value), lpValue, sizeof(UInt64)); // Скопировать значение атрибута из адреса по указателю
+    Value := Value and not (UInt64(1) shl 44);        // Сбросить бит NON_MICROSOFT_BINARIES_ALWAYS_ON
+    Value := Value and not (UInt64(1) shl 28);        // Сбросить бит WIN32K_SYSTEM_CALL_DISABLE_ALWAYS_ON	
+    CopyMemory(lpValue, ADDR(Value), sizeof(UInt64)); // Скопировать в адрес по указателю значения атрибута
   end;
   SetHook(UPTCODE, 0);
   result := RawUpdateProcThreadAttribute(lpAttributeList, dwFlags, Attribute, lpValue, cbSize, lpPreviousValue, lpReturnSize);
