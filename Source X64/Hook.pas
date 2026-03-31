@@ -33,7 +33,6 @@ implementation
 // Функция установливает перехват
 procedure CodeHook(OldProcAddress, NewProcAddress: pointer; OPT : byte = 0);
 var
-
   // структура для формирования кода прыжка в прокси функцию методом 1. mov rax,addr 2. jmp rax (12 байт)
   RAXJUMP    : packed record
   MOVRRAXOP  : WORD;                    // Поле для записи опкода инструкции MOV RAX    | 49 B8
@@ -42,9 +41,9 @@ var
   end;
 
   Protect : Cardinal;                   // Переменная для хранения параметров доступа к странице памяти
+  VALUE   : NativeUInt;                 // Переменная для функции WriteProcessMemory
 
 begin
-
   // Формирование кода прыжка в прокси функцию методом mov rax,addr jmp rax (12 байт)
   RAXJUMP.MOVRRAXOP := $B848;
   RAXJUMP.MOVRRAXARG := NewProcAddress;
@@ -116,7 +115,7 @@ begin
   // Изменить параметры доступа к области памяти
   if not VirtualProtect(OldProcAddress, 12, PAGE_EXECUTE_READWRITE, ADDR(Protect)) then exit;
   // Записать код прыжка в начало исходной функци
-  CopyMemory(OldProcAddress, Addr(RAXJUMP), 12);
+  WriteProcessMemory(INVALID_HANDLE_VALUE, OldProcAddress, ADDR(RAXJUMP), 12, VALUE);
   // Восстановить прежние параметры доступа к памяти
   VirtualProtect(OldProcAddress, 12, Protect, ADDR(Protect));
 end;
@@ -125,11 +124,12 @@ end;
 procedure SetHook(HOOK: HOOKDATA; OPT: byte);
 var
   Protect : Cardinal;                      // Переменная для хранения параметров доступа к странице памяти
+  VALUE   : NativeUInt;                    // Переменная для функции WriteProcessMemory
 begin
   // Изменить параметры доступа к памяти где расположена функция
   if not VirtualProtect(HOOK.FUNCADDRES, 12, PAGE_EXECUTE_READWRITE, ADDR(Protect)) then exit;
-  if OPT = 0 then CopyMemory(HOOK.FUNCADDRES, ADDR(HOOK.OLDDATA), 12); // Записать в память по адресу функции исходный код
-  if OPT = 1 then CopyMemory(HOOK.FUNCADDRES, ADDR(HOOK.NEWDATA), 12); // Записать в память по адресу функции код прыжка
+  if OPT = 0 then WriteProcessMemory(INVALID_HANDLE_VALUE, HOOK.FUNCADDRES, ADDR(HOOK.OLDDATA), 12, VALUE); // Записать в память по адресу функции исходный код
+  if OPT = 1 then WriteProcessMemory(INVALID_HANDLE_VALUE, HOOK.FUNCADDRES, ADDR(HOOK.NEWDATA), 12, VALUE); // Записать в память по адресу функции код прыжка
   // Восстановить прежние параметры доступа к памяти
   VirtualProtect(HOOK.FUNCADDRES, 12, Protect, ADDR(Protect));
 end;
