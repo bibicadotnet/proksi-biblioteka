@@ -109,6 +109,9 @@ Type
 
   TGetMappedFileNameW = function (hProcess: THandle; lpv: Pointer; lpFilename: PWideChar; nSize: DWORD): DWORD stdcall;
 
+function WriteProcessMemory(hProcess: THandle; const lpBaseAddress: Pointer; lpBuffer: Pointer; nSize: DWORD; var lpNumberOfBytesWritten: DWORD): BOOL; stdcall;
+function WriteProcessMemory; external kernel32 name 'WriteProcessMemory';
+
 function VirtualProtect(lpAddress: Pointer; dwSize, flNewProtect: DWORD; lpflOldProtect: Pointer): BOOL; stdcall;
 function VirtualProtect; external kernel32 name 'VirtualProtect';
 
