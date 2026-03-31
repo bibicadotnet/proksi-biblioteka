@@ -174,9 +174,12 @@ function GetProcAddress; external kernel32 name 'GetProcAddress';
 function LoadLibrary(lpLibFileName: PChar): HMODULE; stdcall;
 function LoadLibrary; external kernel32 name 'LoadLibraryA';
 
+procedure CopyMemory(Destination, Source: Pointer; Length: DWORD); stdcall;
+procedure CopyMemory; external kernel32 name 'RtlMoveMemory';
+
 function Succeeded(Status: HRESULT): BOOL; inline;
-procedure Move(const Source; var Dest; Count : Cardinal);
-procedure CopyMemory(Destination: Pointer; Source: Pointer; Length: Cardinal);
+//procedure Move(const Source; var Dest; Count : Cardinal);
+//procedure CopyMemory(Destination: Pointer; Source: Pointer; Length: Cardinal);
 function GetMappedFileNameW(hProcess: THandle; lpv: Pointer; lpFilename: PWideChar; nSize: DWORD): DWORD;
 
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
@@ -193,7 +196,7 @@ function Succeeded(Status: HRESULT): BOOL;
 begin
   Result := Status and HRESULT($80000000) = 0;
 end;
-
+{
 procedure Move(const Source; var Dest; Count : Cardinal);
 var
   S, D: PAnsiChar;
@@ -218,7 +221,7 @@ begin
   if Cardinal(Dest) > Cardinal(Sour) then for I := Length - 1 downto 0 do Dest[I] := Sour[I];
   if Cardinal(Dest) < Cardinal(Sour) then for I := 0 to Length - 1 do Dest[I] := Sour[I];
 end;
-
+}
 function CheckPSAPILoaded: Boolean;
 begin
   if hPSAPI = 0 then
