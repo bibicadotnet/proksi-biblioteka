@@ -116,10 +116,10 @@ Type
   TGetMappedFileNameW = function (hProcess: THandle; lpv: Pointer; lpFilename: PWideChar; nSize: DWORD): DWORD stdcall;
 
 function VirtualProtect(lpAddress: Pointer; dwSize: SIZE_T; flNewProtect: DWORD; lpflOldProtect: Pointer): BOOL; stdcall;
-function VirtualProtect(lpAddress: Pointer; dwSize: SIZE_T; flNewProtect: DWORD; lpflOldProtect: Pointer): BOOL; external kernel32 name 'VirtualProtect';
+function VirtualProtect; external kernel32 name 'VirtualProtect';
 
 function GetVersionEx(var lpVersionInformation: TOSVersionInfo): BOOL; stdcall;
-function GetVersionEx(var lpVersionInformation: TOSVersionInfo): BOOL; external kernel32 name 'GetVersionExW';
+function GetVersionEx; external kernel32 name 'GetVersionExW';
 
 function GetFullPathName(lpFileName: PWideChar; nBufferLength: DWORD; lpBuffer: PWideChar; var lpFilePart: PWideChar): DWORD; stdcall;
 function GetFullPathName; external kernel32 name 'GetFullPathNameW';
