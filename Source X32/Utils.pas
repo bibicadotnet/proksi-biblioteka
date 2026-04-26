@@ -108,7 +108,7 @@ procedure REPLACE(var PSTR: string; RSTR: string);
 var
   SETPOS : integer;
 begin
-  SETPOS := POS('%DATADIR%', PSTR); // Найти положение '%DATADIR%' в строке
+  SETPOS := XPOS('%DATADIR%', PSTR); // Найти положение '%DATADIR%' в строке
   if SETPOS <> 0 then
   begin
     Delete(PSTR, SETPOS, 9);        // Удалить из строки '%DATADIR%' (9 символов)
