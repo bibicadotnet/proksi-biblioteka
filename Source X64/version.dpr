@@ -25,8 +25,8 @@ procedure VerQueryValueW; stdcall; asm jmp QWORD ptr [proc + 2 * 8] end;
 procedure GetFileVersionInfoSizeA; stdcall; asm jmp QWORD ptr [proc + 3 * 8] end;
 procedure GetFileVersionInfoA; stdcall; asm jmp QWORD ptr [proc + 4 * 8] end;
 procedure VerQueryValueA; stdcall; asm jmp QWORD ptr [proc + 5 * 8] end;
-procedure GetFileVersionInfoExW; stdcall; asm jmp QWORD ptr [proc + 6 * 4] end;
-procedure GetFileVersionInfoSizeExW; stdcall; asm jmp QWORD ptr [proc + 7 * 4] end;
+procedure GetFileVersionInfoExW; stdcall; asm jmp QWORD ptr [proc + 6 * 8] end;
+procedure GetFileVersionInfoSizeExW; stdcall; asm jmp QWORD ptr [proc + 7 * 8] end;
 
 // Объявление списка экспортируемых функций
 exports
