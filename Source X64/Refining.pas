@@ -68,7 +68,7 @@ type
 
   sockaddr = record
     sinfamily: Word;
-    sinzero: array[0..13] of Char;
+    sinzero: array[0..13] of AnsiChar;
   end;
   TSockAddr = sockaddr;
 
