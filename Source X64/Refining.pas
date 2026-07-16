@@ -57,18 +57,18 @@ type
           sinfamily: Word;                  // Семейство адресов (2 байта)
           sinport: Word;                    // Номер порта (2 байта)
           sinaddr: TInAddr;                 // Структура с IP-адресом (4 байта)
-          sinzero: array[0..7] of AnsiChar  // Дополнение до размера структуры sockaddr (8 байт)
+          sinzero: array[0..7] of Byte      // Дополнение до размера структуры sockaddr (8 байт)
          );
       1: (
           safamily: Word;                   // Семейство адресов (2 байта)
-          sadata: array[0..13] of AnsiChar  // Данные (14 байт)
+          sadata: array[0..13] of Byte      // Данные (14 байт)
          )
   end;
   TSockAddrIn = sockaddrin;
 
   sockaddr = record
     sinfamily: Word;
-    sinzero: array[0..13] of AnsiChar;
+    sinzero: array[0..13] of Byte;
   end;
   TSockAddr = sockaddr;
 
