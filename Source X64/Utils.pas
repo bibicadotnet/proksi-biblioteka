@@ -107,7 +107,7 @@ procedure Replace(var PSTR: string; RSTR: string);
 var
   SETPOS : integer;
 begin
-  SETPOS := ХPOS('%DATADIR%', PSTR);
+  SETPOS := XPOS('%DATADIR%', PSTR);
   if SETPOS <> 0 then
   begin
     Delete(PSTR, SETPOS, 9);
