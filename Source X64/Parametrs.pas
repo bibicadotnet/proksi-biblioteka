@@ -78,9 +78,9 @@ begin
   Result := False;
   Len := Length(IniLine);
   if Len = 0 then exit;
-  SETPOS := ХPOS('=', IniLine) + 1;
+  SETPOS := XPOS('=', IniLine) + 1;
   IniParam := Copy(IniLine, SETPOS, Len - SETPOS + 1);
-  if (ХPOS(';', IniLine) = 0) or (ХPOS(';', IniLine) > 2) then Result := True; // Если строка не комментарий
+  if (XPOS(';', IniLine) = 0) or (XPOS(';', IniLine) > 2) then Result := True; // Если строка не комментарий
   if IniParam = '' then Result := False;
 end;
 
@@ -93,7 +93,7 @@ var
 
 begin
   ARGSSTART := '';
-  if ХPOS('--single-argument', ARGS) <> 0 then   // Проверка наличия параметра '--single-argument'
+  if XPOS('--single-argument', ARGS) <> 0 then   // Проверка наличия параметра '--single-argument'
 
   begin
     ARGSSTART := ARGS;
@@ -107,8 +107,8 @@ begin
   DISKCACHEDIR := GETDIR(ExeDir, CACHEDIR, FULLPATCH);  // Сформировать путь к CACHEDIR
 
   if RUNPARAM <> '' then ARGS := ARGS + RUNPARAM + ' ';
-  if ХPOS('--user-data-dir=', ARGS) = 0 then ARGS := ARGS + '--user-data-dir=' + '"' + USERDATADIR + '"' + ' ';
-  if ХPOS('--disk-cache-dir=', ARGS) = 0 then ARGS := ARGS + '--disk-cache-dir=' + '"' + DISKCACHEDIR + '"' + ' ';
+  if XPOS('--user-data-dir=', ARGS) = 0 then ARGS := ARGS + '--user-data-dir=' + '"' + USERDATADIR + '"' + ' ';
+  if XPOS('--disk-cache-dir=', ARGS) = 0 then ARGS := ARGS + '--disk-cache-dir=' + '"' + DISKCACHEDIR + '"' + ' ';
 
   RESULT := ARGS + ARGSSTART;
 end;
