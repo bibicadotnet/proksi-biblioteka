@@ -15,7 +15,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Cần thiết để xử lý toàn bộ lịch sử các bản cũ
+          fetch-depth: 0
 
       - name: Sync Code and Release
         env:
@@ -43,20 +43,32 @@ jobs:
           echo "Đồng bộ tất cả các tags..."
           git fetch ../upstream_repo 'refs/tags/*:refs/tags/*'
           
-          # Đẩy toàn bộ tags (cả cũ lẫn mới) lên GitHub
+          # Đẩy toàn bộ tags lên GitHub
           git push origin --tags
 
-          # 5. Duyệt qua TẤT CẢ các tags để tạo Release
+          # 5. Duyệt qua TẤT CẢ các tags để tạo Release kèm Description gốc
           for TAG in $(git tag); do
             echo "----------------------------------------"
             echo "Đang kiểm tra Tag: $TAG"
             
-            # Kiểm tra xem Release cho Tag này đã tồn tại chưa
             if ! gh release view "$TAG" > /dev/null 2>&1; then
               echo "Phát hiện bản mới/chưa có release. Tiến hành tạo release cho $TAG..."
+              
+              # Lấy nội dung ghi chú gốc của Tag (Description) xuất ra file văn bản
+              git tag -l --format='%(contents)' "$TAG" > release_notes.txt
+              
+              # Nếu tag không chứa nội dung (do tác giả GitFlic không đính kèm vào git tag), dùng câu mặc định
+              if [ ! -s release_notes.txt ] || [ -z "$(cat release_notes.txt | tr -d '[:space:]')" ]; then
+                echo "Bản cập nhật đồng bộ từ GitFlic: https://gitflic.ru/project/neyrostalker/proksi-biblioteka/release" > release_notes.txt
+              fi
+
+              # Tạo release sử dụng nội dung từ file vừa trích xuất
               gh release create "$TAG" \
                 --title "Release $TAG" \
-                --notes "Bản cập nhật đồng bộ tự động mã nguồn từ GitFlic: https://gitflic.ru/project/neyrostalker/proksi-biblioteka/release"
+                --notes-file release_notes.txt
+                
+              # Xóa file tạm sau khi tạo xong
+              rm -f release_notes.txt
             else
               echo "Release $TAG đã tồn tại, bỏ qua."
             fi
