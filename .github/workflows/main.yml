@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Cần thiết để xử lý toàn bộ lịch sử các bản cũ
 
       - name: Sync Code and Release
         env:
@@ -22,46 +24,40 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          # 1. Clone code gốc vào thư mục tạm NẰM NGOÀI dự án (../upstream_repo) để tránh lỗi rsync xóa nhầm
+          # 1. Clone code gốc vào thư mục tạm NẰM NGOÀI dự án
           git clone https://gitflic.ru/project/neyrostalker/proksi-biblioteka.git ../upstream_repo
 
-          # 2. Chép toàn bộ file vào thư mục dự án của bạn
-          # --delete: Xóa các file cũ nếu dự án gốc đã xóa
-          # --exclude: Tuyệt đối giữ lại thư mục .git và .github để không làm hỏng workflow của bạn
+          # 2. Chép toàn bộ file vào thư mục dự án của bạn (bảo vệ .github)
           rsync -av --delete --exclude='.git' --exclude='.github' ../upstream_repo/ ./
 
           # 3. Commit và Push các file gốc lên nhánh hiện tại của dự án
           git add .
           if git diff-index --quiet HEAD; then
-            echo "Mã nguồn không có thay đổi nào mới."
+            echo "Mã nguồn nhánh chính không có thay đổi nào mới."
           else
             git commit -m "Đồng bộ mã nguồn từ dự án gốc GitFlic"
             git push origin HEAD
           fi
 
-          # 4. Lấy tag mới nhất và tạo Release
-          cd ../upstream_repo
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          # 4. Kéo TOÀN BỘ lịch sử Tags từ dự án gốc về
+          echo "Đồng bộ tất cả các tags..."
+          git fetch ../upstream_repo 'refs/tags/*:refs/tags/*'
           
-          # Quay lại thư mục dự án gốc sau khi lấy xong tag
-          cd -
+          # Đẩy toàn bộ tags (cả cũ lẫn mới) lên GitHub
+          git push origin --tags
 
-          if [ -n "$LATEST_TAG" ]; then
-            echo "Phát hiện Tag mới nhất: $LATEST_TAG"
+          # 5. Duyệt qua TẤT CẢ các tags để tạo Release
+          for TAG in $(git tag); do
+            echo "----------------------------------------"
+            echo "Đang kiểm tra Tag: $TAG"
             
-            # Tạo tag cho đoạn code vừa push và đẩy lên GitHub
-            git tag "$LATEST_TAG" 2>/dev/null || true
-            git push origin "$LATEST_TAG" 2>/dev/null || true
-
-            # Kiểm tra xem đã có release này trên GitHub chưa, nếu chưa thì tạo
-            if ! gh release view "$LATEST_TAG" > /dev/null 2>&1; then
-              echo "Tiến hành tạo release $LATEST_TAG..."
-              gh release create "$LATEST_TAG" \
-                --title "Release $LATEST_TAG" \
+            # Kiểm tra xem Release cho Tag này đã tồn tại chưa
+            if ! gh release view "$TAG" > /dev/null 2>&1; then
+              echo "Phát hiện bản mới/chưa có release. Tiến hành tạo release cho $TAG..."
+              gh release create "$TAG" \
+                --title "Release $TAG" \
                 --notes "Bản cập nhật đồng bộ tự động mã nguồn từ GitFlic: https://gitflic.ru/project/neyrostalker/proksi-biblioteka/release"
             else
-              echo "Release $LATEST_TAG đã tồn tại trên dự án của bạn."
+              echo "Release $TAG đã tồn tại, bỏ qua."
             fi
-          else
-            echo "Dự án gốc không có tag release nào."
-          fi
+          done
