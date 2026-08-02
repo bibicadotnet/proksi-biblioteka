@@ -61,14 +61,14 @@ jobs:
               # Tạm thời Checkout về đúng commit của Tag này để chép lịch sử file
               git checkout "$TAG"
               
-              # Không dùng file Список изменений.md nữa. Trỏ thẳng link về bản gốc để người dùng xem chính xác nhất.
+              # Không dùng file Список изменений.md nữa. Trỏ thẳng link về bản gốc
               echo "Версия $TAG" > release_notes.txt
               echo "" >> release_notes.txt
               echo "Bản cập nhật được đồng bộ tự động từ GitFlic." >> release_notes.txt
               echo "🔗 **[Xem chi tiết thay đổi tại trang phát hành gốc](https://gitflic.ru/project/neyrostalker/proksi-biblioteka/release)**" >> release_notes.txt
 
-              # Khôi phục file đính kèm (.zip)
-              ZIP_FILE="Прокси_библиотека_${TAG}.zip"
+              # Khôi phục file đính kèm (.zip) - SỬ DỤNG TÊN TIẾNG ANH ĐỂ TRÁNH LỖI ENCODING
+              ZIP_FILE="Proksi_biblioteka_${TAG}.zip"
               if [ -d "Bin" ]; then
                 # Nén thư mục Bin và tài liệu y hệt cách tác giả làm
                 zip -r "$ZIP_FILE" Bin/ README.md "Список изменений.md" 2>/dev/null || true
