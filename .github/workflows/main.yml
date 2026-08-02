@@ -2,9 +2,7 @@ name: Sync GitFlic to GitHub
 
 on:
   schedule:
-    # 1h chạy 1 lần. timezone: UTC (Giờ VN là UTC+7)
     - cron: '0 * * * *'
-  # Cho phép kích hoạt chạy thủ công từ tab Actions
   workflow_dispatch:
 
 permissions:
@@ -16,60 +14,52 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Sync Source Code and Tags
+      - name: Sync Code and Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Thêm remote upstream về repo GitFlic
-          git remote add upstream https://gitflic.ru/project/neyrostalker/proksi-biblioteka.git || true
-          
-          # Fetch toàn bộ nhánh và tags
-          git fetch upstream '+refs/heads/*:refs/remotes/upstream/*' --tags
+          # 1. Clone code gốc vào thư mục tạm (upstream_repo)
+          git clone https://gitflic.ru/project/neyrostalker/proksi-biblioteka.git upstream_repo
 
-          # Nhận diện tự động nhánh mặc định (master hoặc main)
-          DEFAULT_BRANCH=$(git ls-remote --symref upstream HEAD | awk '/^ref:/ { sub(/refs\/heads\//, "", $2); print $2 }')
-          if [ -z "$DEFAULT_BRANCH" ]; then
-            DEFAULT_BRANCH="master"
+          # 2. Chép toàn bộ file vào thư mục dự án của bạn
+          # --delete: Xóa các file cũ nếu dự án gốc đã xóa
+          # --exclude: Tuyệt đối giữ lại thư mục .git và .github để không làm hỏng workflow của bạn
+          rsync -av --delete --exclude='.git' --exclude='.github' upstream_repo/ ./
+
+          # 3. Commit và Push các file gốc lên nhánh hiện tại của dự án
+          git add .
+          if git diff-index --quiet HEAD; then
+            echo "Mã nguồn không có thay đổi nào mới."
+          else
+            git commit -m "Đồng bộ mã nguồn từ dự án gốc GitFlic"
+            git push origin HEAD
           fi
 
-          # Reset hoàn toàn repo hiện tại cho bằng với GitFlic
-          git checkout -B $DEFAULT_BRANCH upstream/$DEFAULT_BRANCH
-
-          # Push đè mã nguồn và tags lên GitHub
-          git push origin $DEFAULT_BRANCH --force
-          git push origin --tags --force
-
-      - name: Sync Releases
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Lấy tag mới nhất vừa được đồng bộ về
-          LATEST_TAG=$(git describe --tags --abbrev=0 || echo "")
+          # 4. Lấy tag mới nhất và tạo Release
+          cd upstream_repo
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          cd ..
 
           if [ -n "$LATEST_TAG" ]; then
-            echo "Tag mới nhất: $LATEST_TAG"
+            echo "Phát hiện Tag mới nhất: $LATEST_TAG"
+            
+            # Tạo tag cho đoạn code vừa push và đẩy lên GitHub
+            git tag "$LATEST_TAG" 2>/dev/null || true
+            git push origin "$LATEST_TAG" 2>/dev/null || true
 
-            # Kiểm tra xem tag này đã được tạo thành Release trên GitHub chưa
+            # Kiểm tra xem đã có release này trên GitHub chưa, nếu chưa thì tạo
             if ! gh release view "$LATEST_TAG" > /dev/null 2>&1; then
-              echo "Chưa có release cho $LATEST_TAG. Bắt đầu tạo mới..."
-
-              # LƯU Ý: Nếu bản release trên GitFlic có đính kèm file nén (.zip, tar.gz) hoặc file chạy,
-              # bạn sẽ cần trích xuất link tải trực tiếp và sử dụng wget/curl tải về tại đây trước khi tạo release.
-              # Ví dụ: 
-              # curl -sSL -o release_assets.zip "https://gitflic.ru/project/neyrostalker/proksi-biblioteka/release/..."
-              #
-              # Nếu có file tải về, hãy nối thêm tên file (vd: release_assets.zip) vào sau lệnh gh release create
-
+              echo "Tiến hành tạo release $LATEST_TAG..."
               gh release create "$LATEST_TAG" \
                 --title "Release $LATEST_TAG" \
-                --notes "Bản cập nhật đồng bộ tự động từ GitFlic: https://gitflic.ru/project/neyrostalker/proksi-biblioteka/release"
+                --notes "Bản cập nhật đồng bộ tự động mã nguồn từ GitFlic: https://gitflic.ru/project/neyrostalker/proksi-biblioteka/release"
             else
-              echo "Release $LATEST_TAG đã tồn tại trên dự án, bỏ qua bước tạo."
+              echo "Release $LATEST_TAG đã tồn tại trên dự án của bạn."
             fi
           else
-            echo "Dự án hiện tại không có tag nào."
+            echo "Dự án gốc không có tag release nào."
           fi
