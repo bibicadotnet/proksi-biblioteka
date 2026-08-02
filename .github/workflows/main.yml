@@ -33,7 +33,7 @@ jobs:
           # 3. Lấy tên nhánh hiện tại để lát nữa quay về
           CURRENT_BRANCH=$(git branch --show-current)
           if [ -z "$CURRENT_BRANCH" ]; then
-            CURRENT_BRANCH="main" # Dự phòng nếu lỗi
+            CURRENT_BRANCH="main"
           fi
 
           # 4. Commit và Push các file gốc lên nhánh hiện tại của dự án
@@ -61,19 +61,11 @@ jobs:
               # Tạm thời Checkout về đúng commit của Tag này để chép lịch sử file
               git checkout "$TAG"
               
-              # Khôi phục nội dung Description (Ghi chú gốc)
-              if [ -f "Список изменений.md" ]; then
-                # Lấy file Changelog của tác giả làm Ghi chú
-                cat "Список изменений.md" > release_notes.txt
-              else
-                # Nếu không có file changelog, lấy tin nhắn commit của tag
-                git tag -l --format='%(contents)' "$TAG" > release_notes.txt
-                
-                # Nếu tag trống trơn, dùng câu mặc định
-                if [ ! -s release_notes.txt ] || [ -z "$(cat release_notes.txt | tr -d '[:space:]')" ]; then
-                  echo "Bản cập nhật đồng bộ tự động từ GitFlic." > release_notes.txt
-                fi
-              fi
+              # Không dùng file Список изменений.md nữa. Trỏ thẳng link về bản gốc để người dùng xem chính xác nhất.
+              echo "Версия $TAG" > release_notes.txt
+              echo "" >> release_notes.txt
+              echo "Bản cập nhật được đồng bộ tự động từ GitFlic." >> release_notes.txt
+              echo "🔗 **[Xem chi tiết thay đổi tại trang phát hành gốc](https://gitflic.ru/project/neyrostalker/proksi-biblioteka/release)**" >> release_notes.txt
 
               # Khôi phục file đính kèm (.zip)
               ZIP_FILE="Прокси_библиотека_${TAG}.zip"
