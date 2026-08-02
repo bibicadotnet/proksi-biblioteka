@@ -30,7 +30,13 @@ jobs:
           # 2. Chép toàn bộ file vào thư mục dự án của bạn (bảo vệ .github)
           rsync -av --delete --exclude='.git' --exclude='.github' ../upstream_repo/ ./
 
-          # 3. Commit và Push các file gốc lên nhánh hiện tại của dự án
+          # 3. Lấy tên nhánh hiện tại để lát nữa quay về
+          CURRENT_BRANCH=$(git branch --show-current)
+          if [ -z "$CURRENT_BRANCH" ]; then
+            CURRENT_BRANCH="main" # Dự phòng nếu lỗi
+          fi
+
+          # 4. Commit và Push các file gốc lên nhánh hiện tại của dự án
           git add .
           if git diff-index --quiet HEAD; then
             echo "Mã nguồn nhánh chính không có thay đổi nào mới."
@@ -39,37 +45,60 @@ jobs:
             git push origin HEAD
           fi
 
-          # 4. Kéo TOÀN BỘ lịch sử Tags từ dự án gốc về
+          # 5. Kéo TOÀN BỘ lịch sử Tags từ dự án gốc về và push lên GitHub
           echo "Đồng bộ tất cả các tags..."
           git fetch ../upstream_repo 'refs/tags/*:refs/tags/*'
-          
-          # Đẩy toàn bộ tags lên GitHub
           git push origin --tags
 
-          # 5. Duyệt qua TẤT CẢ các tags để tạo Release kèm Description gốc
+          # 6. Duyệt qua TẤT CẢ các tags để tạo Release
           for TAG in $(git tag); do
             echo "----------------------------------------"
             echo "Đang kiểm tra Tag: $TAG"
             
             if ! gh release view "$TAG" > /dev/null 2>&1; then
-              echo "Phát hiện bản mới/chưa có release. Tiến hành tạo release cho $TAG..."
+              echo "Phát hiện bản chưa có release. Tiến hành tạo cho $TAG..."
               
-              # Lấy nội dung ghi chú gốc của Tag (Description) xuất ra file văn bản
-              git tag -l --format='%(contents)' "$TAG" > release_notes.txt
+              # Tạm thời Checkout về đúng commit của Tag này để chép lịch sử file
+              git checkout "$TAG"
               
-              # Nếu tag không chứa nội dung (do tác giả GitFlic không đính kèm vào git tag), dùng câu mặc định
-              if [ ! -s release_notes.txt ] || [ -z "$(cat release_notes.txt | tr -d '[:space:]')" ]; then
-                echo "Bản cập nhật đồng bộ từ GitFlic: https://gitflic.ru/project/neyrostalker/proksi-biblioteka/release" > release_notes.txt
+              # Khôi phục nội dung Description (Ghi chú gốc)
+              if [ -f "Список изменений.md" ]; then
+                # Lấy file Changelog của tác giả làm Ghi chú
+                cat "Список изменений.md" > release_notes.txt
+              else
+                # Nếu không có file changelog, lấy tin nhắn commit của tag
+                git tag -l --format='%(contents)' "$TAG" > release_notes.txt
+                
+                # Nếu tag trống trơn, dùng câu mặc định
+                if [ ! -s release_notes.txt ] || [ -z "$(cat release_notes.txt | tr -d '[:space:]')" ]; then
+                  echo "Bản cập nhật đồng bộ tự động từ GitFlic." > release_notes.txt
+                fi
               fi
 
-              # Tạo release sử dụng nội dung từ file vừa trích xuất
-              gh release create "$TAG" \
-                --title "Release $TAG" \
-                --notes-file release_notes.txt
+              # Khôi phục file đính kèm (.zip)
+              ZIP_FILE="Прокси_библиотека_${TAG}.zip"
+              if [ -d "Bin" ]; then
+                # Nén thư mục Bin và tài liệu y hệt cách tác giả làm
+                zip -r "$ZIP_FILE" Bin/ README.md "Список изменений.md" 2>/dev/null || true
+              fi
+
+              # Tạo release kèm theo file Zip (nếu nén thành công)
+              if [ -f "$ZIP_FILE" ]; then
+                gh release create "$TAG" "$ZIP_FILE" \
+                  --title "Release $TAG" \
+                  --notes-file release_notes.txt
+              else
+                gh release create "$TAG" \
+                  --title "Release $TAG" \
+                  --notes-file release_notes.txt
+              fi
                 
-              # Xóa file tạm sau khi tạo xong
-              rm -f release_notes.txt
+              # Dọn dẹp file tạm
+              rm -f "$ZIP_FILE" release_notes.txt
             else
               echo "Release $TAG đã tồn tại, bỏ qua."
             fi
           done
+          
+          # 7. Cuối cùng, trả repo về lại nhánh gốc để không bị lỗi Detached HEAD
+          git checkout "$CURRENT_BRANCH"
