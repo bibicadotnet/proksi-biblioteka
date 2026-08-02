@@ -22,13 +22,13 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          # 1. Clone code gốc vào thư mục tạm (upstream_repo)
-          git clone https://gitflic.ru/project/neyrostalker/proksi-biblioteka.git upstream_repo
+          # 1. Clone code gốc vào thư mục tạm NẰM NGOÀI dự án (../upstream_repo) để tránh lỗi rsync xóa nhầm
+          git clone https://gitflic.ru/project/neyrostalker/proksi-biblioteka.git ../upstream_repo
 
           # 2. Chép toàn bộ file vào thư mục dự án của bạn
           # --delete: Xóa các file cũ nếu dự án gốc đã xóa
           # --exclude: Tuyệt đối giữ lại thư mục .git và .github để không làm hỏng workflow của bạn
-          rsync -av --delete --exclude='.git' --exclude='.github' upstream_repo/ ./
+          rsync -av --delete --exclude='.git' --exclude='.github' ../upstream_repo/ ./
 
           # 3. Commit và Push các file gốc lên nhánh hiện tại của dự án
           git add .
@@ -40,9 +40,11 @@ jobs:
           fi
 
           # 4. Lấy tag mới nhất và tạo Release
-          cd upstream_repo
+          cd ../upstream_repo
           LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          cd ..
+          
+          # Quay lại thư mục dự án gốc sau khi lấy xong tag
+          cd -
 
           if [ -n "$LATEST_TAG" ]; then
             echo "Phát hiện Tag mới nhất: $LATEST_TAG"
