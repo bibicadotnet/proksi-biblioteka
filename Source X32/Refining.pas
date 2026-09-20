@@ -135,7 +135,6 @@ var
 
 begin
   Cmp := False;
-  Result := False;
   P := 0;
 
   if Len > 11 then                                  // Если размер данных больше 11
@@ -170,7 +169,7 @@ begin
       if (Byte(Buf[Len-3]) = $41) and (Byte(Buf[Len-1]) = $01) then HTTPS := True else HTTPS := False;
     end;
   end;
-  if Cmp = True then Result := True;
+  Result := Cmp;
 end;
 
 // Функция поиска положения адреса в HTTP запросах
