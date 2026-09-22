@@ -220,8 +220,8 @@ begin
       if SEARCHM[i] = $01 then Cmp := True;
       if Cmp = False then break;
     end;
-    Result := Cmp;
-  end;  
+  end;
+  Result := Cmp;
 end;
 
 // Модифицированная функция WSASend. Проверят содержимое буфера, закрывает сокет или отправляет данные в подключенный сокет.
