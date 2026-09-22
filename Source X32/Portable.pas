@@ -373,9 +373,10 @@ begin
     if Cmp = True then break;                                // Если флаг установлен прервать цикл
   end;
   if XPOS('BrowserMetrics', PathName) <> 0 then Cmp := True;
+  if Cmp = True then Exit;
   // Если флаг не установлен выполнить функции CreateDirectoryW
   SetHook(CRDCODE, 0);
-  if Cmp = False then Result := CreateDirectoryW(lpPathName, lpSecurityAttributes);
+  Result := CreateDirectoryW(lpPathName, lpSecurityAttributes);
   SetHook(CRDCODE, 1);
 end;
 
