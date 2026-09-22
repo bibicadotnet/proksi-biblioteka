@@ -185,13 +185,13 @@ begin
   AddrPos := 0;
   Cmp := False;
   //Result := False;
-  if LpBuf.Len > 15 then
+  if Len > 15 then
   begin
-    for X := 0 to LpBuf.Len - 15 do                 // Цикл проверки буфера от начала
+    for X := 0 to Len - 15 do                 // Цикл проверки буфера от начала
     begin
       for i := 0 to 15 do                           // Цикл проверки последовательности
       begin
-        Cmp := Byte(LpBuf.buf[X + i]) = SEARSH[i];
+        Cmp := Byte(buf[X + i]) = SEARSH[i];
         if SEARCHM[i] = $01 then Cmp := True;
         if Cmp = False then break;
       end;
@@ -213,11 +213,11 @@ var
 begin
   //Result := False;
   Cmp := False;
-  if LpBuf.Len > 5 then
+  if Len > 5 then
   begin
     for i := 0 to 5 do
     begin
-      Cmp := Byte(LpBuf.buf[i]) = SEARSH[i];
+      Cmp := Byte(buf[i]) = SEARSH[i];
       if SEARCHM[i] = $01 then Cmp := True;
       if Cmp = False then break;
     end;
