@@ -211,7 +211,6 @@ var
   Cmp : boolean;
   i : integer;
 begin
-  //Result := False;
   Cmp := False;
   if Len > 5 then
   begin
