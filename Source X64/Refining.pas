@@ -136,7 +136,6 @@ var
 
 begin
   Cmp := False;
-  Result := False;
   P := 0;
 
   if Len > 11 then                                  // Если размер данных больше 11
@@ -171,7 +170,7 @@ begin
       if (Byte(Buf[Len-3]) = $41) and (Byte(Buf[Len-1]) = $01) then HTTPS := True else HTTPS := False;
     end;
   end;
-  if Cmp = True then Result := True;
+  Result := Cmp;
 end;
 
 // Функция поиска положения адреса в HTTP запросах
@@ -186,7 +185,6 @@ var
 begin
   AddrPos := 0;
   Cmp := False;
-  Result := False;
   if Len > 15 then
   begin
     for X := 0 to Len - 15 do // Цикл проверки буфера от начала
@@ -201,7 +199,7 @@ begin
       if Cmp = True then break;
     end;
   end;
-  if Cmp = True then Result := True;
+  Result := Cmp;
 end;
 
 // Функция поиска идентификатора сообщения ClientHello в HTTPS запросах
@@ -213,7 +211,7 @@ var
   Cmp : boolean;
   i : integer;
 begin
-  Result := False;
+  Cmp := False;
   if Len > 5 then
   begin
     for i := 0 to 5 do
@@ -222,7 +220,7 @@ begin
       if SEARCHM[i] = $01 then Cmp := True;
       if Cmp = False then break;
     end;
-    if Cmp = True then Result := True;
+    Result := Cmp;
   end;  
 end;
 
@@ -269,9 +267,14 @@ begin
     end;
   end;
 
+  if Cmp = True then
+  begin
+    CloseSocket(s);    // Закрыть сокет.
+    Exit;
+  end;
+
   SetHook(WSACODE, 0);
-  if Cmp = True then Closesocket(s); // Закрыть сокет.
-  if Cmp = False then Result := RAWWSASend(S, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpOverlapped,	lpCompletionRoutine);
+  Result := RAWWSASend(S, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpOverlapped,	lpCompletionRoutine);
   SetHook(WSACODE, 1);
 end;
 
@@ -306,7 +309,6 @@ begin
   begin
     for I := 0 to REFINELISTNUM - 1 do
     begin
-      Cmp := false;
       SetString(Name, PCHAR(REFINELIST[I].buf), REFINELIST[I].Len);
       if HostName <> '' then if XPOS(Name, HostName) <> 0 then Cmp := True;
       if Cmp = True then break;
@@ -314,9 +316,14 @@ begin
     if ECHOFF = True then if HTTPS = True then Cmp := True;
   end;
 
+  if Cmp = True then
+  begin
+    CloseSocket(s);    // Закрыть сокет.
+    Exit;
+  end;
+
   SetHook(WSTCODE, 0);
-  if Cmp = True then CloseSocket(s); // Закрыть сокет.
-  if Cmp = False then Result := RAWWSASendTo(S, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpTo, iTolen, lpOverlapped,	lpCompletionRoutine);
+  Result := RAWWSASendTo(S, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpTo, iTolen, lpOverlapped,	lpCompletionRoutine);
   SetHook(WSTCODE, 1);
 end;
 
@@ -336,9 +343,14 @@ begin
     if level = $29 then Cmp := true;                           // Не использовать семейство адресов IP6
   end;
 
+  if Cmp = True then
+  begin
+    CloseSocket(s);    // Закрыть сокет.
+    Exit;
+  end;
+
   SetHook(SSOCODE, 0);
-  if Cmp = true then Closesocket(s);
-  if Cmp = False then Result := RAWSetsockopt (s, level, optname, optval, optlen);
+  Result := RAWSetsockopt (s, level, optname, optval, optlen);
   SetHook(SSOCODE, 1);
 end;
 
@@ -360,15 +372,16 @@ begin
   Result := 11001;                    // 11001 - Узел не найден. 11004 - Нет данных.
   for I := 0 to REFINELISTNUM - 1 do  // Цикл сравнения имени со списком
   begin
-    Cmp := false;
     Name := '';
     SetString(Name, PAnsiChar(REFINELIST[I].buf), REFINELIST[I].Len);
     if (Nodename <> nil) and (String(Nodename) <> '') then if XPOS(Name, String(Nodename)) <> 0 then Cmp := true;
     if Cmp = true then break;
   end;
 
+  if Cmp = True then Exit;
+
   SetHook(GAICODE, 0);
-  if Cmp = False then Result := RAWGetaddrinfo(Nodename, Servname, hints, pResult);
+  Result := RAWGetaddrinfo(Nodename, Servname, hints, pResult);
   SetHook(GAICODE, 1);
 end;
 
