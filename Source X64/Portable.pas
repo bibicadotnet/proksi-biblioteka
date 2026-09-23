@@ -39,7 +39,7 @@ type
   ObjectAttributes = record
   Length: ULONG;
   RootDirectory: THandle;
-  var ObjectName: UNICODESTRING;
+  ObjectName: Pointer;
   Attributes: ULONG;
   SecurityDescriptor: Pointer;
   SecurityQualityOfService: Pointer;
@@ -74,7 +74,7 @@ type
 
   // Обявление типа фукции с парамеи вызова и возврата соответующими оригинальной функции  NtCreateKey
   CreateKey= function(KeyHandle : PHANDLE; DesiredAccess : ACCESS_MASK; var ObjectAttributes : ObjectAttributes; TitleIndex:ULONG;
-                      var ObjectClass : UNICODESTRING; CreateOptions:ULONG; Disposition:PULONG) : NTSTATUS; stdcall;
+                      ObjectClass : Pointer; CreateOptions:ULONG; Disposition:PULONG) : NTSTATUS; stdcall;
 
   // Обявление типа фукции с параметрами вызова и возврата соответующими оригинальной функции PSStringFromPropertyKey
   PSStringFPropKey = function(const pkey: PROPERTYKEY; psz: PWideChar; cch: LongWord): HRESULT ; stdcall;
@@ -356,7 +356,7 @@ function NtCreateKey(
                      DesiredAccess : ACCESS_MASK;            // Указывает значение ACCESS_MASK, которое определяет запрашиваемый доступ к объекту.
                      var ObjectAttributes : ObjectAttributes;// Указатель на структуру ObjectAttributes, которая определяет имя объекта и другие атрибуты.
                      TitleIndex:ULONG;                       // Драйверы устройств и промежуточных устройств устанавливают этот параметр равным нулю.
-                     var ObjectClass : UNICODESTRING;        // Указатель на строку UNICODESTRING, содержащую класс объекта ключа.
+                     ObjectClass : Pointer;                  // Указатель на строку UNICODESTRING, содержащую класс объекта ключа.
                      CreateOptions:ULONG;                    // Определяет параметры, применяемые при создании или открытии ключа.
                      Disposition:PULONG                      // указатель на переменную, которая получает значение, указывающее, был ли создан новый ключ или открыт существующий.
                      ): NTSTATUS; stdcall;
