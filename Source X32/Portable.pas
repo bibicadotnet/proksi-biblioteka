@@ -43,7 +43,7 @@ type
   ObjectAttributes = packed record
   Length: ULONG;
   RootDirectory: THandle;
-  var ObjectName: UNICODESTRING;  // так можно определить указатель на тип UNICODESTRING
+  ObjectName: Pointer;            // указатель на тип UNICODESTRING можно определить так var ObjectName: UNICODESTRING;
   Attributes: ULONG;
   SecurityDescriptor: Pointer;
   SecurityQualityOfService: Pointer;
