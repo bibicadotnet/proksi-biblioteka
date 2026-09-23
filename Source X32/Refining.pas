@@ -239,7 +239,7 @@ Var
   AddrPos : Integer;
 
 begin
-  Cmp := false;
+  Cmp := False;
   // Врианты результата выполнения функции WSASend
   // 0 - выполнена без ошибок. 10050 - Сеть не работает. 10053 - Соединение прервано. 10057 - Сокет не подключен.
   Result := 10050;
@@ -257,7 +257,6 @@ begin
     begin
       for X := AddrPos to Len - REFINELIST[I].len do
       begin
-        Cmp := TRUE;
         for Y := 0 to REFINELIST[I].len - 1 do
         begin
           Cmp := Upper(Buf[X+Y]) = Upper(REFINELIST[I].buf[Y]);
@@ -370,14 +369,14 @@ var
   I: integer;
   Name: String;
 begin
-  Cmp := false;
+  Cmp := False;
   Result := 11001;                    // 11001 - Узел не найден. 11004 - Нет данных.
   for I := 0 to REFINELISTNUM - 1 do  // Цикл сравнения имени со списком
   begin
     Name := '';
     SetString(Name, PCHAR(REFINELIST[I].buf), REFINELIST[I].Len);  // Скопировать символы из буфера в строку
     if (Nodename <> nil) and (String(Nodename) <> '') then if XPOS(Name, Nodename) <> 0 then Cmp := true;
-    if Cmp = true then break;
+    if Cmp = True then break;
   end;
 
   if Cmp = True then Exit;
