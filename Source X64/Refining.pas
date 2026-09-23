@@ -255,7 +255,6 @@ begin
     begin
       for X := AddrPos to Len - REFINELIST[I].len  - AddrPos do
         begin
-        Cmp := TRUE;
         for Y := 0 to REFINELIST[I].len - 1 do
           begin
           Cmp := UpCase(Buf[X+Y]) = UpCase(REFINELIST[I].buf[Y]);
