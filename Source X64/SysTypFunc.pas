@@ -197,45 +197,27 @@ implementation
 
 var
   GetMappedFileName: TGetMappedFileNameW;
+  hPSAPI: THandle;
 
 function Succeeded(Status: HRESULT): BOOL;
 begin
   Result := Status and HRESULT($80000000) = 0;
 end;
-{
-procedure Move(const Source; var Dest; Count : NativeUInt);
-var
-  S, D: PAnsiChar;
-  I: NativeUInt;
-begin
-  S := PAnsiChar(Addr(Source));      // Получить Адрес памяти с данными в указатель
-  D := PAnsiChar(Addr(Dest));        // Получить Адрес памяти с данными в указатель
-  if S = D then Exit;                // Сравнить и выйти из процедуры если равны
-  if NativeUInt(D) > NativeUInt(S) then for I := Count - 1 downto 0 do D[I] := S[I];
-  if NativeUInt(D) < NativeUInt(S) then for I := 0 to Count - 1 do D[I] := S[I];
-end;
 
-procedure CopyMemory(Destination: Pointer; Source: Pointer; Length: NativeUInt);
-var
-  Sour, Dest: PAnsiChar;
-  I: NativeUInt;
-begin
-  Sour := PAnsiChar(Source);          // Привести указатель к типу PChar
-  Dest := PAnsiChar(Destination);     // Привести указатель к типу PChar
-  if Sour = Dest then Exit;           // Сравнить и выйти из процедуры если равны
-  if NativeUInt(Dest) > NativeUInt(Sour) then for I := Length - 1 downto 0 do Dest[I] := Sour[I];
-  if NativeUInt(Dest) < NativeUInt(Sour) then for I := 0 to Length - 1 do Dest[I] := Sour[I];
-end;
-}
 function CheckPSAPILoaded: Boolean;
-var
-  hPSAPI: THandle;
 begin
   Result := False;
-  hPSAPI := LoadLibrary('PSAPI.dll');
-  if hPSAPI < 32 then Exit;
-  ADDR(GetMappedFileName) := GetProcAddress(hPSAPI, 'GetMappedFileNameW');
-  Result := True;
+  if hPSAPI = 0 then
+  begin
+    hPSAPI := LoadLibrary('PSAPI.dll');
+    if hPSAPI < 32 then
+    begin
+      hPSAPI := 0;
+      Exit;
+    end;
+    ADDR(GetMappedFileName) := GetProcAddress(hPSAPI, 'GetMappedFileNameW');
+    Result := True;
+  end;
 end;
 
 function GetMappedFileNameW(hProcess: THandle; lpv: Pointer; lpFilename: PWideChar; nSize: DWORD): DWORD;
