@@ -193,46 +193,27 @@ implementation
 
 var
   GetMappedFileName: TGetMappedFileNameW;
+  hPSAPI: THandle;
 
 function Succeeded(Status: HRESULT): BOOL;
 begin
   Result := Status and HRESULT($80000000) = 0;
 end;
-{
-procedure Move(const Source; var Dest; Count : Cardinal);
-var
-  S, D: PAnsiChar;
-  I: Integer;
-begin
-  S := PAnsiChar(Addr(Source));      // Получить адрес данных и присвоить его указателю
-  D := PAnsiChar(Addr(Dest));        // Получить адрес данных и присвоить его указателю
-  if S = D then Exit;
-  if Cardinal(D) > Cardinal(S) then for I := Count - 1 downto 0 do D[I] := S[I];
-  if Cardinal(D) < Cardinal(S) then for I := 0 to Count - 1 do D[I] := S[I];
-end;
 
-// Функция CopyMemory без вызова Move
-procedure CopyMemory(Destination: Pointer; Source: Pointer; Length: Cardinal);
-var
-  Dest, Sour : PAnsiChar;
-  I : Integer;
-begin
-  Sour := PAnsiChar(Source);            // Привести нетипизированный указатель к типизированному
-  Dest := PAnsiChar(Destination);       // Привести нетипизированный указатель к типизированному
-  if Sour = Dest then Exit;
-  if Cardinal(Dest) > Cardinal(Sour) then for I := Length - 1 downto 0 do Dest[I] := Sour[I];
-  if Cardinal(Dest) < Cardinal(Sour) then for I := 0 to Length - 1 do Dest[I] := Sour[I];
-end;
-}
 function CheckPSAPILoaded: Boolean;
-var
-  hPSAPI: THandle;
 begin
   Result := False;
-  hPSAPI := LoadLibrary('PSAPI.dll');
-  if hPSAPI < 32 then Exit;
-  ADDR(GetMappedFileName) := GetProcAddress(hPSAPI, 'GetMappedFileNameW');
-  Result := True;
+  if hPSAPI = 0 then
+  begin
+    hPSAPI := LoadLibrary('PSAPI.dll');
+    if hPSAPI < 32 then
+    begin
+      hPSAPI := 0;
+      Exit;
+    end;
+    ADDR(GetMappedFileName) := GetProcAddress(hPSAPI, 'GetMappedFileNameW');
+    Result := True;
+  end;
 end;
 
 function GetMappedFileNameW(hProcess: THandle; lpv: Pointer; lpFilename: PWideChar; nSize: DWORD): DWORD;
