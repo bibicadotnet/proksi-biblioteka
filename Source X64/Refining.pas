@@ -12,8 +12,6 @@ uses
 
 type
 
-  BuffAnsi = array of AnsiChar;    // Тип данных для функций Host, ClientHello, WSASend
-
   // Запись для функции WSASend
   WSABUF = record
     len: Cardinal;
@@ -94,7 +92,7 @@ type
                         S: TSocket; const lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
                         const lpTo: TSockAddr; iTolen: Integer; var lpOverlapped: WSAOverlapped; lpCompletionRoutine: TWSAOverlappedCompletionRoutine
                         ): Integer; stdcall;
-  TClosesocket = function(s: TSocket): Integer; stdcall;                    
+  TClosesocket = function(s: TSocket): Integer; stdcall;
   TSetsockopt = function(s: TSocket; level, optname: Integer; optval: PAnsiChar; optlen: Integer): Integer; stdcall;
 
 VAR
@@ -123,7 +121,7 @@ implementation
 // *******************************************
 
 // Функция поиска DNS записи в UDP запросах
-function DNS(const Buf: BuffAnsi; Len : integer; var Name : String; var HTTPS: boolean): boolean;
+function DNS(const LpBuf: WSABuf; var Name : String; var HTTPS: boolean): boolean;
 const
   SEARSH   : array [0..11] of Byte = ($FF,$FF,$01,$00,$00,$01,$00,$00,$00,$00,$00,$00); // ID + флаги
   SEARCHM  : array [0..11] of Byte = ($01,$01,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00);
@@ -131,20 +129,20 @@ var
   Cmp : boolean;
   I : integer;
   X : integer;
-  L : integer;
-  P : integer;
+  L : Cardinal;
+  P : Cardinal;
 
 begin
   Cmp := False;
   P := 0;
 
-  if Len > 11 then                                  // Если размер данных больше 11
+  if LpBuf.Len > 11 then                                  // Если размер данных больше 11
   begin
-    for X := 0 to Len - 11 do                       // Цикл проверки буфера от начала
+    for X := 0 to LpBuf.Len - 11 do                       // Цикл проверки буфера от начала
     begin
       for I := 0 to 11 do                           // Цикл проверки последовательности
       begin
-        Cmp := Byte(Buf[X + I]) = SEARSH[i];        // Сравнить байты
+        Cmp := Byte(LpBuf.Buf[X + I]) = SEARSH[i];  // Сравнить байты
         if SEARCHM[i] = $01 then Cmp := True;       // Использовать маску (для любого байта)
         if Cmp = False then break;                  // Прервать цикл при первом же отличии
       end;
@@ -154,27 +152,27 @@ begin
 
     if Cmp = True then                              // Декодирование меток
     begin
-      while (P < Len) do
+      while (P < LpBuf.Len) do
       begin
-        L := Byte(Buf[P]);                                                  // Считать размер метки
+        L := Byte(LpBuf.Buf[P]);                                            // Считать размер метки
         Inc(P, 1);                                                          // Перейти на позицию метки
         if (L = 0) then Break;                                              // Прервать цикл если метка нулевая или если конец меток
         if (Name <> '') then  Name := Name + '.';                           // Добавить точку после каждой метки
-        for I := P to P + L - 1 do Name := Name + Char(Buf[I]);             // Считать метку из буфера
+        for I := P to P + L - 1 do Name := Name + Char(LpBuf.Buf[I]);       // Считать метку из буфера
         Inc(P, L);                                                          // Увеличить P на L (перейти на позицию размера следующей метки)
       end;
     end;
 
     if Cmp = True then             // Определение типа записи HTTPS
     begin
-      if (Byte(Buf[Len-3]) = $41) and (Byte(Buf[Len-1]) = $01) then HTTPS := True else HTTPS := False;
+      if (Byte(LpBuf.Buf[LpBuf.Len-3]) = $41) and (Byte(LpBuf.Buf[LpBuf.Len-1]) = $01) then HTTPS := True else HTTPS := False;
     end;
   end;
   Result := Cmp;
 end;
 
 // Функция поиска положения адреса в HTTP запросах
-function Host(const Buf: BuffAnsi; Len: Integer; var AddrPos: integer): boolean;
+function Host(const LpBuf: WSABuf; var AddrPos: Cardinal): boolean;
 const
   SEARSH  : array [0..15] of Byte = ($48,$54,$54,$50,$2F,$31,$2E,$31,$0D,$0A,$48,$6F,$73,$74,$3A,$20);  // HTTP/1.1 + перевод строки + Host: + пробел
   SEARCHM : array [0..15] of Byte = ($00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$01,$00,$00,$00,$00,$00);  // Маска поиска
@@ -185,13 +183,13 @@ var
 begin
   AddrPos := 0;
   Cmp := False;
-  if Len > 15 then
+  if LpBuf.Len > 15 then
   begin
-    for X := 0 to Len - 15 do // Цикл проверки буфера от начала
+    for X := 0 to LpBuf.Len - 15 do // Цикл проверки буфера от начала
     begin
       for i := 0 to 15 do     // Цикл проверки последовательности
       begin
-        Cmp := Byte(Buf[X + i]) = SEARSH[i];
+        Cmp := Byte(LpBuf.Buf[X + i]) = SEARSH[i];
         if SEARCHM[i] = $01 then Cmp := True;
         if Cmp = False then break;
       end;
@@ -203,7 +201,7 @@ begin
 end;
 
 // Функция поиска идентификатора сообщения ClientHello в HTTPS запросах
-function ClientHello(const Buf: BuffAnsi; Len: Integer): boolean;
+function ClientHello(const LpBuf: WSABuf): boolean;
 const
   SEARSH  : array [0..5] of Byte = ($16,$03,$01,$FF,$FF,$01); // Тип + Версия + Размер + Тип сообщения
   SEARCHM : array [0..5] of Byte = ($00,$00,$01,$01,$01,$00); // Маска поиска
@@ -212,11 +210,11 @@ var
   i : integer;
 begin
   Cmp := False;
-  if Len > 5 then
+  if LpBuf.Len > 5 then
   begin
     for i := 0 to 5 do
     begin
-      Cmp := Byte(Buf[i]) = SEARSH[i];
+      Cmp := Byte(LpBuf.Buf[i]) = SEARSH[i];
       if SEARCHM[i] = $01 then Cmp := True;
       if Cmp = False then break;
     end;
@@ -233,9 +231,7 @@ Var
   I: integer;
   Cmp : boolean;
   X, Y: integer;
-  Buf : BuffAnsi;
-  Len: Integer;
-  AddrPos : Integer;
+  AddrPos : Cardinal;
 begin
   Cmp := False;
   // Врианты результата выполнения функции WSASend
@@ -244,20 +240,16 @@ begin
   lpCompletionRoutine := nil;
   AddrPos := 0;
 
-  Len := lpBuffers.len;
-  SetLength(Buf, Len);
-  CopyMemory(Addr(Buf[0]), lpBuffers.buf, Len);
-
-  if ClientHello(Buf, Len) or Host(Buf, Len, AddrPos) then
+  if ClientHello(lpBuffers) or Host(lpBuffers, AddrPos) then
   begin
     // Цикл сравнения содержимого буфера со списком
     for I := 0 to REFINELISTNUM - 1 do
     begin
-      for X := AddrPos to Len - REFINELIST[I].len  - AddrPos do
+      for X := AddrPos to lpBuffers.Len - REFINELIST[I].len  - AddrPos do
         begin
         for Y := 0 to REFINELIST[I].len - 1 do
           begin
-          Cmp := UpCase(Buf[X+Y]) = UpCase(REFINELIST[I].buf[Y]);
+          Cmp := UpCase(lpBuffers.Buf[X+Y]) = UpCase(REFINELIST[I].buf[Y]);
           if Cmp = False then break;
           end;
         if Cmp = True then break;
@@ -285,8 +277,6 @@ function WSASendTo(s: TSocket; const lpBuffers: WSABuf; dwBufferCount: DWORD; va
 Var
   I: integer;
   Cmp : boolean;
-  Buf : BuffAnsi;
-  Len: Integer;
   Name : String;
   HostName : String;
   HTTPS : boolean;
@@ -300,11 +290,7 @@ begin
   HostName := '';
   lpCompletionRoutine := nil;
 
-  Len := lpBuffers.len;
-  SetLength(Buf, Len);
-  CopyMemory(Addr(Buf[0]), lpBuffers.buf, Len);
-
-  if DNS(Buf, Len, HostName, HTTPS) then         // Если в данных DNS запроса
+  if DNS(lpBuffers, HostName, HTTPS) then         // Если в данных DNS запроса
   begin
     for I := 0 to REFINELISTNUM - 1 do
     begin

@@ -121,7 +121,7 @@ begin
 end;
 
 // Включить или Отключить перхват
-procedure SetHook(HOOK: HOOKDATA; OPT: byte);
+procedure SetHook(HOOK: HOOKDATA; OPT: byte); inline;
 var
   Protect : Cardinal;                      // Переменная для хранения параметров доступа к странице памяти
   VALUE   : NativeUInt;                    // Переменная для функции WriteProcessMemory
