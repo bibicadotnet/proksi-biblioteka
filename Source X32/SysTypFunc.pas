@@ -193,7 +193,6 @@ implementation
 
 var
   GetMappedFileName: TGetMappedFileNameW;
-  hPSAPI: THandle;
 
 function Succeeded(Status: HRESULT): BOOL;
 begin
@@ -201,19 +200,14 @@ begin
 end;
 
 function CheckPSAPILoaded: Boolean;
+var
+  hPSAPI: THandle;
 begin
   Result := False;
-  if hPSAPI = 0 then
-  begin
-    hPSAPI := LoadLibrary('PSAPI.dll');
-    if hPSAPI < 32 then
-    begin
-      hPSAPI := 0;
-      Exit;
-    end;
-    ADDR(GetMappedFileName) := GetProcAddress(hPSAPI, 'GetMappedFileNameW');
-    Result := True;
-  end;
+  hPSAPI := LoadLibrary('PSAPI.dll');
+  if hPSAPI < 32 then Exit;
+  ADDR(GetMappedFileName) := GetProcAddress(hPSAPI, 'GetMappedFileNameW');
+  Result := True;
 end;
 
 function GetMappedFileNameW(hProcess: THandle; lpv: Pointer; lpFilename: PWideChar; nSize: DWORD): DWORD;

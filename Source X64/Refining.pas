@@ -359,7 +359,7 @@ begin
   begin
     Name := '';
     SetString(Name, PAnsiChar(REFINELIST[I].buf), REFINELIST[I].Len);
-    if (Nodename <> nil) and (String(Nodename) <> '') then if XPOS(Name, String(Nodename)) <> 0 then Cmp := true;
+    if (Nodename <> nil) and (Nodename <> '') then if XPOS(Name, String(Nodename)) <> 0 then Cmp := true;
     if Cmp = true then break;
   end;
 
