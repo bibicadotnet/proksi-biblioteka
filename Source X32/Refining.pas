@@ -78,8 +78,8 @@ type
     ai_protocol: Integer;     // Тип протокола
     ai_addrlen: LongWord;     // Длина буфера в байтах, на который указывает элемент ai_addr
     ai_canonname: PChar;      // Каноническое имя для хоста
-    var ai_addr: TSockAddrIn; // Указатель на структуру TSockAddrIn
-    ai_next: PAddrInfo;       // Указатель PAddrInfo на следующую структуру типа TAddrInfo
+    ai_addr: Pointer;         // Указатель на структуру TSockAddrIn
+    ai_next: PAddrInfo;       // Указатель PAddrInfo на следующую структуру типа AddrInfo
   end;
 
 TWSAOverlappedCompletionRoutine = procedure (dwError : DWORD; cbTransferred : DWORD; var lpOverlapped : WSAOVERLAPPED; dwFlags : DWORD);
@@ -237,8 +237,7 @@ begin
   Cmp := False;
   // Врианты результата выполнения функции WSASend
   // 0 - выполнена без ошибок. 10050 - Сеть не работает. 10053 - Соединение прервано. 10057 - Сокет не подключен.
-  Result := 10050;
-  lpCompletionRoutine := nil;
+  Result := SOCETERROR;
   AddrPos := 0;
 
   if ClientHello(lpBuffers) or Host(lpBuffers, AddrPos) then
@@ -261,7 +260,7 @@ begin
 
   if Cmp = True then
   begin
-    CloseSocket(s);
+    SetLastError(10061);
     Exit;
   end;
 
@@ -286,10 +285,9 @@ begin
   HTTPS := False;
   // Врианты результата выполнения функции WSASendTo
   // 0 - выполнена без ошибок. 10050 - Сеть не работает. 10053 - Соединение прервано. 10057 - Сокет не подключен.
-  Result := 10050;
+  Result := SOCETERROR;
   Name := '';
   HostName := '';
-  lpCompletionRoutine := nil;
 
   if DNS(lpBuffers, HostName, HTTPS) then         // Если в данных DNS запроса
   begin
@@ -304,7 +302,7 @@ begin
 
   if Cmp = True then
   begin
-    CloseSocket(s);
+    SetLastError(10061);
     Exit;
   end;
 
@@ -319,7 +317,7 @@ var
   Cmp : boolean;
 begin
   Cmp := false;
-  Result := 10050;
+  Result := SOCETERROR;
 
   if BCTOFF = True then   // Отключить широковещательные рассылки
   begin
@@ -331,7 +329,7 @@ begin
 
   if Cmp = True then
   begin
-    CloseSocket(s);
+    SetLastError(10050);
     Exit;
   end;
 
