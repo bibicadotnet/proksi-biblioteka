@@ -22,6 +22,8 @@ const
   DLL_THREAD_DETACH = 3;
   DLL_PROCESS_DETACH = 0;
 
+  SOCETERROR = -1;
+
 Type
 
   DWORD = LongWord;
@@ -193,6 +195,7 @@ implementation
 
 var
   GetMappedFileName: TGetMappedFileNameW;
+  hPSAPI: THandle;
 
 function Succeeded(Status: HRESULT): BOOL;
 begin
@@ -200,14 +203,11 @@ begin
 end;
 
 function CheckPSAPILoaded: Boolean;
-var
-  hPSAPI: THandle;
 begin
-  Result := False;
-  hPSAPI := LoadLibrary('PSAPI.dll');
-  if hPSAPI < 32 then Exit;
-  ADDR(GetMappedFileName) := GetProcAddress(hPSAPI, 'GetMappedFileNameW');
   Result := True;
+  if hPSAPI <> 0 then Exit else hPSAPI := LoadLibrary('PSAPI.dll');
+  if hPSAPI > 31 then ADDR(GetMappedFileName) := GetProcAddress(hPSAPI, 'GetMappedFileNameW') else Result := False;
+  if hPSAPI < 32 then hPSAPI := 0;
 end;
 
 function GetMappedFileNameW(hProcess: THandle; lpv: Pointer; lpFilename: PWideChar; nSize: DWORD): DWORD;
