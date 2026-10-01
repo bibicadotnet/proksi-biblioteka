@@ -119,7 +119,6 @@ var
   IniName : String;
   IniLine : String;
   IniParam : String;
-  I : integer;
 begin
   REGOFF := True;                               // Значение параметра по умолчанию
   AIDOFF := True;                               // Значение параметра по умолчанию
@@ -199,7 +198,7 @@ begin
         SetLength(REFINELIST, REFINELISTNUM);
         REFINELIST[REFINELISTNUM-1].len := Length(IniParam);
         SetLength(REFINELIST[REFINELISTNUM-1].buf, REFINELIST[REFINELISTNUM-1].len);
-        for I := 0 to REFINELIST[REFINELISTNUM-1].len - 1 do REFINELIST[REFINELISTNUM-1].buf[I] := AnsiChar(IniParam[I + 1]);
+        AnsiString(REFINELIST[REFINELISTNUM-1].buf) := Ansistring(IniParam);
       end;
 
       end;
