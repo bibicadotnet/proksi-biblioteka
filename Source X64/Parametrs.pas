@@ -119,7 +119,6 @@ var
   IniName : String;
   IniLine : String;
   IniParam : String;
-  I : integer;
 begin
   REGOFF := True;                               // Значение параметра по умолчанию
   AIDOFF := True;                               // Значение параметра по умолчанию
@@ -199,7 +198,7 @@ begin
         SetLength(REFINELIST, REFINELISTNUM);
         REFINELIST[REFINELISTNUM-1].len := Length(IniParam);
         SetLength(REFINELIST[REFINELISTNUM-1].buf, REFINELIST[REFINELISTNUM-1].len);
-        for I := 0 to REFINELIST[REFINELISTNUM-1].len - 1 do REFINELIST[REFINELISTNUM-1].buf[I] := AnsiChar(IniParam[I + 1]);
+        AnsiString(REFINELIST[REFINELISTNUM-1].buf) := Ansistring(IniParam);
       end;
 
       end;
@@ -224,6 +223,7 @@ var
       repeat
         if (Search.Name <> '.') and (Search.Name <> '..') then         // Пропускать директории "." и ".."
         begin
+          if (Search.Attr and faSymLink) <> 0  then Continue; 
           if (Search.Attr and faDirectory) <> 0                        // Если найдена директория
           then  DeleteFolder(FolderPath + '\' + Search.Name)           // рекурсивный вызов функции для перехода внутрь директории
           else DeleteFile(PChar(FolderPath + '\' + Search.Name));      // иначе удалить файл

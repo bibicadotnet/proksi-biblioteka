@@ -193,7 +193,7 @@ begin
         SetLength(REFINELIST, REFINELISTNUM);
         REFINELIST[REFINELISTNUM-1].len := Length(IniParam);
         SetLength(REFINELIST[REFINELISTNUM-1].buf, REFINELIST[REFINELISTNUM-1].len);
-        for I := 0 to REFINELIST[REFINELISTNUM-1].len - 1 do REFINELIST[REFINELISTNUM-1].buf[I] := IniParam[I + 1];
+        String(REFINELIST[REFINELISTNUM-1].buf) := IniParam;
       end;
 
       end;

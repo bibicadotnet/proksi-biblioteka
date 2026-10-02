@@ -78,8 +78,8 @@ type
     ai_protocol: Integer;     // Тип протокола
     ai_addrlen: NativeUInt;   // Длина буфера в байтах, на который указывает элемент ai_addr
     ai_canonname: PAnsiChar;  // Каноническое имя для хоста
-    var ai_addr: TSockAddrIn; // Указатель на структуру TSockAddrIn
-    ai_next: PAddrInfo;       // Указатель PAddrInfo на следующую структуру типа TAddrInfo
+    ai_addr: Pointer;         // Указатель на тип данных TSockAddrIn
+    ai_next: PAddrInfo;       // Указатель PAddrInfo на следующую структуру типа AddrInfo
   end;
 
   TWSAOverlappedCompletionRoutine = procedure (dwError : DWORD; cbTransferred : DWORD; var lpOverlapped : WSAOVERLAPPED; dwFlags : DWORD);
@@ -236,8 +236,7 @@ begin
   Cmp := False;
   // Врианты результата выполнения функции WSASend
   // 0 - выполнена без ошибок. 10050 - Сеть не работает. 10053 - Соединение прервано. 10057 - Сокет не подключен.
-  Result := 10050;
-  lpCompletionRoutine := nil;
+  Result := SOCETERROR;
   AddrPos := 0;
 
   if ClientHello(lpBuffers) or Host(lpBuffers, AddrPos) then
@@ -260,7 +259,7 @@ begin
 
   if Cmp = True then
   begin
-    CloseSocket(s);    // Закрыть сокет.
+    SetLastError(10061);    // Чтобы правильно закрыть сокет.
     Exit;
   end;
 
@@ -285,7 +284,7 @@ begin
   HTTPS := False;
   // Врианты результата выполнения функции WSASendTo
   // 0 - выполнена без ошибок. 10050 - Сеть не работает. 10053 - Соединение прервано. 10057 - Сокет не подключен.
-  Result := 10050;
+  Result := SOCETERROR;
   Name := '';
   HostName := '';
   lpCompletionRoutine := nil;
@@ -294,7 +293,7 @@ begin
   begin
     for I := 0 to REFINELISTNUM - 1 do
     begin
-      SetString(Name, PCHAR(REFINELIST[I].buf), REFINELIST[I].Len);
+      SetString(Name, PAnsiChar(REFINELIST[I].buf), REFINELIST[I].Len);
       if HostName <> '' then if XPOS(Name, HostName) <> 0 then Cmp := True;
       if Cmp = True then break;
     end;
@@ -303,7 +302,7 @@ begin
 
   if Cmp = True then
   begin
-    CloseSocket(s);    // Закрыть сокет.
+    SetLastError(10061);    // Чтобы правильно закрыть сокет.
     Exit;
   end;
 
@@ -318,7 +317,7 @@ var
   Cmp : boolean;
 begin
   Cmp := False;
-  Result := 10050;
+  Result := SOCETERROR;
 
   if BCTOFF = True then               // Отключить широковещательную рассылку
   begin
@@ -330,7 +329,7 @@ begin
 
   if Cmp = True then
   begin
-    CloseSocket(s);    // Закрыть сокет.
+    SetLastError(10050);    // Чтобы правильно закрыть сокет.
     Exit;
   end;
 
@@ -347,7 +346,7 @@ begin
 end;
 
 // Функция getaddrinfo для получения IP адреса узла из его имени
-function Getaddrinfo(const Nodename: PAnsiChar; const Servname : PAnsiChar; const hints: PAddrInfo; var pResult: PAddrInfo): Integer; stdcall;
+function GetAddrInfo(const Nodename: PAnsiChar; const Servname : PAnsiChar; const hints: PAddrInfo; var pResult: PAddrInfo): Integer; stdcall;
 var
   Cmp : boolean;
   I: integer;
