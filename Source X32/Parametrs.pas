@@ -112,7 +112,6 @@ var
   IniName : String;
   IniLine : String;
   IniParam : String;
-  I : integer;
 
 begin
   REGOFF := True;                               // Значение параметра по умолчанию
