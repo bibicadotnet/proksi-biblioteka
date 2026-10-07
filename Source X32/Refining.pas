@@ -260,7 +260,7 @@ begin
 
   if Cmp = True then
   begin
-    SetLastError(10061);
+    SetLastError(10054);
     Exit;
   end;
 
@@ -302,7 +302,7 @@ begin
 
   if Cmp = True then
   begin
-    SetLastError(10061);
+    SetLastError(10054);
     Exit;
   end;
 

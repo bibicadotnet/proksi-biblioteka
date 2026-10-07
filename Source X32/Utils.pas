@@ -187,11 +187,10 @@ begin
   StrLen := Length(Str);
   SubStrLen := Length(SubStr);
   Result := 0;
-  if SubStrLen = 0 then  Exit;
-  if SubStrLen > StrLen then Exit;
+  Compare := True;                                                   // Начальное значение флага cовпадения
+  if (SubStrLen = 0) or (SubStrLen > StrLen) then Exit;
   for I := 0 to StrLen - SubStrLen do                                // Цикл поиска подстроки
   begin
-    Compare := True;                                                 // Начальное значение флага cовпадения
     for J := 1 to SubStrLen do                                       // Цикл посимвольного сравнения
     begin
       Compare := Upper(Str[J+I]) = Upper(SubStr[J]);                 // Привести символы к верхнему регистру и сравнить

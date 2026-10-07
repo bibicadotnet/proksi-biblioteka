@@ -259,7 +259,7 @@ begin
 
   if Cmp = True then
   begin
-    SetLastError(10061);    // Чтобы правильно закрыть сокет.
+    SetLastError(10054);    // Чтобы правильно закрыть сокет.
     Exit;
   end;
 
@@ -302,7 +302,7 @@ begin
 
   if Cmp = True then
   begin
-    SetLastError(10061);    // Чтобы правильно закрыть сокет.
+    SetLastError(10054);    // Чтобы правильно закрыть сокет.
     Exit;
   end;
 
