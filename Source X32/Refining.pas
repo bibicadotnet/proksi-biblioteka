@@ -361,7 +361,7 @@ begin
   for I := 0 to REFINELISTNUM - 1 do  // Цикл сравнения имени со списком
   begin
     Name := '';
-    SetString(Name, PCHAR(REFINELIST[I].buf), REFINELIST[I].Len);  // Скопировать символы из буфера в строку
+    SetString(Name, PAnsiChar(REFINELIST[I].buf), REFINELIST[I].Len);  // Скопировать символы из буфера в строку
     if (Nodename <> nil) and (String(Nodename) <> '') then if XPOS(Name, String(Nodename)) <> 0 then Cmp := true;
     if Cmp = True then break;
   end;
