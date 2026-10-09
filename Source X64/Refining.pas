@@ -197,6 +197,7 @@ begin
       begin
         AddrPos := X + 16; // Положение адреса в данных
         Break;
+      end;
     end;
   end;
   Result := Cmp;
