@@ -153,7 +153,9 @@ end;
 // Это модифицированная функция-заглушка. Отключает в браузере использование системного DNS-клиента
 function GetComputerNameExW(NameType: TComputerNameFormat; lpBuffer: PWideChar; var nSize: DWORD): BOOL; stdcall;
 begin
-  Result := false;
+  lpBuffer[0] := #0000;
+  nSize := 0;
+  Result := False;
 end;
 
 function GetVolumeInformationA
@@ -257,46 +259,50 @@ begin
   result := TRUE;
 end;
 
-function RegCreateKeyA(hKey: HKEY; lpSubKey: PAnsiChar; phkResult: PHKEY): Longint; stdcall;
+function RegCreateKeyA(hKey: HKEY; lpSubKey: PAnsiChar; var hkResult: HKEY): Longint; stdcall;
 begin
-  Result := 0;
+  phkResult := 0;
+  Result := 2;
 end;
 
-function RegCreateKeyW(hKey: HKEY; lpSubKey: PWideChar; phkResult: PHKEY): Longint; stdcall;
+function RegCreateKeyW(hKey: HKEY; lpSubKey: PWideChar; var phkResult: HKEY): Longint; stdcall;
 begin
-  Result := 0;
+  phkResult := 0;
+  Result := 2;
 end;
 
 function RegCreateKeyExA(hKey: HKEY; lpSubKey: PAnsiChar; Reserved: DWORD; lpClass: PAnsiChar; dwOptions: DWORD; samDesired: REGSAM;
-                         lpSecurityAttributes: PSecurityAttributes; phkResult: PHKEY; lpdwDisposition: PDWORD): Longint; stdcall;
+                         lpSecurityAttributes: PSecurityAttributes; var phkResult: HKEY; lpdwDisposition: PDWORD): Longint; stdcall;
 begin
-  Result := 0;
+  phkResult := 0;
+  Result := 2;
 end;
 
 function RegCreateKeyExW(hKey: HKEY; lpSubKey: PWideChar; Reserved: DWORD; lpClass: PWideChar; dwOptions: DWORD; samDesired: REGSAM;
-                         lpSecurityAttributes: PSecurityAttributes; phkResult: PHKEY; lpdwDisposition: PDWORD): Longint; stdcall;
+                         lpSecurityAttributes: PSecurityAttributes; var phkResult: HKEY; lpdwDisposition: PDWORD): Longint; stdcall;
 begin
-  Result := 0;
+  phkResult := 0;
+  Result := 2;
 end;
 
 function RegSetValueA(hKey: HKEY; lpSubKey: PAnsiChar; dwType: DWORD; lpData: PAnsiChar; cbData: DWORD): Longint; stdcall;
 begin
-  Result := 0;
+  Result := 2;
 end;
 
 function RegSetValueW(hKey: HKEY; lpSubKey: PWideChar; dwType: DWORD; lpData: PWideChar; cbData: DWORD): Longint; stdcall;
 begin
-  Result := 0;
+  Result := 2;
 end;
 
 function RegSetValueExA(hKey: HKEY; lpValueName: PAnsiChar; Reserved: DWORD; dwType: DWORD; lpData: Pointer; cbData: DWORD): Longint; stdcall;
 begin
-  Result := 0;
+  Result := 2;
 end;
 
 function RegSetValueExW(hKey: HKEY; lpValueName: PWideChar; Reserved: DWORD; dwType: DWORD; lpData: Pointer; cbData: DWORD): Longint; stdcall;
 begin
-  Result := 0;
+  Result := 02;
 end;
 
 function RegCreateKeyTransactedA(
@@ -308,7 +314,7 @@ function RegCreateKeyTransactedA(
                                  hTransaction: DWORD; pExtendedParemeter: Pointer
                                  ): Longint; stdcall;
 begin
-  Result := 0;
+  Result := 2;
 end;
 
 function RegCreateKeyTransactedW(
@@ -320,7 +326,7 @@ function RegCreateKeyTransactedW(
                                  hTransaction: DWORD; pExtendedParemeter: Pointer
                                  ): Longint; stdcall;
 begin
-  Result := 0;
+  Result := 2;
 end;
 
 function RegNotifyChangeKeyValue(hKey: HKEY; bWatchSubtree: BOOL; dwNotifyFilter: DWORD; hEvent: THandle; fAsynchronus: BOOL): Longint; stdcall;
