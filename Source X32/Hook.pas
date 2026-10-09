@@ -113,12 +113,9 @@ begin
     CopyMemory(ADDR(WSTCODE.OldDATA), OldProcAddress, 5);                       // Схранить начало исходной функци в структуру
   end;
   
-  // Изменить параметры доступа к области памяти
-  if not VirtualProtect(OldProcAddress, 5, PAGE_EXECUTE_READWRITE, ADDR(Protect)) then exit;
   // Записать код прыжка в начало исходной функци
   WriteProcessMemory(INVALID_HANDLE_VALUE, OldProcAddress, Addr(CODE), 5, VALUE);
-  // Восстановить прежние параметры доступа к памяти
-  VirtualProtect(OldProcAddress, 5, Protect, ADDR(Protect));
+  FlushInstructionCache(INVHANDLE, OldProcAddress, 5);
 end;
 
 // Функция расчета смещения
@@ -143,13 +140,10 @@ var
   Protect : LongWord;                  // Переменная для хранения параметров доступа к странице памяти
   VALUE   : LongWord;                   // Переменная для функции WriteProcessMemory
 begin
-  // Изменить параметры доступа к памяти где расположена функция
-  if not VirtualProtect(HOOK.FUNCADDRES, 5, PAGE_EXECUTE_READWRITE, ADDR(Protect)) then exit;
   // Записать в память где расположена функция исходный код или код прыжка
   if OPT = 0 then WriteProcessMemory(INVALID_HANDLE_VALUE, HOOK.FUNCADDRES, Addr(HOOK.OldDATA), 5, VALUE); // Записать в память по адресу функции исходный код
   if OPT = 1 then WriteProcessMemory(INVALID_HANDLE_VALUE, HOOK.FUNCADDRES, Addr(HOOK.NewDATA), 5, VALUE); // Записать в память по адресу функции код прыжка
-  // Восстановить прежние параметры доступа к памяти
-  VirtualProtect(HOOK.FUNCADDRES, 5, Protect, ADDR(Protect));
+  FlushInstructionCache(INVHANDLE, HOOK.FUNCADDRES, 5);
 end;
 
 end.
