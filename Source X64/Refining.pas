@@ -142,12 +142,12 @@ begin
     begin
       for I := 0 to 11 do                           // Цикл проверки последовательности
       begin
+        if SEARCHM[i] = $01 then Continue;
         Cmp := Byte(LpBuf.Buf[X + I]) = SEARSH[i];  // Сравнить байты
-        if SEARCHM[i] = $01 then Cmp := True;       // Использовать маску (для любого байта)
-        if Cmp = False then break;                  // Прервать цикл при первом же отличии
+        if Cmp = False then Break;                  // Прервать цикл при первом же отличии
       end;
       if Cmp = True then P := X + 12;               // Положение размера первой метки в данных
-      if Cmp = True then break;                     // Прервать цикл
+      if Cmp = True then Break;                     // Прервать цикл
     end;
 
     if Cmp = True then                              // Декодирование меток
@@ -189,12 +189,14 @@ begin
     begin
       for i := 0 to 15 do     // Цикл проверки последовательности
       begin
+        if SEARCHM[i] = $01 then Continue;
         Cmp := Byte(LpBuf.Buf[X + i]) = SEARSH[i];
-        if SEARCHM[i] = $01 then Cmp := True;
-        if Cmp = False then break;
+        if Cmp = False then Break;
       end;
-      if Cmp = True then AddrPos := X + 16; // Положение адреса в данных
-      if Cmp = True then break;
+      if Cmp = True then 
+      begin
+        AddrPos := X + 16; // Положение адреса в данных
+        Break;
     end;
   end;
   Result := Cmp;
@@ -214,9 +216,9 @@ begin
   begin
     for i := 0 to 5 do
     begin
+      if SEARCHM[i] = $01 then Continue;
       Cmp := Byte(LpBuf.Buf[i]) = SEARSH[i];
-      if SEARCHM[i] = $01 then Cmp := True;
-      if Cmp = False then break;
+      if Cmp = False then Break;
     end;
   end;
   Result := Cmp;
