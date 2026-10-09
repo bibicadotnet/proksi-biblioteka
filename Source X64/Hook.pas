@@ -40,7 +40,6 @@ var
   JMPRAXOP   : WORD;                    // Поле для записи опкода инструкции JMP RAX    | FF E0
   end;
 
-  Protect : Cardinal;                   // Переменная для хранения параметров доступа к странице памяти
   VALUE   : NativeUInt;                 // Переменная для функции WriteProcessMemory
 
 begin
@@ -112,26 +111,19 @@ begin
     CopyMemory(ADDR(WSTCODE.OLDDATA), OldProcAddress, 12); // Схранить начало исходной функци в структуру WSTCODE. Размер 12 байт.
   end;
 
-  // Изменить параметры доступа к области памяти
-  if not VirtualProtect(OldProcAddress, 12, PAGE_EXECUTE_READWRITE, ADDR(Protect)) then exit;
   // Записать код прыжка в начало исходной функци
-  WriteProcessMemory(INVALID_HANDLE_VALUE, OldProcAddress, ADDR(RAXJUMP), 12, VALUE);
-  // Восстановить прежние параметры доступа к памяти
-  VirtualProtect(OldProcAddress, 12, Protect, ADDR(Protect));
+  WriteProcessMemory(INVHANDLE, OldProcAddress, ADDR(RAXJUMP), 12, VALUE);
+  FlushInstructionCache(INVHANDLE, HOOK.FUNCADDRES, 12)
 end;
 
 // Включить или Отключить перхват
 procedure SetHook(HOOK: HOOKDATA; OPT: byte); inline;
 var
-  Protect : Cardinal;                      // Переменная для хранения параметров доступа к странице памяти
   VALUE   : NativeUInt;                    // Переменная для функции WriteProcessMemory
 begin
-  // Изменить параметры доступа к памяти где расположена функция
-  if not VirtualProtect(HOOK.FUNCADDRES, 12, PAGE_EXECUTE_READWRITE, ADDR(Protect)) then exit;
-  if OPT = 0 then WriteProcessMemory(INVALID_HANDLE_VALUE, HOOK.FUNCADDRES, ADDR(HOOK.OLDDATA), 12, VALUE); // Записать в память по адресу функции исходный код
-  if OPT = 1 then WriteProcessMemory(INVALID_HANDLE_VALUE, HOOK.FUNCADDRES, ADDR(HOOK.NEWDATA), 12, VALUE); // Записать в память по адресу функции код прыжка
-  // Восстановить прежние параметры доступа к памяти
-  VirtualProtect(HOOK.FUNCADDRES, 12, Protect, ADDR(Protect));
+  if OPT = 0 then WriteProcessMemory(INVHANDLE, HOOK.FUNCADDRES, ADDR(HOOK.OLDDATA), 12, VALUE); // Записать в память по адресу функции исходный код
+  if OPT = 1 then WriteProcessMemory(INVHANDLE, HOOK.FUNCADDRES, ADDR(HOOK.NEWDATA), 12, VALUE); // Записать в память по адресу функции код прыжка
+  FlushInstructionCache(INVHANDLE, HOOK.FUNCADDRES, 12)
 end;
 
 end.
