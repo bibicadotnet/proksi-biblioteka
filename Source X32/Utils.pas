@@ -16,7 +16,7 @@ CONST
   faDirectory = $00000010;
   faArchive   = $00000020 platform;
   faSymLink   = $00000040 platform;
-  faAnyFile   = $0000003F;
+  faAnyFile   = $000001FF;
 
 TYPE
   TSearchRec = record
