@@ -77,7 +77,7 @@ type
     ai_socktype: Integer;     // Тип сокета
     ai_protocol: Integer;     // Тип протокола
     ai_addrlen: NativeUInt;   // Длина буфера в байтах, на который указывает элемент ai_addr
-    ai_canonname: PAnsiChar;  // Каноническое имя для хоста
+    ai_canonname: Pointer;    // Каноническое имя для хоста. Указатель PAnsiChar
     ai_addr: Pointer;         // Указатель на тип данных TSockAddrIn
     ai_next: PAddrInfo;       // Указатель PAddrInfo на следующую структуру типа AddrInfo
   end;
@@ -142,12 +142,12 @@ begin
     begin
       for I := 0 to 11 do                           // Цикл проверки последовательности
       begin
+        if SEARCHM[i] = $01 then Continue;
         Cmp := Byte(LpBuf.Buf[X + I]) = SEARSH[i];  // Сравнить байты
-        if SEARCHM[i] = $01 then Cmp := True;       // Использовать маску (для любого байта)
-        if Cmp = False then break;                  // Прервать цикл при первом же отличии
+        if Cmp = False then Break;                  // Прервать цикл при первом же отличии
       end;
       if Cmp = True then P := X + 12;               // Положение размера первой метки в данных
-      if Cmp = True then break;                     // Прервать цикл
+      if Cmp = True then Break;                     // Прервать цикл
     end;
 
     if Cmp = True then                              // Декодирование меток
@@ -189,12 +189,15 @@ begin
     begin
       for i := 0 to 15 do     // Цикл проверки последовательности
       begin
+        if SEARCHM[i] = $01 then Continue;
         Cmp := Byte(LpBuf.Buf[X + i]) = SEARSH[i];
-        if SEARCHM[i] = $01 then Cmp := True;
-        if Cmp = False then break;
+        if Cmp = False then Break;
       end;
-      if Cmp = True then AddrPos := X + 16; // Положение адреса в данных
-      if Cmp = True then break;
+      if Cmp = True then 
+      begin
+        AddrPos := X + 16; // Положение адреса в данных
+        Break;
+      end;
     end;
   end;
   Result := Cmp;
@@ -214,9 +217,9 @@ begin
   begin
     for i := 0 to 5 do
     begin
+      if SEARCHM[i] = $01 then Continue;
       Cmp := Byte(LpBuf.Buf[i]) = SEARSH[i];
-      if SEARCHM[i] = $01 then Cmp := True;
-      if Cmp = False then break;
+      if Cmp = False then Break;
     end;
   end;
   Result := Cmp;
@@ -358,8 +361,8 @@ begin
   begin
     Name := '';
     SetString(Name, PAnsiChar(REFINELIST[I].buf), REFINELIST[I].Len);
-    if (Nodename <> nil) and (Nodename <> '') then if XPOS(Name, String(Nodename)) <> 0 then Cmp := true;
-    if Cmp = true then break;
+    if (Nodename <> nil) and (Nodename <> '') then if XPOS(Name, String(Nodename)) <> 0 then Cmp := True;
+    if Cmp = true then Break;
   end;
 
   if Cmp = True then Exit;

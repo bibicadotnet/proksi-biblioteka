@@ -77,13 +77,13 @@ type
     ai_socktype: Integer;     // Тип сокета
     ai_protocol: Integer;     // Тип протокола
     ai_addrlen: LongWord;     // Длина буфера в байтах, на который указывает элемент ai_addr
-    ai_canonname: PChar;      // Каноническое имя для хоста
+    ai_canonname: Pointer;    // Каноническое имя для хоста. Указатель PAnsiChar 
     ai_addr: Pointer;         // Указатель на структуру TSockAddrIn
     ai_next: PAddrInfo;       // Указатель PAddrInfo на следующую структуру типа AddrInfo
   end;
 
 TWSAOverlappedCompletionRoutine = procedure (dwError : DWORD; cbTransferred : DWORD; var lpOverlapped : WSAOVERLAPPED; dwFlags : DWORD);
-TGetaddrinfo = function(const Nodename: PChar; const Servname : PChar; const hints: PAddrInfo; var pResult: PAddrInfo): Integer; stdcall;
+TGetaddrinfo = function(const Nodename: PAnsiChar; const Servname : PAnsiChar; const hints: PAddrInfo; var pResult: PAddrInfo): Integer; stdcall;
 TWSASend = function(
                     S: TSocket;	const lpBuffers: WSABuf; dwBufferCount: DWORD; var lpNumberOfBytesSent: DWORD; dwFlags: DWORD;
                     var lpOverlapped: WSAOverlapped;	lpCompletionRoutine: TWSAOverlappedCompletionRoutine
@@ -111,7 +111,7 @@ function WSASendTo(S: TSocket; const lpBuffers: WSABuf; dwBufferCount: DWORD; va
                   ): Integer; stdcall;
 function Setsockopt(s: TSocket; level, optname: Integer; optval: PByte; optlen: Integer): Integer; stdcall;
 function Listen(s: TSocket; backlog: Integer): Integer; stdcall;
-function Getaddrinfo(const Nodename: PChar; const Servname : PChar; const hints: PAddrInfo; var pResult: PAddrInfo): Integer; stdcall;                 
+function Getaddrinfo(const Nodename: PAnsiChar; const Servname : PAnsiChar; const hints: PAddrInfo; var pResult: PAddrInfo): Integer; stdcall;                 
 
 implementation
 
@@ -141,8 +141,8 @@ begin
     begin
       for I := 0 to 11 do                           // Цикл проверки последовательности
       begin
+        if SEARCHM[i] = $01 then Continue;
         Cmp := Byte(LpBuf.Buf[X + I]) = SEARSH[i];  // Сравнить байты
-        if SEARCHM[i] = $01 then Cmp := True;       // Использовать маску (для любого байта)
         if Cmp = False then break;                  // Прервать цикл при первом же отличии
       end;
       if Cmp = True then P := X + 12;               // Положение размера первой метки в данных
@@ -188,12 +188,16 @@ begin
     begin
       for i := 0 to 15 do                           // Цикл проверки последовательности
       begin
+        if SEARCHM[i] = $01 then Continue;
         Cmp := Byte(LpBuf.Buf[X + i]) = SEARSH[i];
         if SEARCHM[i] = $01 then Cmp := True;
         if Cmp = False then break;
       end;
-      if Cmp = True then AddrPos := X + 16;         // Положение адреса в данных
-      if Cmp = True then break;
+      if Cmp = True then 
+      begin
+        AddrPos := X + 16;         // Положение адреса в данных
+        Break;
+      end;  
     end;
   end;
   Result := Cmp;
@@ -213,8 +217,8 @@ begin
   begin
     for i := 0 to 5 do
     begin
+      if SEARCHM[i] = $01 then Continue;
       Cmp := Byte(LpBuf.Buf[i]) = SEARSH[i];
-      if SEARCHM[i] = $01 then Cmp := True;
       if Cmp = False then break;
     end;
   end;
@@ -346,7 +350,7 @@ begin
 end;
 
 // Функция getaddrinfo для получения IP адреса узла из его имени
-function Getaddrinfo(const Nodename: PChar; const Servname : PChar; const hints: PAddrInfo; var pResult: PAddrInfo): Integer; stdcall;
+function Getaddrinfo(const Nodename: PAnsiChar; const Servname : PAnsiChar; const hints: PAddrInfo; var pResult: PAddrInfo): Integer; stdcall;
 var
   Cmp : boolean;
   I: integer;
@@ -357,8 +361,8 @@ begin
   for I := 0 to REFINELISTNUM - 1 do  // Цикл сравнения имени со списком
   begin
     Name := '';
-    SetString(Name, PCHAR(REFINELIST[I].buf), REFINELIST[I].Len);  // Скопировать символы из буфера в строку
-    if (Nodename <> nil) and (String(Nodename) <> '') then if XPOS(Name, Nodename) <> 0 then Cmp := true;
+    SetString(Name, PAnsiChar(REFINELIST[I].buf), REFINELIST[I].Len);  // Скопировать символы из буфера в строку
+    if (Nodename <> nil) and (String(Nodename) <> '') then if XPOS(Name, String(Nodename)) <> 0 then Cmp := true;
     if Cmp = True then break;
   end;
 

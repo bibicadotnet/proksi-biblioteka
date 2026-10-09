@@ -10,7 +10,7 @@ const
   IMAGE_FILE_LINE_NUMS_STRIPPED = $0004;
   IMAGE_FILE_LOCAL_SYMS_STRIPPED = $0008;
   MAX_PATH = 260;
-  INVALID_HANDLE_VALUE = THandle(-1);
+  INVHANDLE = THandle(-1);
   LMEM_FIXED = 0;
   PAGE_READONLY = 2;
   SECTION_MAP_READ = 4;
@@ -182,9 +182,10 @@ function LoadLibrary; external kernel32 name 'LoadLibraryA';
 procedure CopyMemory(Destination, Source: Pointer; Length: DWORD); stdcall;
 procedure CopyMemory; external kernel32 name 'RtlMoveMemory';
 
+function FlushInstructionCache(hProcess: THandle; const lpBaseAddress: Pointer; dwSize: DWORD): BOOL; stdcall;
+function FlushInstructionCache; external kernel32 name 'FlushInstructionCache';
+
 function Succeeded(Status: HRESULT): BOOL; inline;
-//procedure Move(const Source; var Dest; Count : Cardinal);
-//procedure CopyMemory(Destination: Pointer; Source: Pointer; Length: Cardinal);
 function GetMappedFileNameW(hProcess: THandle; lpv: Pointer; lpFilename: PWideChar; nSize: DWORD): DWORD;
 
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}

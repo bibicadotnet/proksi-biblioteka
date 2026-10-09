@@ -41,7 +41,6 @@ var
   OFFSET : DWORD;                      // Поле для записи аргумента инструкции JMP  | DWORD
   end;
 
-  Protect : LongWord;                  // Переменная для хранения параметров доступа к странице памяти
   VALUE   : LongWord;                  // Переменная для функции WriteProcessMemory
 
 begin
@@ -114,7 +113,7 @@ begin
   end;
   
   // Записать код прыжка в начало исходной функци
-  WriteProcessMemory(INVALID_HANDLE_VALUE, OldProcAddress, Addr(CODE), 5, VALUE);
+  WriteProcessMemory(INVHANDLE, OldProcAddress, Addr(CODE), 5, VALUE);
   FlushInstructionCache(INVHANDLE, OldProcAddress, 5);
 end;
 
@@ -137,12 +136,11 @@ end;
 // Включить или Отключить перхват
 procedure SetHook(HOOK: HOOKDATA; OPT: byte); inline;
 var
-  Protect : LongWord;                  // Переменная для хранения параметров доступа к странице памяти
   VALUE   : LongWord;                   // Переменная для функции WriteProcessMemory
 begin
   // Записать в память где расположена функция исходный код или код прыжка
-  if OPT = 0 then WriteProcessMemory(INVALID_HANDLE_VALUE, HOOK.FUNCADDRES, Addr(HOOK.OldDATA), 5, VALUE); // Записать в память по адресу функции исходный код
-  if OPT = 1 then WriteProcessMemory(INVALID_HANDLE_VALUE, HOOK.FUNCADDRES, Addr(HOOK.NewDATA), 5, VALUE); // Записать в память по адресу функции код прыжка
+  if OPT = 0 then WriteProcessMemory(INVHANDLE, HOOK.FUNCADDRES, Addr(HOOK.OldDATA), 5, VALUE); // Записать в память по адресу функции исходный код
+  if OPT = 1 then WriteProcessMemory(INVHANDLE, HOOK.FUNCADDRES, Addr(HOOK.NewDATA), 5, VALUE); // Записать в память по адресу функции код прыжка
   FlushInstructionCache(INVHANDLE, HOOK.FUNCADDRES, 5);
 end;
 

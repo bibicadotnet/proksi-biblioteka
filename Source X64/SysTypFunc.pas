@@ -10,7 +10,7 @@ Const
   IMAGE_FILE_LINE_NUMS_STRIPPED = $0004;
   IMAGE_FILE_LOCAL_SYMS_STRIPPED = $0008;
   MAX_PATH = 260;
-  INVALID_HANDLE_VALUE = THandle(-1);
+  INVHANDLE = THandle(-1);
   LMEM_FIXED = 0;
   PAGE_READONLY = 2;
   SECTION_MAP_READ = 4;
@@ -188,9 +188,10 @@ function LoadLibrary; external kernel32 name 'LoadLibraryW';
 procedure CopyMemory(Destination, Source: Pointer; Length: NativeUInt); stdcall;
 procedure CopyMemory; external kernel32 name 'RtlMoveMemory';
 
+function FlushInstructionCache(hProcess: THandle; const lpBaseAddress: Pointer; dwSize: SIZE_T): BOOL; stdcall;
+function FlushInstructionCache; external kernel32 name 'FlushInstructionCache';
+
 function Succeeded(Status: HRESULT): BOOL; inline;
-//procedure Move(const Source; var Dest; Count : NativeUInt);
-//procedure CopyMemory(Destination: Pointer; Source: Pointer; Length: NativeUInt);
 function GetMappedFileNameW(hProcess: THandle; lpv: Pointer; lpFilename: PWideChar; nSize: DWORD): DWORD;
 
 { *Описание типов данных из модуля Windows и PSAPI* }

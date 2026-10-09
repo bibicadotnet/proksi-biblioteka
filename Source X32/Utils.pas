@@ -15,7 +15,7 @@ CONST
   faVolumeID  = $00000008 platform deprecated;
   faDirectory = $00000010;
   faArchive   = $00000020 platform;
-  faSymLink   = $00000040 platform;
+  faSymLink   = $00000400;
   faAnyFile   = $000001FF;
 
 TYPE
@@ -149,10 +149,10 @@ end;
 
 procedure FindClose(var F: TSearchRec);
 begin
-  if F.FindHandle <> INVALID_HANDLE_VALUE then
+  if F.FindHandle <> INVHANDLE then
   begin
     SysTypFunc.FindClose(F.FindHandle);
-    F.FindHandle := INVALID_HANDLE_VALUE;
+    F.FindHandle := INVHANDLE;
   end;
 end;
 
@@ -162,7 +162,7 @@ const
 begin
   F.ExcludeAttr := not Attr and faSpecial;
   F.FindHandle := FindFirstFile(PChar(Path), F.FindData);
-  if F.FindHandle <> INVALID_HANDLE_VALUE then
+  if F.FindHandle <> INVHANDLE then
   begin
     Result := FindMatchingFile(F);
     if Result <> 0 then FindClose(F);
