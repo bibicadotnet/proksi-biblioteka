@@ -15,7 +15,7 @@ CONST
   faVolumeID  = $00000008 platform deprecated;
   faDirectory = $00000010;
   faArchive   = $00000020 platform;
-  faSymLink   = $00000040 platform;
+  faSymLink   = $00000400;
   faAnyFile   = $000001FF;
 
 TYPE
