@@ -113,7 +113,7 @@ begin
 
   // Записать код прыжка в начало исходной функци
   WriteProcessMemory(INVHANDLE, OldProcAddress, ADDR(RAXJUMP), 12, VALUE);
-  FlushInstructionCache(INVHANDLE, HOOK.FUNCADDRES, 12)
+  FlushInstructionCache(INVHANDLE, OldProcAddress, 12)
 end;
 
 // Включить или Отключить перхват
