@@ -150,6 +150,8 @@ end;
 // Это модифицированная функция-заглушка. Отключает в браузере использование системного DNS-клиента
 function GetComputerNameExW(NameType: TComputerNameFormat; lpBuffer: PWideChar; var nSize: DWORD): BOOL; stdcall;
 begin
+  lpBuffer[0] := #0000;
+  nSize := 0;
   Result := false;
 end;
 
@@ -253,60 +255,64 @@ begin
   result := TRUE;
 end;
 
-function RegCreateKeyA(hKey: HKEY; lpSubKey: PAnsiChar; phkResult: PHKEY): Longint; stdcall;
+function RegCreateKeyA(hKey: HKEY; lpSubKey: PAnsiChar; var phkResult: HKEY): Longint; stdcall;
 begin
-  Result := 0;
+  phkResult := 0;
+  Result := 2;
 end;
 
-function RegCreateKeyW(hKey: HKEY; lpSubKey: PWideChar; phkResult: PHKEY): Longint; stdcall;
+function RegCreateKeyW(hKey: HKEY; lpSubKey: PWideChar; var phkResult: HKEY): Longint; stdcall;
 begin
-  Result := 0;
+  phkResult := 0;
+  Result := 2;
 end;
 
 function RegCreateKeyExA(hKey: HKEY; lpSubKey: PAnsiChar; Reserved: DWORD; lpClass: PAnsiChar; dwOptions: DWORD; samDesired: REGSAM;
-                         lpSecurityAttributes: PSecurityAttributes; phkResult: PHKEY; lpdwDisposition: PDWORD): Longint; stdcall;
+                         lpSecurityAttributes: PSecurityAttributes; var phkResult: HKEY; lpdwDisposition: PDWORD): Longint; stdcall;
 begin
-  Result := 0;
+  phkResult := 0;
+  Result := 2;
 end;
 
 function RegCreateKeyExW(hKey: HKEY; lpSubKey: PWideChar; Reserved: DWORD; lpClass: PWideChar; dwOptions: DWORD; samDesired: REGSAM;
-                         lpSecurityAttributes: PSecurityAttributes; phkResult: PHKEY; lpdwDisposition: PDWORD): Longint; stdcall;
+                         lpSecurityAttributes: PSecurityAttributes; var phkResult: HKEY; lpdwDisposition: PDWORD): Longint; stdcall;
 begin
-  Result := 0;
+  phkResult := 0;
+  Result := 2;
 end;
 
 function RegSetValueA(hKey: HKEY; lpSubKey: PAnsiChar; dwType: DWORD; lpData: PAnsiChar; cbData: DWORD): Longint; stdcall;
 begin
-  Result := 0;
+  Result := 2;
 end;
 
 function RegSetValueW(hKey: HKEY; lpSubKey: PWideChar; dwType: DWORD; lpData: PWideChar; cbData: DWORD): Longint; stdcall;
 begin
-  Result := 0;
+  Result := 2;
 end;
 
 function RegSetValueExA(hKey: HKEY; lpValueName: PAnsiChar; Reserved: DWORD; dwType: DWORD; lpData: Pointer; cbData: DWORD): Longint; stdcall;
 begin
-  Result := 0;
+  Result := 2;
 end;
 
 function RegSetValueExW(hKey: HKEY; lpValueName: PWideChar; Reserved: DWORD; dwType: DWORD; lpData: Pointer; cbData: DWORD): Longint; stdcall;
 begin
-  Result := 0;
+  Result := 2;
 end;
 
 function RegCreateKeyTransactedA(hKey: HKEY; lpSubKey: PAnsiChar; Reserved: DWORD; lpClass: PAnsiChar; dwOptions: DWORD; samDesired: REGSAM;
                                  lpSecurityAttributes: PSecurityAttributes; var phkResult: HKEY; lpdwDisposition: PDWORD;
                                  hTransaction: DWORD; pExtendedParemeter: Pointer): Longint; stdcall;
 begin
-  Result := 0;
+  Result := 2;
 end;
 
 function RegCreateKeyTransactedW(hKey: HKEY; lpSubKey: PWideChar; Reserved: DWORD; lpClass: PWideChar; dwOptions: DWORD; samDesired: REGSAM;
                                  lpSecurityAttributes: PSecurityAttributes; var phkResult: HKEY; lpdwDisposition: PDWORD;
                                  hTransaction: DWORD; pExtendedParemeter: Pointer): Longint; stdcall;
 begin
-  Result := 0;
+  Result := 2;
 end;
 
 function RegNotifyChangeKeyValue(hKey: HKEY; bWatchSubtree: BOOL; dwNotifyFilter: DWORD; hEvent: THandle; fAsynchronus: BOOL): Longint; stdcall;
@@ -507,64 +513,70 @@ begin
   CodeHook(Addr(Proc), ADDR(CryptUnprotectData));                       // Подмена адреса точки входа функции в процессе на адрес функции из DLL
 
   // Перехват вызова функции NtCreateKey
-  if REGOFF = TRUE then begin
-  DLLHandle := GetModule('ntdll.dll');                                  // Получить идентификатор
-  Addr(Proc) := GetProcAddress(DLLHandle, 'NtCreateKey');               // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(NtCreateKey), 3);                           // Подмена адреса точки входа функции в процессе на адрес функции из DLL
-  ADDR(RawCreateKey) := ADDR(Proc);                                     // Присвоить адрес функции RawCreateKey
+  if REGOFF = TRUE then 
+  begin
+    DLLHandle := GetModule('ntdll.dll');                                // Получить идентификатор
+    Addr(Proc) := GetProcAddress(DLLHandle, 'NtCreateKey');             // Определить адрес функции
+    CodeHook(Addr(Proc), ADDR(NtCreateKey), 3);                         // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+    ADDR(RawCreateKey) := ADDR(Proc);                                   // Присвоить адрес функции RawCreateKey
   end;
 
   // Перехват вызова функции SHGetFolderPathW
-  if SPFOLD = TRUE then begin
-  DLLHandle := GetModule('SHELL32.dll');                                // Получить идентификатор
-
-  Addr(Proc) := GetProcAddress(DLLHandle, 'SHGetFolderPathW');          // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(SHGetFolderPathW));                         // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+  if SPFOLD = TRUE then 
+  begin
+    DLLHandle := GetModule('SHELL32.dll');                              // Получить идентификатор
+    Addr(Proc) := GetProcAddress(DLLHandle, 'SHGetFolderPathW');        // Определить адрес функции
+    CodeHook(Addr(Proc), ADDR(SHGetFolderPathW));                       // Подмена адреса точки входа функции в процессе на адрес функции из DLL
   end;
 
   // Перехват вызова функций из Propsys.dll
-  if AIDOFF = TRUE then begin
-  DLLHandle := GetModule('Propsys.dll');                                // Получить идентификатор
-  Addr(Proc) := GetProcAddress(DLLHandle, 'PSStringFromPropertyKey');   // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(StringFromPropertyKey), 8);                 // Подмена адреса точки входа функции в процессе на адрес функции из DLL
-  ADDR(RAWPSStringFromPropertyKey) := ADDR(Proc);                       // Присвоить адрес функции RAWPSStringFromPropertyKey
+  if AIDOFF = TRUE then 
+  begin
+    DLLHandle := GetModule('Propsys.dll');                              // Получить идентификатор
+    Addr(Proc) := GetProcAddress(DLLHandle, 'PSStringFromPropertyKey'); // Определить адрес функции
+    CodeHook(Addr(Proc), ADDR(StringFromPropertyKey), 8);               // Подмена адреса точки входа функции в процессе на адрес функции из DLL
+    ADDR(RAWPSStringFromPropertyKey) := ADDR(Proc);                     // Присвоить адрес функции RAWPSStringFromPropertyKey
   end;
 
-  if (REFINE = TRUE) or (BCTOFF = TRUE) or (ECHOFF = TRUE) then begin
-  DLLHandle := GetModule('WS2_32.dll');                                 // Получить идентификатор
+  if (REFINE = TRUE) or (BCTOFF = TRUE) or (ECHOFF = TRUE) then
+  begin
+    DLLHandle := GetModule('WS2_32.dll');                               // Получить идентификатор
 
-  // Импорт функции closesocket
-  ADDR(closesocket) := GetProcAddress(DLLHandle, 'closesocket');
+    // Импорт функции closesocket
+    ADDR(closesocket) := GetProcAddress(DLLHandle, 'closesocket');
 
-  if REFINE = TRUE then begin
-  //Перехват функции WSASend
-  ADDR(Proc) := GetProcAddress(DLLHandle, 'WSASend');                   // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(WSASend), 5);                               // Подмена адреса функции
-  ADDR(RAWWSASend) := ADDR(Proc);
+    if REFINE = TRUE then
+    begin
+      //Перехват функции WSASend
+      ADDR(Proc) := GetProcAddress(DLLHandle, 'WSASend');               // Определить адрес функции
+      CodeHook(Addr(Proc), ADDR(WSASend), 5);                           // Подмена адреса функции
+      ADDR(RAWWSASend) := ADDR(Proc);
   
-  // Перехват функции getaddrinfo
-  ADDR(Proc) := GetProcAddress(DLLHandle, 'getaddrinfo');               // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(Getaddrinfo), 7);
-  ADDR(RAWGetaddrinfo) := ADDR(Proc);
-  end;
+      // Перехват функции getaddrinfo
+      ADDR(Proc) := GetProcAddress(DLLHandle, 'getaddrinfo');           // Определить адрес функции
+      CodeHook(Addr(Proc), ADDR(Getaddrinfo), 7);
+      ADDR(RAWGetaddrinfo) := ADDR(Proc);
+    end;
 
-    if (REFINE = True) or (ECHOFF = True) then begin
-  //Перехват функции WSASendTo
-  ADDR(Proc) := GetProcAddress(DLLHandle, 'WSASendTo');
-  CodeHook(Addr(Proc), ADDR(WSASendTo), 9);                             // Подмена адреса функции
-  ADDR(RAWWSASendTo) := ADDR(Proc);
-  end;
+    if (REFINE = True) or (ECHOFF = True) then 
+    begin
+      //Перехват функции WSASendTo
+      ADDR(Proc) := GetProcAddress(DLLHandle, 'WSASendTo');
+      CodeHook(Addr(Proc), ADDR(WSASendTo), 9);                        // Подмена адреса функции
+      ADDR(RAWWSASendTo) := ADDR(Proc);
+    end;
 
-  if BCTOFF = TRUE then begin
-  // Перехват функции setsockopt
-  Addr(Proc) := GetProcAddress(DLLHandle, 'setsockopt');                // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(Setsockopt), 6);
-  ADDR(RAWSetsockopt) := ADDR(Proc);
+    if BCTOFF = TRUE then 
+    begin
+      // Перехват функции setsockopt
+      Addr(Proc) := GetProcAddress(DLLHandle, 'setsockopt');            // Определить адрес функции
+      CodeHook(Addr(Proc), ADDR(Setsockopt), 6);
+      ADDR(RAWSetsockopt) := ADDR(Proc);
 
-  // Перехват функции listen
-  ADDR(Proc) := GetProcAddress(DLLHandle, 'listen');                    // Определить адрес функции
-  CodeHook(Addr(Proc), ADDR(Listen));
-  end;
+      // Перехват функции listen
+      ADDR(Proc) := GetProcAddress(DLLHandle, 'listen');                // Определить адрес функции
+      CodeHook(Addr(Proc), ADDR(Listen));
+    end;
   end;
 
   end;
