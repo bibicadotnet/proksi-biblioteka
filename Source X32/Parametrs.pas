@@ -217,6 +217,7 @@ var
       repeat
         if (Search.Name <> '.') and (Search.Name <> '..') then         // Пропускать директории "." и ".."
         begin
+          if (Search.Attr and faSymLink) <> 0 then Continue;
           if (Search.Attr and faDirectory) <> 0                        // Если найдена директория
           then  DeleteFolder(FolderPath + '\' + Search.Name)           // рекурсивный вызов функции для перехода внутрь директории
           else DeleteFile(PChar(FolderPath + '\' + Search.Name));      // иначе удалить файл
