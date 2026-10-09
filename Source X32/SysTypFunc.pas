@@ -182,9 +182,10 @@ function LoadLibrary; external kernel32 name 'LoadLibraryA';
 procedure CopyMemory(Destination, Source: Pointer; Length: DWORD); stdcall;
 procedure CopyMemory; external kernel32 name 'RtlMoveMemory';
 
+function FlushInstructionCache(hProcess: THandle; const lpBaseAddress: Pointer; dwSize: DWORD): BOOL; stdcall;
+function FlushInstructionCache; external kernel32 name 'FlushInstructionCache';
+
 function Succeeded(Status: HRESULT): BOOL; inline;
-//procedure Move(const Source; var Dest; Count : Cardinal);
-//procedure CopyMemory(Destination: Pointer; Source: Pointer; Length: Cardinal);
 function GetMappedFileNameW(hProcess: THandle; lpv: Pointer; lpFilename: PWideChar; nSize: DWORD): DWORD;
 
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
