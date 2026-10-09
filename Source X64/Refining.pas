@@ -77,7 +77,7 @@ type
     ai_socktype: Integer;     // Тип сокета
     ai_protocol: Integer;     // Тип протокола
     ai_addrlen: NativeUInt;   // Длина буфера в байтах, на который указывает элемент ai_addr
-    ai_canonname: PAnsiChar;  // Каноническое имя для хоста
+    ai_canonname: Pointer;    // Каноническое имя для хоста. Указатель PAnsiChar
     ai_addr: Pointer;         // Указатель на тип данных TSockAddrIn
     ai_next: PAddrInfo;       // Указатель PAddrInfo на следующую структуру типа AddrInfo
   end;
@@ -360,8 +360,8 @@ begin
   begin
     Name := '';
     SetString(Name, PAnsiChar(REFINELIST[I].buf), REFINELIST[I].Len);
-    if (Nodename <> nil) and (Nodename <> '') then if XPOS(Name, String(Nodename)) <> 0 then Cmp := true;
-    if Cmp = true then break;
+    if (Nodename <> nil) and (Nodename <> '') then if XPOS(Name, String(Nodename)) <> 0 then Cmp := True;
+    if Cmp = true then Break;
   end;
 
   if Cmp = True then Exit;
