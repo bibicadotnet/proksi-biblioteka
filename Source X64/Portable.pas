@@ -259,7 +259,7 @@ begin
   result := TRUE;
 end;
 
-function RegCreateKeyA(hKey: HKEY; lpSubKey: PAnsiChar; var hkResult: HKEY): Longint; stdcall;
+function RegCreateKeyA(hKey: HKEY; lpSubKey: PAnsiChar; var phkResult: HKEY): Longint; stdcall;
 begin
   phkResult := 0;
   Result := 2;
