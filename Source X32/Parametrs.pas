@@ -97,10 +97,10 @@ begin
     ARGS := '';
   end;
   ARGS := ARGS + '--portable' + ' ';
-  ARGS := ARGS + '--disable-features=RendererCodeIntegrity,FlashDeprecationWarning' + ' ';
   USERDATADIR := GetDIR(ExeDir, DATADIR, FULLPATCH);    // Сформировать путь к USERDATADIR
   DISKCACHEDIR := GetDIR(ExeDir, CACHEDIR, FULLPATCH);  // Сформировать путь к CACHEDIR
   if RUNPARAM <> '' then ARGS := ARGS + RUNPARAM + ' ';
+  if XPOS('--disable-features=', ARGS) = 0 then ARGS := ARGS + '--disable-features=RendererCodeIntegrity,FlashDeprecationWarning' + ' ';
   if XPOS('--user-data-dir=', ARGS) = 0 then ARGS := ARGS + '--user-data-dir=' + '"' + USERDATADIR + '"' + ' ';
   if XPOS('--disk-cache-dir=', ARGS) = 0 then ARGS := ARGS + '--disk-cache-dir=' + '"' + DISKCACHEDIR + '"' + ' ';
   RESULT := ARGS + ARGSSTART;
