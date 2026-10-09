@@ -41,7 +41,6 @@ var
   OFFSET : DWORD;                      // Поле для записи аргумента инструкции JMP  | DWORD
   end;
 
-  Protect : LongWord;                  // Переменная для хранения параметров доступа к странице памяти
   VALUE   : LongWord;                  // Переменная для функции WriteProcessMemory
 
 begin
@@ -137,7 +136,6 @@ end;
 // Включить или Отключить перхват
 procedure SetHook(HOOK: HOOKDATA; OPT: byte); inline;
 var
-  Protect : LongWord;                  // Переменная для хранения параметров доступа к странице памяти
   VALUE   : LongWord;                   // Переменная для функции WriteProcessMemory
 begin
   // Записать в память где расположена функция исходный код или код прыжка
