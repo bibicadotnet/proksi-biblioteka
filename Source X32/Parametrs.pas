@@ -73,16 +73,16 @@ end;
 // Функция для излечения значения параметра из строки
 function GetParam(IniLine : string; var IniParam : string): boolean;
 var
-  Len    : INTEGER;
-  SETPOS : INTEGER;
+  Len    : Integer;
+  GetPos : Integer;
 begin
   Result := False;
-  Len := Length(IniLine);
-  if Len = 0 then exit;
-  SETPOS := XPOS('=', IniLine) + 1;
-  IniParam := Copy(IniLine, SETPOS, Len - SETPOS + 1);
-  if (XPOS(';', IniLine) = 0) or (XPOS(';', IniLine) > 2) then Result := True; // Если строка не комментарий
-  if IniParam = '' then Result := False;
+  Len := Length(IniLine);                                   // Определить длину записи параметра
+  if Len = 0 then Exit;
+  GetPos := XPOS('=', IniLine) + 1;                         // Определить положение значения параметра в записи параметра
+  if (GetPos = 1) or (XPOS(';', IniLine) = 1) then Exit;
+  IniParam := Copy(IniLine, GetPos, Len - GetPos + 1);      // Скопировать в результат из записи всё после знака '='
+  Result := True;
 end;
 
 // Функция для добавления параметров запуска
