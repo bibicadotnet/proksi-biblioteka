@@ -145,8 +145,11 @@ begin
         Cmp := Byte(LpBuf.Buf[X + I]) = SEARSH[i];  // Сравнить байты
         if Cmp = False then break;                  // Прервать цикл при первом же отличии
       end;
-      if Cmp = True then P := X + 12;               // Положение размера первой метки в данных
-      if Cmp = True then break;                     // Прервать цикл
+      if Cmp = True then 
+      begin
+        P := X + 12;               // Положение размера первой метки в данных
+        Break;                     // Прервать цикл
+      end;
     end;
 
     if Cmp = True then                              // Декодирование меток
