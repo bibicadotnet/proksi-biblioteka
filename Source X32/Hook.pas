@@ -119,18 +119,7 @@ end;
 
 // Функция расчета смещения
 function CodeOffset(NEWADDR, OLDADDR: DWORD):DWORD;
-begin
-  if(OLDADDR < NEWADDR) then
-    begin
-      Result := NEWADDR - OLDADDR;
-      Result := $FFFFFFFF - Result;
-      Result := Result - 4;
-    end
-  else
-    begin
-      Result := OLDADDR - NEWADDR;
-      Result := Result - 5;
-    end;
+  Result := OLDADDR - (NEWADDR + 5);
 end;
 
 // Включить или Отключить перхват
