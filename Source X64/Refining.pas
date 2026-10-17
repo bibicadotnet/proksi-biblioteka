@@ -250,7 +250,7 @@ begin
     // Цикл сравнения содержимого буфера со списком
     for I := 0 to REFINELISTNUM - 1 do
     begin
-      for X := AddrPos to lpBuffers.Len - REFINELIST[I].len  - AddrPos do
+      for X := AddrPos to lpBuffers.Len - REFINELIST[I].len do
         begin
         for Y := 0 to REFINELIST[I].len - 1 do
           begin
