@@ -175,7 +175,7 @@ begin
 end;
 
 // Функция поиска положения адреса в HTTP запросах
-function Host(const LpBuf: WSABuf; var AddrPos: Cardinal): boolean;
+function Host(const LpBuf: WSABuf; var AddrPos: integer): boolean;
 const
   SEARSH  : array [0..15] of Byte = ($48,$54,$54,$50,$2F,$31,$2E,$31,$0D,$0A,$48,$6F,$73,$74,$3A,$20);  // HTTP/1.1 + перевод строки + Host: + пробел
   SEARCHM : array [0..15] of Byte = ($00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$01,$00,$00,$00,$00,$00);  // Маска поиска
@@ -237,7 +237,7 @@ Var
   I: integer;
   Cmp : boolean;
   X, Y: integer;
-  AddrPos : Cardinal;
+  AddrPos : integer;
 begin
   Cmp := False;
   // Врианты результата выполнения функции WSASend
