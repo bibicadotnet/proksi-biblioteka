@@ -119,6 +119,7 @@ end;
 
 // Функция расчета смещения
 function CodeOffset(NEWADDR, OLDADDR: DWORD):DWORD;
+begin
   Result := OLDADDR - (NEWADDR + 5);
 end;
 
