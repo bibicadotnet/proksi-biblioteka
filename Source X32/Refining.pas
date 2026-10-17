@@ -193,7 +193,6 @@ begin
       begin
         if SEARCHM[i] = $01 then Continue;
         Cmp := Byte(LpBuf.Buf[X + i]) = SEARSH[i];
-        if SEARCHM[i] = $01 then Cmp := True;
         if Cmp = False then break;
       end;
       if Cmp = True then 
@@ -267,7 +266,7 @@ begin
 
   if Cmp = True then
   begin
-    SetLastError(10054);
+    SetLastError(10054);       //  10054 Сервер прервар соединение
     Exit;
   end;
 
@@ -309,7 +308,7 @@ begin
 
   if Cmp = True then
   begin
-    SetLastError(10054);
+    SetLastError(10054);       //  10054 Сервер прервар соединение
     Exit;
   end;
 
