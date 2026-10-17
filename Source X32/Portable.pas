@@ -55,13 +55,13 @@ type
   pid: DWORD;
   end;
 
-  // Структура для описания входных и выходных данных
+  // Структура для описания входных и выходных данных для функций CryptProtectData и CryptUnprotectData
   DATA_BLOB = record
   cbData: DWORD;            // Размер данных в байтах
   pbData: pByte;            // Указатель на первый байт в блоке данных
   end;
 
-  // Структура для описания дополнительных данных шифрования
+  // Структура для описания дополнительных данных шифрования для функций CryptProtectData и CryptUnprotectData
   CRYPTPROTECT_PROMPTSTRUCT = record
   cbSize: DWORD;            // Размер этой структуры в байтах
   dwPromptFlags: DWORD;     // флаги, указывающие, когда должны отображаться приглашения в пользовательскую область

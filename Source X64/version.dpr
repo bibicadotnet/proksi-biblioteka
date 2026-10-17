@@ -13,7 +13,7 @@ uses
 {$SETPEFlAGS IMAGE_FILE_DEBUG_STRIPPED or IMAGE_FILE_LINE_NUMS_STRIPPED or IMAGE_FILE_LOCAL_SYMS_STRIPPED}
 
 var
-  Proc : array [1..8] of Procedure;        // массив типа Procedure
+  Proc : array [1..8] of Pointer;        // массив типа Procedure
 
 // Описание функций для метода dll wraper
 // Функции представляют собой джампы на адреса функций системного файла version.dll.
@@ -48,15 +48,15 @@ begin
   GetSystemDirectory(SysPatch, SizeOf(SysPatch));                          // Определить Путь к системной директории
   FileName :=  SysPatch + '\version.dll';                                  // Получить полное имя файла
   DLLHandle := LoadLibrary(pchar(FileName));                               // Загрузить библиотеку и получить её идентификатор
-  Addr(proc[1]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoSizeW');   // Определить адрес функции
-  Addr(proc[2]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoW');       // Определить адрес функции
-  Addr(proc[3]) := GetProcAddress(DLLHandle, 'VerQueryValueW');            // Определить адрес функции
-  Addr(proc[4]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoSizeA');   // Определить адрес функции
-  Addr(proc[5]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoA');       // Определить адрес функции
-  Addr(proc[6]) := GetProcAddress(DLLHandle, 'VerQueryValueA');            // Определить адрес функции
+  Proc[1] := GetProcAddress(DLLHandle, 'GetFileVersionInfoSizeW');   // Определить адрес функции
+  Proc[2] := GetProcAddress(DLLHandle, 'GetFileVersionInfoW');       // Определить адрес функции
+  Proc[3] := GetProcAddress(DLLHandle, 'VerQueryValueW');            // Определить адрес функции
+  Proc[4] := GetProcAddress(DLLHandle, 'GetFileVersionInfoSizeA');   // Определить адрес функции
+  Proc[5] := GetProcAddress(DLLHandle, 'GetFileVersionInfoA');       // Определить адрес функции
+  Proc[6] := GetProcAddress(DLLHandle, 'VerQueryValueA');            // Определить адрес функции
   if OS > 1 then begin                                                     // Для ОС 7, 8, 10, 11
-  Addr(proc[7]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoExW');     // Определить адрес функции
-  Addr(proc[8]) := GetProcAddress(DLLHandle, 'GetFileVersionInfoSizeExW'); // Определить адрес функции
+  Proc[7] := GetProcAddress(DLLHandle, 'GetFileVersionInfoExW');     // Определить адрес функции
+  Proc[8] := GetProcAddress(DLLHandle, 'GetFileVersionInfoSizeExW'); // Определить адрес функции
   end;
 end;
 

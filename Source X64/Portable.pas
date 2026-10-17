@@ -302,7 +302,7 @@ end;
 
 function RegSetValueExW(hKey: HKEY; lpValueName: PWideChar; Reserved: DWORD; dwType: DWORD; lpData: Pointer; cbData: DWORD): Longint; stdcall;
 begin
-  Result := 02;
+  Result := 2;
 end;
 
 function RegCreateKeyTransactedA(
