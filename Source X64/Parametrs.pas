@@ -69,7 +69,7 @@ begin
 end;
 
 // Функция для излечения значения параметра из строки
-function GetParam(IniLine : string; var IniParam : string): boolean;
+function GetParam(const IniLine : string; var IniParam : string): boolean;
 var
   Len    : Integer;
   GetPos : Integer;
@@ -250,8 +250,7 @@ var
 begin
   for i := 0 to FILELISTNUM - 1 do
   begin
-  if XPOS('*', FILELIST[i]) = 0 then DeleteFile(PChar(FILELIST[i]));
-  if XPOS('*', FILELIST[i]) <> 0 then
+  if XPOS('*', FILELIST[i]) = 0 then DeleteFile(PChar(FILELIST[i])) else
     begin
       DirName := '';
       // Извлечь путь к файлу
