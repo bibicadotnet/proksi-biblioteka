@@ -26,7 +26,6 @@ VAR
   DATADIR   : string;
   CACHEDIR  : string;
   RUNPARAM  : string;
-  FULLPATCH : boolean;
 
   REGOFF : boolean;          // Переменная для отключения записи в реестр
   AIDOFF : boolean;          // Переменная для отключения идентификации приложения
@@ -37,6 +36,7 @@ VAR
   BCTOFF : boolean;          // Переменная для отключения широковещательных рассылок
   ECHOFF : boolean;          // Переменная для отключения Encrypted Client Hello
   DNSOFF : boolean;          // Переменная для отключения использования системной службы DNS
+  FPATCH : boolean;          // Переменная для включения абсолютного пути
 
   FILELIST     : array of String;  // Массив списка файлов для удаления
   DELDIRLIST   : array of String;  // Массив списка директорий для удаления
@@ -91,14 +91,14 @@ var
   ARGSSTART : String;
 begin
   ARGSSTART := '';
-  if XPOS('--single-argument', ARGS) <> 0 then    // Проверка наличия параметра '--single-argument'
+  if XPOS('--single-argument', ARGS) <> 0 then          // Проверка наличия параметра '--single-argument'
   begin
     ARGSSTART := ARGS;
     ARGS := '';
   end;
   ARGS := ARGS + '--portable' + ' ';
-  USERDATADIR := GetDIR(ExeDir, DATADIR, FULLPATCH);    // Сформировать путь к USERDATADIR
-  DISKCACHEDIR := GetDIR(ExeDir, CACHEDIR, FULLPATCH);  // Сформировать путь к CACHEDIR
+  USERDATADIR := GetDIR(ExeDir, DATADIR, FPATCH);       // Сформировать путь к USERDATADIR
+  DISKCACHEDIR := GetDIR(ExeDir, CACHEDIR, FPATCH);     // Сформировать путь к CACHEDIR
   if RUNPARAM <> '' then ARGS := ARGS + RUNPARAM + ' ';
   if XPOS('--disable-features=', ARGS) = 0 then ARGS := ARGS + '--disable-features=RendererCodeIntegrity,FlashDeprecationWarning' + ' ';
   if XPOS('--user-data-dir=', ARGS) = 0 then ARGS := ARGS + '--user-data-dir=' + '"' + USERDATADIR + '"' + ' ';
@@ -123,7 +123,7 @@ begin
   BCTOFF := True;                               // Значение параметра по умолчанию
   ECHOFF := False;                              // Значение параметра по умолчанию
   DNSOFF := True;                               // Значение параметра по умолчанию 
-  FULLPATCH := True;                            // Значение параметра по умолчанию
+  FPATCH := True;                               // Значение параметра по умолчанию
 
   DATADIR   := '';
   CACHEDIR  := '';
@@ -148,17 +148,17 @@ begin
     Readln(IniFile, IniLine);                   // Прочитат строку в переменную IniLine
     if GetParam(IniLine, IniParam) = true then  // Извлечь из строки значение параметра
       begin
-      if XPOS('REGOFF=', IniLine) <> 0 then if IniParam = '1' then REGOFF := True else if IniParam = '0' then REGOFF := False;
-      if XPOS('AIDOFF=', IniLine) <> 0 then if IniParam = '1' then AIDOFF := True else if IniParam = '0' then AIDOFF := False;
-      if XPOS('DIROFF=', IniLine) <> 0 then if IniParam = '1' then DIROFF := True else if IniParam = '0' then DIROFF := False;
-      if XPOS('RMDISK=', IniLine) <> 0 then if IniParam = '1' then RMDISK := True else if IniParam = '0' then RMDISK := False;
-      if XPOS('REFINE=', IniLine) <> 0 then if IniParam = '1' then REFINE := True else if IniParam = '0' then REFINE := False;
-      if XPOS('SPFOLD=', IniLine) <> 0 then if IniParam = '1' then SPFOLD := True else if IniParam = '0' then SPFOLD := False;
-      if XPOS('BCTOFF=', IniLine) <> 0 then if IniParam = '1' then BCTOFF := True else if IniParam = '0' then BCTOFF := False;
-      if XPOS('ECHOFF=', IniLine) <> 0 then if IniParam = '1' then ECHOFF := True else if IniParam = '0' then ECHOFF := False;
-      if XPOS('DNSOFF=', IniLine) <> 0 then if IniParam = '1' then DNSOFF := True else if IniParam = '0' then DNSOFF := False;
+      if XPOS('REGOFF=', IniLine) <> 0 then REGOFF := IniParam = '1';
+      if XPOS('AIDOFF=', IniLine) <> 0 then AIDOFF := IniParam = '1';
+      if XPOS('DIROFF=', IniLine) <> 0 then DIROFF := IniParam = '1';
+      if XPOS('RMDISK=', IniLine) <> 0 then RMDISK := IniParam = '1';
+      if XPOS('REFINE=', IniLine) <> 0 then REFINE := IniParam = '1';
+      if XPOS('SPFOLD=', IniLine) <> 0 then SPFOLD := IniParam = '1';
+      if XPOS('BCTOFF=', IniLine) <> 0 then BCTOFF := IniParam = '1';
+      if XPOS('ECHOFF=', IniLine) <> 0 then ECHOFF := IniParam = '1';
+      if XPOS('DNSOFF=', IniLine) <> 0 then DNSOFF := IniParam = '1';
+      if XPOS('APPDIR=', IniLine) <> 0 then FPATCH := IniParam = '1';
 
-      if XPOS('APPDIR=', IniLine) <> 0 then if IniParam = '0' then FULLPATCH := False else if IniParam = '1' then FULLPATCH := True;
       if XPOS('DATADIR=', IniLine) <> 0 then if IniParam <> '' then DATADIR := IniParam;
       if XPOS('CACHEDIR=', IniLine) <> 0 then if IniParam <> '' then CACHEDIR := IniParam;
       if XPOS('RUNPARAM=', IniLine) <> 0 then if IniParam <> '' then RUNPARAM := IniParam;
