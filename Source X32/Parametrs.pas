@@ -71,7 +71,7 @@ begin
 end;
 
 // Функция для излечения значения параметра из строки
-function GetParam(IniLine : string; var IniParam : string): boolean;
+function GetParam(const IniLine : string; var IniParam : string): boolean;
 var
   Len    : Integer;
   GetPos : Integer;
@@ -217,12 +217,12 @@ var
       repeat
         if (Search.Name <> '.') and (Search.Name <> '..') then         // Пропускать директории "." и ".."
         begin
-          if (Search.Attr and faSymLink) <> 0 then Continue;
+          if (Search.Attr and faSymLink) <> 0 then Continue;           // Пропустить symlink, junction, точку монтирования и т. д.
           if (Search.Attr and faDirectory) <> 0                        // Если найдена директория
           then  DeleteFolder(FolderPath + '\' + Search.Name)           // рекурсивный вызов функции для перехода внутрь директории
           else DeleteFile(PChar(FolderPath + '\' + Search.Name));      // иначе удалить файл
         end;
-      until FindNext(Search) <> 0;                                     // Продолжить поиск
+      until FindNext(Search) <> 0;                                     // Выполнить поиск и если найдено повторить цикл
       FindClose(Search);                                               // Освободить ресурс поиска
     end;
     RemoveDirectory(PChar(FolderPath));                                // Удалить корневую директорию
@@ -245,8 +245,7 @@ var
 begin
   for i := 0 to FILELISTNUM - 1 do
   begin
-  if XPOS('*', FILELIST[i]) = 0 then DeleteFile(PChar(FILELIST[i]));
-  if XPOS('*', FILELIST[i]) <> 0 then
+  if XPOS('*', FILELIST[i]) = 0 then DeleteFile(PChar(FILELIST[i])) else
     begin
       DirName := '';
       // Извлечь путь к файлу
