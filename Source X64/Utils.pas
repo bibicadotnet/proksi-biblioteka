@@ -67,11 +67,12 @@ end;
 
 // Удалить из имени директории последовательно все '..\' и '.'
 function DirNameDistil(const Dir : string): string;
-var DirName : string;
+var
+  DirName : string;
 begin
   DirName := Dir;
-  while (XPOS('..\', DirName) <> 0) do DELETE(DirName, XPOS('..\', DirName), 3);
-  while (XPOS('.\', DirName) <> 0) do DELETE(DirName, XPOS('.\', DirName), 1);
+  while XPOS('..\', DirName) <> 0 do DELETE(DirName, XPOS('..\', DirName), 3);
+  while XPOS('.\', DirName) <> 0 do DELETE(DirName, XPOS('.\', DirName), 1);
   Result := DirName;
 end;
 
